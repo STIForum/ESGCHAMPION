@@ -15,18 +15,19 @@
         .auth-container {
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             padding: var(--space-6);
-            background: linear-gradient(135deg, var(--primary-50) 0%, white 50%, var(--gray-50) 100%);
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
         }
         .auth-card {
             width: 100%;
-            max-width: 480px;
+            max-width: 640px;
             background: white;
             border-radius: var(--radius-2xl);
             box-shadow: var(--shadow-xl);
             padding: var(--space-10);
+            margin: var(--space-6) 0;
         }
         .auth-header {
             text-align: center;
@@ -36,53 +37,157 @@
             display: inline-flex;
             align-items: center;
             gap: var(--space-2);
-            margin-bottom: var(--space-6);
+            margin-bottom: var(--space-4);
         }
         .auth-title {
-            font-size: var(--text-2xl);
+            font-size: var(--text-3xl);
             margin-bottom: var(--space-2);
+            font-weight: 700;
         }
         .auth-subtitle {
             color: var(--gray-500);
-            font-size: var(--text-sm);
+            font-size: var(--text-base);
         }
-        .divider {
-            display: flex;
-            align-items: center;
+        
+        /* Form Sections */
+        .form-section {
+            margin-bottom: var(--space-8);
+            padding-bottom: var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: var(--space-4);
+        }
+        .section-title {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-5);
+        }
+        .subsection-title {
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--gray-600);
+            margin-bottom: var(--space-2);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: var(--space-4);
-            margin: var(--space-6) 0;
-            color: var(--gray-400);
+        }
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+        .form-label {
+            display: block;
             font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
         }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--gray-200);
+        .form-label .required {
+            color: var(--error);
+            margin-left: 2px;
         }
-        .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-3);
+        .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: var(--space-3) var(--space-4);
-            background: white;
-            border: 2px solid var(--gray-200);
+            border: 1px solid var(--gray-300);
             border-radius: var(--radius-lg);
-            font-weight: 600;
-            color: var(--gray-700);
-            cursor: pointer;
+            font-size: var(--text-base);
             transition: all var(--transition);
+            background: white;
         }
-        .social-btn:hover {
-            border-color: var(--gray-300);
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+        .form-input::placeholder {
+            color: var(--gray-400);
+        }
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-helper {
+            font-size: var(--text-xs);
+            color: var(--gray-500);
+            margin-top: var(--space-1);
+        }
+        
+        /* Password field with toggle */
+        .password-field {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: var(--space-3);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: var(--space-1);
+        }
+        .password-toggle:hover {
+            color: var(--gray-600);
+        }
+        
+        /* Agreement boxes */
+        .agreement-section {
             background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-4);
         }
-        .social-btn svg {
-            width: 20px;
-            height: 20px;
+        .form-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+            cursor: pointer;
         }
+        .form-checkbox:last-child {
+            margin-bottom: 0;
+        }
+        .form-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+        .form-checkbox span {
+            font-size: var(--text-sm);
+            color: var(--gray-700);
+            line-height: 1.5;
+        }
+        .form-checkbox a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .form-checkbox a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Digital Signature */
+        .signature-field {
+            margin-top: var(--space-4);
+        }
+        .signature-field .form-input {
+            font-style: italic;
+            font-family: 'Playfair Display', serif;
+        }
+        .signature-helper {
+            font-size: var(--text-xs);
+            color: var(--gray-500);
+            margin-top: var(--space-1);
+        }
+        
         .auth-footer {
             text-align: center;
             margin-top: var(--space-6);
@@ -92,28 +197,8 @@
         .auth-footer p {
             font-size: var(--text-sm);
             color: var(--gray-500);
-            margin-bottom: 0;
         }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-4);
-        }
-        .agreement-box {
-            background: var(--gray-50);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            margin-bottom: var(--space-4);
-        }
-        .agreement-box h4 {
-            font-size: var(--text-sm);
-            margin-bottom: var(--space-2);
-        }
-        .agreement-box p {
-            font-size: var(--text-xs);
-            color: var(--gray-500);
-            margin-bottom: var(--space-3);
-        }
+        
         .success-message {
             text-align: center;
             padding: var(--space-8);
@@ -129,7 +214,11 @@
             margin: 0 auto var(--space-6);
             color: var(--success);
         }
-        @media (max-width: 480px) {
+        
+        @media (max-width: 640px) {
+            .auth-card {
+                padding: var(--space-6);
+            }
             .form-row {
                 grid-template-columns: 1fr;
             }
@@ -147,106 +236,348 @@
                     <div class="logo-icon">ESG</div>
                     <span>Champions</span>
                 </a>
-                <h1 class="auth-title">Become a Champion</h1>
-                <p class="auth-subtitle">Join our community of sustainability experts</p>
+                <h1 class="auth-title">Become an ESG Champion</h1>
+                <p class="auth-subtitle">Join our community of sustainability experts and help shape ESG standards</p>
             </div>
 
             <!-- Registration Form -->
             <div id="register-form-container">
-                <!-- LinkedIn Register -->
-                <button type="button" class="social-btn" id="linkedin-btn">
-                    <svg viewBox="0 0 24 24" fill="#0A66C2">
-                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                    Continue with LinkedIn
-                </button>
-
-                <div class="divider">or register with email</div>
-
                 <form id="register-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="full_name">Full Name</label>
-                            <input 
-                                type="text" 
-                                id="full_name" 
-                                class="form-input" 
-                                placeholder="Jane Doe"
-                                required
-                            >
+                    
+                    <!-- Section 1.1: Basic Information -->
+                    <div class="form-section">
+                        <h2 class="section-title">1.1 Basic Information</h2>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="first_name">
+                                    First Name <span class="required">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="first_name" 
+                                    name="first_name"
+                                    class="form-input" 
+                                    placeholder="John"
+                                    required
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="last_name">
+                                    Last Name <span class="required">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="last_name" 
+                                    name="last_name"
+                                    class="form-input" 
+                                    placeholder="Doe"
+                                    required
+                                >
+                            </div>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label" for="company">Company</label>
+                            <label class="form-label" for="company">
+                                Company/Organization Name <span class="required">*</span>
+                            </label>
                             <input 
                                 type="text" 
                                 id="company" 
+                                name="company"
                                 class="form-input" 
-                                placeholder="Your organization"
+                                placeholder="Your Company Ltd"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="job_title">
+                                Role/Designation <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="job_title" 
+                                name="job_title"
+                                class="form-input" 
+                                placeholder="Sustainability Manager"
+                                required
                             >
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="job_title">Job Title</label>
-                        <input 
-                            type="text" 
-                            id="job_title" 
-                            class="form-input" 
-                            placeholder="e.g., Sustainability Manager"
-                        >
+                    <!-- Section 1.2: Contact Details -->
+                    <div class="form-section">
+                        <h2 class="section-title">1.2 Contact Details</h2>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="email">
+                                Business Email <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email"
+                                class="form-input" 
+                                placeholder="champion@example.com"
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="mobile_number">
+                                Mobile Number <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="tel" 
+                                id="mobile_number" 
+                                name="mobile_number"
+                                class="form-input" 
+                                placeholder="+44 123 456 7890"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="office_phone">
+                                Office Phone Number
+                            </label>
+                            <input 
+                                type="tel" 
+                                id="office_phone" 
+                                name="office_phone"
+                                class="form-input" 
+                                placeholder="+44 123 456 7891"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="linkedin_url">
+                                LinkedIn Profile
+                            </label>
+                            <input 
+                                type="url" 
+                                id="linkedin_url" 
+                                name="linkedin_url"
+                                class="form-input" 
+                                placeholder="https://linkedin.com/in/yourprofile"
+                                pattern="https?://.*linkedin\.com/.*"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="website">
+                                Professional Website
+                            </label>
+                            <input 
+                                type="url" 
+                                id="website" 
+                                name="website"
+                                class="form-input" 
+                                placeholder="https://yourwebsite.com"
+                            >
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="email">Email</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            class="form-input" 
-                            placeholder="you@company.com"
-                            required
-                            autocomplete="email"
-                        >
+                    <!-- Section 1.3: ESG Expertise & Achievements -->
+                    <div class="form-section">
+                        <h2 class="section-title">1.3 ESG Expertise & Achievements</h2>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="competence_level">
+                                Competence in ESG Reporting
+                            </label>
+                            <select id="competence_level" name="competence_level" class="form-input form-select">
+                                <option value="">Select your competence level</option>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                                <option value="expert">Expert</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="esg_contributions">
+                                Key ESG Contributions
+                            </label>
+                            <textarea 
+                                id="esg_contributions" 
+                                name="esg_contributions"
+                                class="form-input form-textarea" 
+                                placeholder="Highlight impactful projects, reporting experience, or certifications."
+                                rows="4"
+                            ></textarea>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="password">Password</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            class="form-input" 
-                            placeholder="At least 6 characters"
-                            required
-                            minlength="6"
-                            autocomplete="new-password"
-                        >
-                        <p class="form-helper">Must be at least 6 characters</p>
+                    <!-- Section 1.4: Areas of Interest -->
+                    <div class="form-section">
+                        <h2 class="section-title">1.4 Areas of Interest</h2>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="primary_sector">
+                                1.4.1. Primary Sectors of Focus <span class="required">*</span>
+                            </label>
+                            <select id="primary_sector" name="primary_sector" class="form-input form-select" required>
+                                <option value="">Select primary sector</option>
+                                <option value="agriculture">Agriculture, Forestry & Fishing</option>
+                                <option value="automotive">Automotive & Transport</option>
+                                <option value="aviation">Aviation & Aerospace</option>
+                                <option value="banking">Banking & Financial Services</option>
+                                <option value="construction">Construction & Real Estate</option>
+                                <option value="creative">Creative Industries (Advertising, Film, Music, Media, etc.)</option>
+                                <option value="defense">Defense & Security</option>
+                                <option value="education">Education & Training</option>
+                                <option value="energy">Energy & Utilities (Renewables, Oil & Gas, Nuclear)</option>
+                                <option value="engineering">Engineering & Manufacturing</option>
+                                <option value="environmental">Environmental Services</option>
+                                <option value="food">Food & Beverage (Production, Retail, Hospitality)</option>
+                                <option value="government">Government & Public Services</option>
+                                <option value="healthcare">Healthcare & Pharmaceuticals</option>
+                                <option value="it">Information Technology (Software Development, Cybersecurity, etc.)</option>
+                                <option value="legal">Legal & Professional Services</option>
+                                <option value="logistics">Logistics & Supply Chain</option>
+                                <option value="marine">Marine & Maritime</option>
+                                <option value="mining">Mining & Quarrying</option>
+                                <option value="nonprofit">Non-Profit & NGOs</option>
+                                <option value="retail">Retail & E-commerce</option>
+                                <option value="telecom">Telecommunications</option>
+                                <option value="tourism">Tourism, Leisure & Hospitality</option>
+                                <option value="transport">Transport & Infrastructure</option>
+                                <option value="venture">Venture Capital & Private Equity</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="expertise_area">
+                                1.4.2. Area of Expertise (Panels) <span class="required">*</span>
+                            </label>
+                            <select id="expertise_area" name="expertise_area" class="form-input form-select" required>
+                                <option value="">Select area of expertise</option>
+                                <optgroup label="Environmental">
+                                    <option value="climate">Climate Action</option>
+                                    <option value="energy">Energy Management</option>
+                                    <option value="water">Water Stewardship</option>
+                                    <option value="waste">Waste & Circular Economy</option>
+                                    <option value="biodiversity">Biodiversity & Land Use</option>
+                                </optgroup>
+                                <optgroup label="Social">
+                                    <option value="human_rights">Human Rights</option>
+                                    <option value="labor">Labor Practices</option>
+                                    <option value="health_safety">Health & Safety</option>
+                                    <option value="diversity">Diversity & Inclusion</option>
+                                    <option value="community">Community Engagement</option>
+                                </optgroup>
+                                <optgroup label="Governance">
+                                    <option value="corporate_governance">Corporate Governance</option>
+                                    <option value="ethics">Ethics & Compliance</option>
+                                    <option value="risk">Risk Management</option>
+                                    <option value="transparency">Transparency & Reporting</option>
+                                </optgroup>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Agreements -->
-                    <div class="agreement-box">
-                        <h4>Contributor Agreements</h4>
-                        <p>By registering, you agree to our contributor terms which govern intellectual property rights and content contributions.</p>
+                    <!-- Account Security -->
+                    <div class="form-section">
+                        <h2 class="section-title">Account Security</h2>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="password">
+                                Password <span class="required">*</span>
+                            </label>
+                            <div class="password-field">
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    name="password"
+                                    class="form-input" 
+                                    placeholder="Min. 8 characters"
+                                    required
+                                    minlength="8"
+                                    autocomplete="new-password"
+                                >
+                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="confirm_password">
+                                Confirm Password <span class="required">*</span>
+                            </label>
+                            <div class="password-field">
+                                <input 
+                                    type="password" 
+                                    id="confirm_password" 
+                                    name="confirm_password"
+                                    class="form-input" 
+                                    placeholder="Re-enter your password"
+                                    required
+                                    minlength="8"
+                                    autocomplete="new-password"
+                                >
+                                <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 1.5: Legal -->
+                    <div class="form-section">
+                        <h2 class="section-title">1.5 Legal</h2>
                         
                         <label class="form-checkbox">
-                            <input type="checkbox" id="cla_accepted" required>
-                            <span>I accept the <a href="/contributor-agreements.html" target="_blank">Contributor License Agreement (CLA)</a></span>
+                            <input type="checkbox" id="cla_accepted" name="cla_accepted" required>
+                            <span>I accept the <a href="/contributor-agreements.html" target="_blank">Contributor License Agreement (CLA)</a> <span class="required">*</span></span>
                         </label>
                         
-                        <label class="form-checkbox mt-4">
-                            <input type="checkbox" id="nda_accepted">
-                            <span>I accept the <a href="/contributor-agreements.html" target="_blank">Non-Disclosure Agreement (NDA)</a> (optional)</span>
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="nda_accepted" name="nda_accepted" required>
+                            <span>I have read and agree to the <a href="/contributor-agreements.html#nda" target="_blank">Non-Disclosure Agreement (NDA)</a> <span class="required">*</span></span>
                         </label>
-                    </div>
 
-                    <label class="form-checkbox mb-6">
-                        <input type="checkbox" id="terms_accepted" required>
-                        <span>I agree to the <a href="/privacy.html" target="_blank">Privacy Policy</a> and <a href="/terms.html" target="_blank">Terms of Service</a></span>
-                    </label>
+                        <div class="signature-field">
+                            <label class="form-label" for="digital_signature">
+                                Digital Signature <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="digital_signature" 
+                                name="digital_signature"
+                                class="form-input" 
+                                placeholder="Type your full name as digital signature"
+                                required
+                            >
+                            <p class="signature-helper">By typing your name, you are providing your digital signature</p>
+                        </div>
+
+                        <div style="margin-top: var(--space-4);">
+                            <label class="form-checkbox">
+                                <input type="checkbox" id="terms_accepted" name="terms_accepted" required>
+                                <span>I accept the <a href="/terms.html" target="_blank">Terms & Conditions</a> <span class="required">*</span></span>
+                            </label>
+                            
+                            <label class="form-checkbox">
+                                <input type="checkbox" id="ip_accepted" name="ip_accepted">
+                                <span>I accept the <a href="/contributor-agreements.html#ip" target="_blank">IP & Attribution Policy</a> (optional if covered in CLA)</span>
+                            </label>
+                        </div>
+                    </div>
 
                     <div id="error-message" class="alert alert-error hidden" style="margin-bottom: var(--space-4);"></div>
 
                     <button type="submit" class="btn btn-primary w-full" id="submit-btn">
-                        Create Account
+                        Register as Champion
                     </button>
                 </form>
 
@@ -274,28 +605,67 @@
     <script src="logout.js"></script>
     
     <script>
-        // LinkedIn register
-        document.getElementById('linkedin-btn').addEventListener('click', async () => {
-            try {
-                const result = await window.championAuth.loginWithLinkedIn();
-                if (!result.success) {
-                    showError(result.error);
-                }
-            } catch (error) {
-                showError('LinkedIn registration failed. Please try again.');
+        // Password toggle function
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+        }
+
+        // Form validation
+        function validateForm() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                showError('Passwords do not match.');
+                return false;
             }
-        });
+            
+            if (password.length < 8) {
+                showError('Password must be at least 8 characters.');
+                return false;
+            }
+            
+            const digitalSignature = document.getElementById('digital_signature').value.trim();
+            const firstName = document.getElementById('first_name').value.trim();
+            const lastName = document.getElementById('last_name').value.trim();
+            const fullName = `${firstName} ${lastName}`.toLowerCase();
+            
+            if (digitalSignature.toLowerCase() !== fullName) {
+                showError('Digital signature must match your full name.');
+                return false;
+            }
+            
+            return true;
+        }
 
         // Email registration form
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (!validateForm()) {
+                return;
+            }
+            
             const formData = {
-                full_name: document.getElementById('full_name').value,
+                full_name: `${document.getElementById('first_name').value} ${document.getElementById('last_name').value}`,
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
                 company: document.getElementById('company').value,
                 job_title: document.getElementById('job_title').value,
+                mobile_number: document.getElementById('mobile_number').value,
+                office_phone: document.getElementById('office_phone').value,
+                linkedin_url: document.getElementById('linkedin_url').value,
+                website: document.getElementById('website').value,
+                competence_level: document.getElementById('competence_level').value,
+                esg_contributions: document.getElementById('esg_contributions').value,
+                primary_sector: document.getElementById('primary_sector').value,
+                expertise_area: document.getElementById('expertise_area').value,
                 cla_accepted: document.getElementById('cla_accepted').checked,
-                nda_accepted: document.getElementById('nda_accepted').checked
+                nda_accepted: document.getElementById('nda_accepted').checked,
+                terms_accepted: document.getElementById('terms_accepted').checked,
+                ip_accepted: document.getElementById('ip_accepted').checked,
+                digital_signature: document.getElementById('digital_signature').value
             };
             
             const email = document.getElementById('email').value;
@@ -322,7 +692,7 @@
                 showError('An unexpected error occurred. Please try again.');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Account';
+                submitBtn.textContent = 'Register as Champion';
             }
         });
 
@@ -330,6 +700,7 @@
             const errorEl = document.getElementById('error-message');
             errorEl.textContent = message;
             errorEl.classList.remove('hidden');
+            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function hideError() {
@@ -339,11 +710,10 @@
         // Check if already logged in
         document.addEventListener('DOMContentLoaded', async () => {
             await new Promise(resolve => setTimeout(resolve, 500));
-            if (window.championAuth.isAuthenticated()) {
+            if (window.championAuth && window.championAuth.isAuthenticated()) {
                 window.location.href = '/champion-dashboard.html';
             }
         });
     </script>
 </body>
 </html>
-
