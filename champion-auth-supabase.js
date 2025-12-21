@@ -185,9 +185,18 @@ class ChampionAuth {
             };
         } catch (error) {
             console.error('LinkedIn login error:', error);
+            
+            // Check for specific provider not enabled error
+            if (error.message && error.message.includes('provider is not enabled')) {
+                return {
+                    success: false,
+                    error: 'LinkedIn login is not configured yet. Please use email registration instead, or contact support.'
+                };
+            }
+            
             return {
                 success: false,
-                error: error.message || 'LinkedIn login failed'
+                error: error.message || 'LinkedIn login failed. Please try email registration.'
             };
         }
     }
