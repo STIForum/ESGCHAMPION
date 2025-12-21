@@ -311,10 +311,9 @@ class SupabaseService {
             .from('indicators')
             .select('*')
             .eq('panel_id', panelId)
-            .eq('is_active', true)
             .order('order_index');
         if (error) throw error;
-        return data;
+        return data || [];
     }
 
     /**
