@@ -18,6 +18,10 @@ ALTER TABLE indicators ADD COLUMN IF NOT EXISTS difficulty TEXT DEFAULT 'moderat
 ALTER TABLE indicators ADD COLUMN IF NOT EXISTS time_estimate TEXT DEFAULT '3-5 min';
 ALTER TABLE indicators ADD COLUMN IF NOT EXISTS gri_standard TEXT;
 ALTER TABLE indicators ADD COLUMN IF NOT EXISTS impact_rating INTEGER DEFAULT 4;
+ALTER TABLE indicators ADD COLUMN IF NOT EXISTS framework_mapping TEXT;
+ALTER TABLE indicators ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'ESG Database';
+ALTER TABLE indicators ADD COLUMN IF NOT EXISTS sector_context TEXT DEFAULT 'All';
+ALTER TABLE indicators ADD COLUMN IF NOT EXISTS data_source_detail TEXT;
 
 -- =====================================================
 -- Update existing panels with appropriate impact levels
@@ -70,9 +74,34 @@ UPDATE indicators SET impact_rating = 5 WHERE importance_level = 'high';
 UPDATE indicators SET impact_rating = 4 WHERE importance_level = 'medium' AND impact_rating IS NULL;
 UPDATE indicators SET impact_rating = 3 WHERE importance_level = 'low';
 
+-- =====================================================
+-- REVIEWS TABLE - Add extended review fields
+-- =====================================================
+
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS clarity_rating INTEGER;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_necessary TEXT;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS comments TEXT;
+
+-- =====================================================
+-- Update existing indicators with source data
+-- =====================================================
+
+UPDATE indicators SET source = 'SME Hub' WHERE name ILIKE '%scope%' OR name ILIKE '%emission%';
+UPDATE indicators SET source = 'Company Records' WHERE name ILIKE '%training%' OR name ILIKE '%policy%';
+UPDATE indicators SET source = 'Third-party Verification' WHERE name ILIKE '%audit%' OR name ILIKE '%certification%';
+
+-- Set sector context
+UPDATE indicators SET sector_context = 'All' WHERE sector_context IS NULL;
+UPDATE indicators SET sector_context = 'Manufacturing' WHERE name ILIKE '%waste%' OR name ILIKE '%material%';
+UPDATE indicators SET sector_context = 'Financial Services' WHERE name ILIKE '%investment%' OR name ILIKE '%portfolio%';
+UPDATE indicators SET sector_context = 'Energy' WHERE name ILIKE '%energy%' OR name ILIKE '%renewable%';
+
+-- Set framework mapping to match gri_standard
+UPDATE indicators SET framework_mapping = gri_standard WHERE gri_standard IS NOT NULL;
+
 -- Verify changes
 SELECT 'Panel and indicator metadata added successfully!' as status;
 
 SELECT name, impact_level, estimated_time, icon FROM panels LIMIT 5;
-SELECT name, importance_level, difficulty, time_estimate, gri_standard, impact_rating FROM indicators LIMIT 5;
+SELECT name, importance_level, difficulty, time_estimate, gri_standard, source, sector_context FROM indicators LIMIT 5;
 

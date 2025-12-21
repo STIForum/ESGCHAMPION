@@ -9,6 +9,7 @@ class ChampionIndicators {
         this.indicators = [];
         this.selectedIndicator = null;
         this.rating = 0;
+        this.clarityRating = 0;
         this.selectedIndicatorIds = [];
     }
 
@@ -130,6 +131,7 @@ class ChampionIndicators {
 
         this.selectedIndicator = indicator;
         this.rating = 0;
+        this.clarityRating = 0;
 
         // Update URL
         const url = new URL(window.location);
@@ -158,43 +160,113 @@ class ChampionIndicators {
             console.error('Error loading reviews:', error);
         }
 
+        // Get framework mapping (use gri_standard or data_source)
+        const frameworkMapping = indicator.gri_standard || indicator.framework_mapping || 'GRI Standard';
+        const source = indicator.source || 'ESG Database';
+        const sectorContext = indicator.sector_context || 'All';
+
         container.innerHTML = `
-            <div class="indicator-header">
-                <h2 style="margin-bottom: var(--space-2);">${indicator.name}</h2>
-                <p class="text-secondary">${indicator.description || 'No description available'}</p>
-            </div>
-            <div class="indicator-body">
-                ${indicator.methodology ? `
-                    <div class="methodology-section">
-                        <h4 style="margin-bottom: var(--space-2);">Methodology</h4>
-                        <p class="text-secondary" style="font-size: var(--text-sm); margin: 0;">${indicator.methodology}</p>
-                    </div>
-                ` : ''}
+            <div class="indicator-detail-card">
+                <div class="indicator-detail-header">
+                    <h2 class="indicator-detail-title">${indicator.name}</h2>
+                    <p class="indicator-detail-desc">${indicator.description || 'No description available'}</p>
+                </div>
                 
-                <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
-                    ${indicator.data_source ? `
-                        <div>
-                            <div class="text-secondary" style="font-size: var(--text-xs); text-transform: uppercase; margin-bottom: var(--space-1);">Data Source</div>
-                            <div class="font-semibold">${indicator.data_source}</div>
+                <!-- Framework & Source Info -->
+                <div class="indicator-meta-section">
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <span class="meta-label">Framework Mapping</span>
+                            <span class="meta-value">${frameworkMapping}</span>
                         </div>
-                    ` : ''}
-                    ${indicator.unit ? `
-                        <div>
-                            <div class="text-secondary" style="font-size: var(--text-xs); text-transform: uppercase; margin-bottom: var(--space-1);">Unit</div>
-                            <div class="font-semibold">${indicator.unit}</div>
+                        <div class="meta-item">
+                            <span class="meta-label">Source</span>
+                            <span class="meta-value">${source}</span>
                         </div>
-                    ` : ''}
-                    ${indicator.frequency ? `
-                        <div>
-                            <div class="text-secondary" style="font-size: var(--text-xs); text-transform: uppercase; margin-bottom: var(--space-1);">Frequency</div>
-                            <div class="font-semibold">${indicator.frequency}</div>
-                        </div>
-                    ` : ''}
+                    </div>
+                    <div class="meta-item full-width">
+                        <span class="meta-label">Sector Context</span>
+                        <span class="meta-value">${sectorContext}</span>
+                    </div>
                 </div>
 
                 ${isAuthenticated ? `
+                    <!-- Assessment Questions -->
+                    <div class="assessment-section">
+                        <div class="form-group">
+                            <label class="form-label">Is this indicator necessary?</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="is_necessary" value="yes">
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="is_necessary" value="no">
+                                    <span>No</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="is_necessary" value="not_sure">
+                                    <span>Not sure</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Rate the clarity and relevance</label>
+                            <div class="clarity-rating" id="clarity-rating">
+                                ${[1, 2, 3, 4, 5].map(n => `
+                                    <button type="button" class="clarity-star" data-value="${n}" onclick="indicatorsPage.setClarityRating(${n})">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="comments-input">Comments</label>
+                            <textarea 
+                                id="comments-input" 
+                                class="form-textarea" 
+                                placeholder="Enter comments or references...."
+                                rows="4"
+                            ></textarea>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${indicator.methodology ? `
+                    <div class="methodology-section">
+                        <h4 class="section-title">Methodology</h4>
+                        <p class="methodology-text">${indicator.methodology}</p>
+                        
+                        <div class="methodology-grid">
+                            ${indicator.data_source ? `
+                                <div class="methodology-item">
+                                    <span class="methodology-label">DATA SOURCE</span>
+                                    <span class="methodology-value">${indicator.data_source}</span>
+                                </div>
+                            ` : ''}
+                            ${indicator.unit ? `
+                                <div class="methodology-item">
+                                    <span class="methodology-label">UNIT</span>
+                                    <span class="methodology-value">${indicator.unit}</span>
+                                </div>
+                            ` : ''}
+                            ${indicator.frequency ? `
+                                <div class="methodology-item">
+                                    <span class="methodology-label">FREQUENCY</span>
+                                    <span class="methodology-value">${indicator.frequency}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${isAuthenticated ? `
                     <div class="review-form">
-                        <h4 style="margin-bottom: var(--space-4);">Submit Your Review</h4>
+                        <h4 class="section-title">Submit Your Review</h4>
                         <form id="review-form" onsubmit="indicatorsPage.submitReview(event)">
                             <div class="form-group">
                                 <label class="form-label">Your Rating</label>
@@ -230,8 +302,8 @@ class ChampionIndicators {
                 `}
 
                 <!-- Existing Reviews -->
-                <div class="mt-8">
-                    <h4 style="margin-bottom: var(--space-4);">Community Reviews (${reviews.length})</h4>
+                <div class="reviews-section">
+                    <h4 class="section-title">Community Reviews (${reviews.length})</h4>
                     ${reviews.length > 0 ? `
                         <div id="reviews-list">
                             ${reviews.map(review => this.renderReview(review)).join('')}
@@ -309,6 +381,14 @@ class ChampionIndicators {
         });
     }
 
+    setClarityRating(value) {
+        this.clarityRating = value;
+        
+        document.querySelectorAll('.clarity-star').forEach((star, index) => {
+            star.classList.toggle('active', index < value);
+        });
+    }
+
     async submitReview(event) {
         event.preventDefault();
         
@@ -318,6 +398,8 @@ class ChampionIndicators {
         }
 
         const content = document.getElementById('review-content').value.trim();
+        const comments = document.getElementById('comments-input')?.value.trim() || '';
+        const isNecessary = document.querySelector('input[name="is_necessary"]:checked')?.value || null;
         
         if (!content) {
             window.showToast('Please enter your review', 'error');
@@ -333,11 +415,21 @@ class ChampionIndicators {
         btn.disabled = true;
         btn.textContent = 'Submitting...';
 
+        // Build extended review data
+        const reviewData = {
+            content: content,
+            rating: this.rating,
+            clarity_rating: this.clarityRating || null,
+            is_necessary: isNecessary,
+            comments: comments
+        };
+
         try {
             await window.championDB.submitReview(
                 this.selectedIndicator.id,
                 content,
-                this.rating
+                this.rating,
+                reviewData
             );
 
             window.showToast('Review submitted successfully!', 'success');

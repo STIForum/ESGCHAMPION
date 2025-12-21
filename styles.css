@@ -2107,6 +2107,214 @@ p {
     color: #f59e0b;
 }
 
+/* =====================================================
+   INDICATOR DETAIL PAGE STYLES
+   ===================================================== */
+
+.indicator-detail-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow);
+}
+
+.indicator-detail-header {
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.indicator-detail-title {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: var(--space-2);
+}
+
+.indicator-detail-desc {
+    color: var(--gray-600);
+    font-size: var(--text-base);
+    margin: 0;
+}
+
+/* Framework/Source Meta Section */
+.indicator-meta-section {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+}
+
+.meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    margin-bottom: var(--space-4);
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.meta-item.full-width {
+    grid-column: span 2;
+}
+
+.meta-label {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    color: var(--gray-500);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: var(--text-base);
+    color: var(--gray-900);
+    font-weight: 600;
+}
+
+/* Assessment Section */
+.assessment-section {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+}
+
+/* Radio Group */
+.radio-group {
+    display: flex;
+    gap: var(--space-6);
+    margin-top: var(--space-2);
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    color: var(--gray-700);
+}
+
+.radio-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+/* Clarity Rating Stars */
+.clarity-rating {
+    display: flex;
+    gap: var(--space-1);
+    margin-top: var(--space-2);
+}
+
+.clarity-star {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-300);
+    padding: 2px;
+    transition: color 0.15s ease;
+}
+
+.clarity-star:hover,
+.clarity-star.active {
+    color: #f59e0b;
+}
+
+/* Methodology Section */
+.methodology-section {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+}
+
+.methodology-text {
+    color: var(--gray-600);
+    font-size: var(--text-sm);
+    margin: 0 0 var(--space-4) 0;
+    line-height: 1.6;
+}
+
+.methodology-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--gray-200);
+}
+
+.methodology-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.methodology-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.methodology-value {
+    font-size: var(--text-sm);
+    color: var(--gray-900);
+    font-weight: 600;
+}
+
+/* Review Form Section */
+.review-form {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+}
+
+.section-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0 0 var(--space-4) 0;
+}
+
+/* Reviews Section */
+.reviews-section {
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--gray-100);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+    .meta-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+
+    .meta-item.full-width {
+        grid-column: span 1;
+    }
+
+    .methodology-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .radio-group {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+}
+
 /* Mobile responsiveness for modal */
 @media (max-width: 640px) {
     .modal-container {
