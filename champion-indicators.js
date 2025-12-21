@@ -166,12 +166,11 @@ class ChampionIndicators {
         const sectorContext = indicator.sector_context || 'All';
 
         container.innerHTML = `
-            <div class="indicator-detail-card">
-                <div class="indicator-detail-header">
-                    <h2 class="indicator-detail-title">${indicator.name}</h2>
-                    <p class="indicator-detail-desc">${indicator.description || 'No description available'}</p>
-                </div>
-                
+            <div class="indicator-header">
+                <h2 style="margin-bottom: var(--space-2);">${indicator.name}</h2>
+                <p class="text-secondary">${indicator.description || 'No description available'}</p>
+            </div>
+            <div class="indicator-body">
                 <!-- Framework & Source Info -->
                 <div class="indicator-meta-section">
                     <div class="meta-grid">
