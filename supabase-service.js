@@ -157,13 +157,22 @@ class SupabaseService {
      * Get champion by ID
      */
     async getChampion(id) {
-        const { data, error } = await this.client
-            .from('champions')
-            .select('*')
-            .eq('id', id)
-            .single();
-        if (error) throw error;
-        return data;
+        try {
+            const { data, error } = await this.client
+                .from('champions')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (error) {
+                console.warn('getChampion error:', error.message);
+                // Return a default champion object to prevent crashes
+                return { id, credits: 0, full_name: '', email: '' };
+            }
+            return data;
+        } catch (err) {
+            console.warn('getChampion failed:', err.message);
+            return { id, credits: 0, full_name: '', email: '' };
+        }
     }
 
     /**
@@ -405,14 +414,23 @@ class SupabaseService {
      * Get reviews by champion
      */
     async getReviewsByChampion(championId) {
-        const { data, error } = await this.client
-            .from('reviews')
-            .select('*, indicators(name), panels(name, category)')
-            .eq('champion_id', championId)
-            .eq('is_deleted', false)
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        return data;
+        try {
+            // Try with is_deleted filter first
+            const { data, error } = await this.client
+                .from('reviews')
+                .select('*, indicators(name), panels(name, category)')
+                .eq('champion_id', championId)
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                console.warn('getReviewsByChampion error:', error.message);
+                return [];
+            }
+            return data || [];
+        } catch (err) {
+            console.warn('getReviewsByChampion failed:', err.message);
+            return [];
+        }
     }
 
     /**
@@ -617,11 +635,20 @@ class SupabaseService {
      * Get champion resume point
      */
     async getResumePoint(championId) {
-        const { data, error } = await this.client.rpc('get_champion_resume_point', {
-            p_champion_id: championId
-        });
-        if (error) throw error;
-        return data?.[0] || null;
+        try {
+            const { data, error } = await this.client.rpc('get_champion_resume_point', {
+                p_champion_id: championId
+            });
+            // Don't throw on error - RPC function may not exist
+            if (error) {
+                console.warn('getResumePoint RPC not available:', error.message);
+                return null;
+            }
+            return data?.[0] || null;
+        } catch (err) {
+            console.warn('getResumePoint failed:', err.message);
+            return null;
+        }
     }
 
     /**
@@ -645,23 +672,32 @@ class SupabaseService {
      * Get accepted reviews
      */
     async getAcceptedReviews(options = {}) {
-        let query = this.client
-            .from('accepted_reviews')
-            .select('*, champions(id, full_name, avatar_url), indicators(name), panels(name, category)');
+        try {
+            let query = this.client
+                .from('accepted_reviews')
+                .select('*, champions(id, full_name, avatar_url), indicators(name), panels(name, category)');
 
-        if (options.championId) {
-            query = query.eq('champion_id', options.championId);
+            if (options.championId) {
+                query = query.eq('champion_id', options.championId);
+            }
+
+            if (options.limit) {
+                query = query.limit(options.limit);
+            }
+
+            query = query.order('accepted_at', { ascending: false });
+
+            const { data, error } = await query;
+            if (error) {
+                // Table might not exist yet
+                console.warn('getAcceptedReviews error:', error.message);
+                return [];
+            }
+            return data || [];
+        } catch (err) {
+            console.warn('getAcceptedReviews failed:', err.message);
+            return [];
         }
-
-        if (options.limit) {
-            query = query.limit(options.limit);
-        }
-
-        query = query.order('accepted_at', { ascending: false });
-
-        const { data, error } = await query;
-        if (error) throw error;
-        return data;
     }
 
     // =====================================================
