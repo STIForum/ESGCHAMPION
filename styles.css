@@ -1171,7 +1171,7 @@ p {
 .main-content {
     flex: 1;
     margin-left: 280px;
-    margin-right: max(0px, calc((100vw - 1280px) / 2));
+    margin-right: max(24px, calc((100vw - 1400px) / 2));
     padding: var(--space-8);
     background: var(--gray-50);
     min-height: calc(100vh - 70px);
