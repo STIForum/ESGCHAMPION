@@ -1131,13 +1131,14 @@ p {
 }
 
 .sidebar {
-    width: 280px;
+    width: 180px;
     background: white;
     border-right: 1px solid var(--gray-200);
-    padding: var(--space-6);
+    padding: var(--space-4);
     position: fixed;
     top: 70px;
-    left: 0;
+    /* Align sidebar left edge with header logo */
+    left: max(0px, calc((100vw - 1280px) / 2));
     bottom: 0;
     overflow-y: auto;
     z-index: var(--z-sticky);
@@ -1170,8 +1171,10 @@ p {
 
 .main-content {
     flex: 1;
-    margin-left: 280px;
-    margin-right: max(24px, calc((100vw - 1400px) / 2));
+    /* Align with header: sidebar width + header left offset */
+    margin-left: calc(max(0px, (100vw - 1280px) / 2) + 180px);
+    /* Align with header right edge (profile avatar) */
+    margin-right: max(24px, calc((100vw - 1280px) / 2));
     padding: var(--space-8);
     background: var(--gray-50);
     min-height: calc(100vh - 70px);
@@ -1488,6 +1491,8 @@ p {
     }
     
     .sidebar {
+        left: 0;
+        width: 280px;
         transform: translateX(-100%);
         transition: transform var(--transition);
     }
