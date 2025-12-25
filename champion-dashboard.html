@@ -8,7 +8,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,8 +19,8 @@
     <header class="header">
         <div class="header-inner">
             <a href="/" class="logo">
-                <img src="/assets/images/Stif logo 1.png" alt="STIF Logo" class="logo-img">
-                <span class="logo-subtitle">Sustainability Technology and Innovation Forum</span>
+                <div class="logo-icon">ESG</div>
+                <span>Champions</span>
             </a>
             <nav>
                 <ul class="nav-menu">
@@ -191,25 +191,36 @@
                         </div>
                     </div>
 
-                    <!-- Why Your Reviews Matter -->
+                    <!-- Quick Actions -->
                     <div>
                         <div class="widget">
                             <div class="widget-header">
-                                <h3 class="widget-title">Why Your Reviews Matter</h3>
+                                <h3 class="widget-title">Quick Actions</h3>
                             </div>
                             <div class="widget-body">
-                                <div class="sidebar-link mb-2" style="display: flex; align-items: flex-start; cursor: default;">
-                                    <span style="color: var(--primary-green); font-weight: bold; margin-right: 10px;">✓</span>
-                                    <span>Your insights train the STIF Intelligence Engine to deliver smarter, fairer, expert-driven recommendations.</span>
-                                </div>
-                                <div class="sidebar-link mb-2" style="display: flex; align-items: flex-start; cursor: default;">
-                                    <span style="color: var(--primary-green); font-weight: bold; margin-right: 10px;">✓</span>
-                                    <span>You shape the ESG baseline for SMEs, directing small businesses toward what truly drives impact.</span>
-                                </div>
-                                <div class="sidebar-link" style="display: flex; align-items: flex-start; cursor: default;">
-                                    <span style="color: var(--primary-green); font-weight: bold; margin-right: 10px;">✓</span>
-                                    <span>Your reviews strengthen trust in sustainability reporting and accelerate industry-wide progress.</span>
-                                </div>
+                                <a href="/champion-panels.html" class="sidebar-link mb-2" style="display: flex;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                        <path d="M2 17l10 5 10-5"></path>
+                                        <path d="M2 12l10 5 10-5"></path>
+                                    </svg>
+                                    Browse Panels
+                                </a>
+                                <a href="/ranking.html" class="sidebar-link mb-2" style="display: flex;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 20v-6"></path>
+                                        <path d="M6 20V4"></path>
+                                        <path d="M18 20V10"></path>
+                                    </svg>
+                                    View Leaderboard
+                                </a>
+                                <a href="/champion-profile.html" class="sidebar-link" style="display: flex;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                    </svg>
+                                    Account Settings
+                                </a>
                             </div>
                         </div>
 

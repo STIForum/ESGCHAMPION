@@ -311,9 +311,10 @@ class SupabaseService {
             .from('indicators')
             .select('*')
             .eq('panel_id', panelId)
+            .eq('is_active', true)
             .order('order_index');
         if (error) throw error;
-        return data || [];
+        return data;
     }
 
     /**
@@ -336,22 +337,10 @@ class SupabaseService {
         const { data, error } = await this.client
             .from('indicators')
             .select('*, panels(name, category)')
-            .order('name');
+            .eq('is_active', true)
+            .order('order_index');
         if (error) throw error;
-        return data || [];
-    }
-
-    async getIndicatorsByIds(indicatorIds) {
-        if (!indicatorIds || indicatorIds.length === 0) {
-            return [];
-        }
-        const { data, error } = await this.client
-            .from('indicators')
-            .select('*, panels(name, category)')
-            .in('id', indicatorIds)
-            .order('name');
-        if (error) throw error;
-        return data || [];
+        return data;
     }
 
     /**
@@ -420,9 +409,10 @@ class SupabaseService {
             .from('reviews')
             .select('*, indicators(name), panels(name, category)')
             .eq('champion_id', championId)
+            .eq('is_deleted', false)
             .order('created_at', { ascending: false });
         if (error) throw error;
-        return data || [];
+        return data;
     }
 
     /**

@@ -31,55 +31,34 @@ class ChampionDashboard {
 
     async loadDashboard() {
         try {
-            // Get champion profile directly
-            const championId = this.auth.getUser().id;
-            let champion = null;
-            let reviews = [];
-            
-            // Try to get champion profile
-            try {
-                champion = await window.supabaseService.getChampion(championId);
-            } catch (e) {
-                console.log('Could not load champion profile, using default:', e);
-                champion = {
-                    id: championId,
-                    full_name: this.auth.getUser().email?.split('@')[0] || 'Champion',
-                    credits: 0
-                };
-            }
-            
-            // Try to get reviews
-            try {
-                reviews = await window.supabaseService.getReviewsByChampion(championId) || [];
-            } catch (e) {
-                console.log('Could not load reviews:', e);
-                reviews = [];
-            }
+            // Get dashboard stats
+            const data = await this.db.getDashboardStats();
             
             // Update welcome message
+            const champion = data.champion;
             const firstName = champion.full_name?.split(' ')[0] || 'Champion';
             document.getElementById('welcome-title').textContent = `Welcome back, ${firstName}!`;
             
-            // Calculate stats
-            const pendingReviews = reviews.filter(r => r.status === 'pending');
-            const approvedReviews = reviews.filter(r => r.status === 'approved');
-            
             // Update stats
-            document.getElementById('stat-credits').textContent = champion.credits || 0;
-            document.getElementById('stat-approved').textContent = approvedReviews.length;
-            document.getElementById('stat-pending').textContent = pendingReviews.length;
-            document.getElementById('stif-score').textContent = champion.credits || 0;
+            document.getElementById('stat-credits').textContent = data.stats.credits;
+            document.getElementById('stat-approved').textContent = data.stats.approvedReviews;
+            document.getElementById('stat-pending').textContent = data.stats.pendingReviews;
+            document.getElementById('stif-score').textContent = data.stats.credits;
             
-            // Get rank (with fallback)
-            try {
-                const rank = await this.db.getChampionRank(championId);
-                document.getElementById('stat-rank').textContent = rank ? `#${rank}` : '#1';
-            } catch (e) {
-                document.getElementById('stat-rank').textContent = '#1';
+            // Get rank
+            const rank = await this.db.getChampionRank(champion.id);
+            document.getElementById('stat-rank').textContent = rank ? `#${rank}` : '#--';
+            
+            // Load resume point
+            if (data.resumePoint && data.resumePoint.panel_id) {
+                this.showResumeCard(data.resumePoint);
             }
             
             // Load recent reviews
-            this.renderRecentReviews(reviews.slice(0, 5));
+            this.renderRecentReviews(data.recentReviews);
+            
+            // Load STIF score breakdown
+            await this.loadScoreBreakdown();
             
             // Show dashboard
             document.getElementById('loading-state').classList.add('hidden');

@@ -110,26 +110,21 @@ class ChampionAuth {
             const data = await this.service.signUp(email, password, metadata);
             
             if (data.user) {
-                // Champion profile is automatically created by database trigger
-                // Try to update with additional metadata, but don't fail if it errors
-                try {
-                    const profileData = {
-                        id: data.user.id,
-                        email: email,
-                        full_name: metadata.full_name || '',
-                        company: metadata.company || '',
-                        job_title: metadata.job_title || '',
-                        linkedin_url: metadata.linkedin_url || '',
-                        cla_accepted: metadata.cla_accepted || false,
-                        nda_accepted: metadata.nda_accepted || false,
-                        cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
-                        nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null
-                    };
-                    await this.service.upsertChampion(profileData);
-                } catch (profileError) {
-                    // Profile creation handled by trigger, ignore RLS errors
-                    console.log('Profile update skipped (handled by trigger):', profileError.message);
-                }
+                // Create champion profile in database
+                const profileData = {
+                    id: data.user.id,
+                    email: email,
+                    full_name: metadata.full_name || '',
+                    company: metadata.company || '',
+                    job_title: metadata.job_title || '',
+                    linkedin_url: metadata.linkedin_url || '',
+                    cla_accepted: metadata.cla_accepted || false,
+                    nda_accepted: metadata.nda_accepted || false,
+                    cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
+                    nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null
+                };
+
+                await this.service.upsertChampion(profileData);
             }
 
             return {
@@ -185,18 +180,9 @@ class ChampionAuth {
             };
         } catch (error) {
             console.error('LinkedIn login error:', error);
-            
-            // Check for specific provider not enabled error
-            if (error.message && error.message.includes('provider is not enabled')) {
-                return {
-                    success: false,
-                    error: 'LinkedIn login is not configured yet. Please use email registration instead, or contact support.'
-                };
-            }
-            
             return {
                 success: false,
-                error: error.message || 'LinkedIn login failed. Please try email registration.'
+                error: error.message || 'LinkedIn login failed'
             };
         }
     }

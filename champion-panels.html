@@ -8,7 +8,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,8 +19,8 @@
     <header class="header">
         <div class="header-inner">
             <a href="/" class="logo">
-                <img src="/assets/images/Stif logo 1.png" alt="STIF Logo" class="logo-img">
-                <span class="logo-subtitle">Sustainability Technology and Innovation Forum</span>
+                <div class="logo-icon">ESG</div>
+                <span>Champions</span>
             </a>
             <nav>
                 <ul class="nav-menu">
@@ -110,56 +110,11 @@
         </div>
     </main>
 
-    <!-- Indicator Selection Modal -->
-    <div id="indicator-modal" class="modal-overlay hidden">
-        <div class="modal-container">
-            <div class="modal-header">
-                <div>
-                    <h2 class="modal-title">Select Indicators to Review</h2>
-                    <p class="modal-subtitle" id="modal-panel-name"></p>
-                </div>
-                <button class="modal-close" id="modal-close-btn" aria-label="Close modal">&times;</button>
-            </div>
-            
-            <div class="modal-search">
-                <input 
-                    type="text" 
-                    id="indicator-search" 
-                    class="form-input" 
-                    placeholder="Search indicators..."
-                >
-            </div>
-            
-            <div class="modal-actions-top">
-                <label class="form-checkbox select-all-checkbox">
-                    <input type="checkbox" id="select-all-indicators">
-                    <span>Select All</span>
-                </label>
-                <span class="indicator-count" id="selected-count">0 of 0 selected</span>
-            </div>
-            
-            <div class="modal-body" id="indicators-list">
-                <!-- Indicators will be loaded here -->
-                <div class="modal-loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading indicators...</p>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button class="btn btn-ghost" id="modal-cancel-btn">Cancel</button>
-                <button class="btn btn-primary" id="modal-submit-btn" disabled>
-                    Review Selected Indicators
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                <p>&copy; 2025 STIF. All rights reserved.</p>
+                <p>&copy; 2024 STIF. All rights reserved.</p>
             </div>
         </div>
     </footer>
