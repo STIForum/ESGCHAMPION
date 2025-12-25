@@ -1128,19 +1128,22 @@ p {
     display: flex;
     min-height: 100vh;
     padding-top: 70px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
 }
 
 .sidebar {
-    width: 280px;
+    width: 200px;
+    flex-shrink: 0;
     background: white;
     border-right: 1px solid var(--gray-200);
-    padding: var(--space-6);
-    position: fixed;
+    padding: var(--space-4);
+    position: sticky;
     top: 70px;
-    left: 0;
-    bottom: 0;
+    height: calc(100vh - 70px);
     overflow-y: auto;
-    z-index: var(--z-sticky);
 }
 
 .sidebar-nav {
@@ -1170,7 +1173,6 @@ p {
 
 .main-content {
     flex: 1;
-    margin-left: 280px;
     padding: var(--space-8);
     background: var(--gray-50);
     min-height: calc(100vh - 70px);
@@ -1178,10 +1180,7 @@ p {
 }
 
 .dashboard-container {
-    max-width: 1200px;
     width: 100%;
-    margin: 0 auto;
-    padding: 0 var(--space-4);
     box-sizing: border-box;
 }
 
@@ -1496,8 +1495,6 @@ p {
     }
     
     .main-content {
-        margin-left: 0;
-        max-width: 100%;
         width: 100%;
     }
 
