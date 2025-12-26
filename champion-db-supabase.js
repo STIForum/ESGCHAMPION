@@ -464,6 +464,94 @@ class ChampionDB {
             console.error('Error logging activity:', error);
         }
     }
+
+    // =====================================================
+    // PANEL REVIEW SUBMISSIONS
+    // =====================================================
+
+    /**
+     * Create a panel review submission with all indicator reviews
+     */
+    async createPanelReviewSubmission(panelId, indicatorReviews) {
+        const auth = window.championAuth;
+        if (!auth.isAuthenticated()) {
+            throw new Error('User must be authenticated');
+        }
+
+        try {
+            const userId = auth.getUser().id;
+            
+            // Create the submission
+            const submission = await this.service.createPanelReviewSubmission(panelId, userId);
+            
+            // Add indicator reviews
+            const reviews = await this.service.addIndicatorReviewsToSubmission(
+                submission.id,
+                indicatorReviews
+            );
+
+            return {
+                submission,
+                indicatorReviews: reviews
+            };
+        } catch (error) {
+            console.error('Error creating panel review submission:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get all panel review submissions for admin
+     */
+    async getAdminPanelReviewSubmissions(status = null) {
+        try {
+            return await this.service.getAdminPanelReviewSubmissions(status);
+        } catch (error) {
+            console.error('Error getting admin panel submissions:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get submission with indicator reviews
+     */
+    async getSubmissionWithIndicatorReviews(submissionId) {
+        try {
+            return await this.service.getSubmissionWithIndicatorReviews(submissionId);
+        } catch (error) {
+            console.error('Error getting submission with reviews:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update submission status
+     */
+    async updateSubmissionStatus(submissionId, status) {
+        try {
+            return await this.service.updateSubmissionStatus(submissionId, status);
+        } catch (error) {
+            console.error('Error updating submission status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get user's panel review submissions
+     */
+    async getUserPanelReviewSubmissions() {
+        const auth = window.championAuth;
+        if (!auth.isAuthenticated()) {
+            return [];
+        }
+
+        try {
+            return await this.service.getUserPanelReviewSubmissions(auth.getUser().id);
+        } catch (error) {
+            console.error('Error getting user submissions:', error);
+            return [];
+        }
+    }
 }
 
 // Create and export singleton instance

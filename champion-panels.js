@@ -133,31 +133,8 @@ class ChampionPanels {
             return;
         }
 
-        try {
-            // Fetch all indicators for this panel
-            const panelData = await window.championDB.getPanelWithIndicators(panelId);
-            const indicators = panelData.indicators || [];
-            
-            if (indicators.length === 0) {
-                window.showToast?.('No indicators available for this panel', 'error');
-                return;
-            }
-
-            // Store panel info and ALL indicator IDs
-            sessionStorage.setItem('selectedIndicators', JSON.stringify({
-                panelId: panelId,
-                panelName: panelName,
-                indicatorIds: indicators.map(i => i.id)
-            }));
-
-            // Navigate directly to review page with all indicators
-            const indicatorIds = indicators.map(i => i.id).join(',');
-            window.location.href = `/champion-indicators.html?panel=${panelId}&selected=${indicatorIds}`;
-            
-        } catch (error) {
-            console.error('Error starting panel review:', error);
-            window.showToast?.('Failed to load panel. Please try again.', 'error');
-        }
+        // Open the indicator selection modal
+        await this.openIndicatorModal(panelId, panelName);
     }
 
     getPanelIcon(name, category) {
@@ -250,12 +227,12 @@ class ChampionPanels {
         
         // Update modal title with panel name
         if (modalTitle) {
-            modalTitle.textContent = `Review ${panelName}`;
+            modalTitle.textContent = `Select Indicators for ${panelName}`;
         }
         
         // Reset UI
         reviewBtn.disabled = true;
-        reviewBtn.textContent = 'Start Review';
+        reviewBtn.textContent = 'Proceed to Review';
         document.getElementById('indicator-search').value = '';
         indicatorsList.innerHTML = '<div class="text-center p-6"><div class="loading-spinner"></div></div>';
         
@@ -265,9 +242,8 @@ class ChampionPanels {
         document.body.style.overflow = 'hidden';
         
         try {
-            // Fetch indicators for THIS PANEL ONLY
-            const panelData = await window.championDB.getPanelWithIndicators(panelId);
-            this.allIndicators = panelData.indicators || [];
+            // Fetch ALL indicators system-wide (not panel-specific)
+            this.allIndicators = await window.championDB.getAllIndicators();
             this.renderIndicatorsList(this.allIndicators);
         } catch (error) {
             console.error('Error loading indicators:', error);
@@ -413,8 +389,8 @@ class ChampionPanels {
             indicatorIds: Array.from(this.selectedIndicators)
         }));
 
-        // Navigate with URL params
-        window.location.href = `/champion-indicators.html?selected=${selectedIds}`;
+        // Navigate with URL params (include panel ID for shareability)
+        window.location.href = `/champion-indicators.html?panel=${this.currentPanelId}&selected=${selectedIds}`;
     }
 
     filterPanels(filter) {

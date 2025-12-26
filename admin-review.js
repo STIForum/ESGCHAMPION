@@ -37,9 +37,9 @@ class AdminReviewPage {
 
     async loadPanelReviewQueue() {
         try {
-            // Get panel submissions from localStorage (in production, this would be from database)
-            const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
-            this.panelReviews = submissions.filter(s => s.status === 'pending');
+            // Fetch panel review submissions from database
+            const submissions = await window.championDB.getAdminPanelReviewSubmissions('pending');
+            this.panelReviews = submissions || [];
             
             const countEl = document.getElementById('panel-pending-count');
             if (countEl) {
@@ -49,6 +49,14 @@ class AdminReviewPage {
             
         } catch (error) {
             console.error('Error loading panel review queue:', error);
+            // Fallback to localStorage for backwards compatibility
+            try {
+                const localSubmissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
+                this.panelReviews = localSubmissions.filter(s => s.status === 'pending');
+                this.renderPanelReviewQueue(this.panelReviews);
+            } catch (e) {
+                console.error('Fallback also failed:', e);
+            }
         }
     }
 
@@ -69,100 +77,159 @@ class AdminReviewPage {
             return;
         }
 
-        container.innerHTML = reviews.map(review => `
+        container.innerHTML = reviews.map(review => {
+            // Handle both database schema and legacy localStorage format
+            const panelName = review.panels?.name || review.panelName || 'Unknown Panel';
+            const panelCategory = review.panels?.category || 'environmental';
+            const championName = review.champions?.full_name || review.championName || 'Anonymous';
+            const submittedAt = review.created_at || review.submittedAt;
+            const indicatorCount = review.indicatorCount || '—';
+            
+            return `
             <div class="panel-review-card" data-id="${review.id}" onclick="adminPage.openPanelReviewModal('${review.id}')">
                 <div class="flex-between mb-4">
                     <div>
-                        <h3 style="margin-bottom: var(--space-1);">${review.panelName || 'Unknown Panel'}</h3>
+                        <span class="badge badge-${panelCategory}" style="margin-bottom: var(--space-2);">${panelCategory}</span>
+                        <h3 style="margin-bottom: var(--space-1);">${panelName}</h3>
                         <div class="text-secondary" style="font-size: var(--text-sm);">
-                            ${review.indicatorCount || 0} indicators reviewed
+                            ${indicatorCount} indicators reviewed
                         </div>
                     </div>
                     <div class="text-right">
                         <span class="badge badge-warning">Pending Review</span>
                         <div class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">
-                            ${this.formatDate(review.submittedAt)}
+                            ${this.formatDate(submittedAt)}
                         </div>
                     </div>
                 </div>
                 
                 <div class="flex-between">
                     <div class="text-secondary" style="font-size: var(--text-sm);">
-                        Submitted by: <strong>${review.championName || 'Anonymous'}</strong>
+                        Submitted by: <strong>${championName}</strong>
                     </div>
                     <button class="btn btn-primary btn-sm">View Details</button>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     async openPanelReviewModal(submissionId) {
-        const submission = this.panelReviews.find(r => r.id === submissionId);
-        if (!submission) return;
-
-        this.selectedPanelReview = submission;
-
         const backdrop = document.getElementById('panel-review-modal-backdrop');
         const modal = document.getElementById('panel-review-modal');
         const title = document.getElementById('panel-review-modal-title');
         const body = document.getElementById('panel-review-modal-body');
         const footer = document.getElementById('panel-review-modal-footer');
 
-        title.textContent = `Review: ${submission.panelName}`;
-
-        // Fetch indicator details
-        let indicatorDetails = [];
-        try {
-            indicatorDetails = await window.championDB.getIndicatorsByIds(submission.indicatorIds);
-        } catch (error) {
-            console.error('Error fetching indicators:', error);
-        }
-
-        body.innerHTML = `
-            <div style="margin-bottom: var(--space-4);">
-                <div class="flex-between mb-3">
-                    <span class="text-secondary">Panel:</span>
-                    <strong>${submission.panelName}</strong>
-                </div>
-                <div class="flex-between mb-3">
-                    <span class="text-secondary">Submitted by:</span>
-                    <strong>${submission.championName || 'Anonymous'}</strong>
-                </div>
-                <div class="flex-between mb-3">
-                    <span class="text-secondary">Submitted at:</span>
-                    <strong>${this.formatDate(submission.submittedAt)}</strong>
-                </div>
-                <div class="flex-between">
-                    <span class="text-secondary">Indicators reviewed:</span>
-                    <strong>${submission.indicatorCount}</strong>
-                </div>
-            </div>
-            
-            <h4 style="margin-bottom: var(--space-3);">Reviewed Indicators</h4>
-            <div class="indicators-reviewed-list">
-                ${indicatorDetails.length > 0 ? indicatorDetails.map((ind, idx) => `
-                    <div class="indicator-review-item">
-                        <div class="flex-between mb-2">
-                            <span class="badge badge-primary">#${idx + 1}</span>
-                            ${ind.panels ? `<span class="badge badge-${ind.panels.category}">${ind.panels.category}</span>` : ''}
-                        </div>
-                        <h5 style="margin-bottom: var(--space-1);">${ind.name}</h5>
-                        <p class="text-secondary" style="font-size: var(--text-sm); margin: 0;">${ind.description || 'No description'}</p>
-                    </div>
-                `).join('') : `
-                    <p class="text-secondary">Unable to load indicator details.</p>
-                `}
-            </div>
-        `;
-
-        footer.innerHTML = `
-            <button class="btn btn-ghost" onclick="adminPage.closePanelReviewModal()">Cancel</button>
-            <button class="btn btn-error" onclick="adminPage.rejectPanelReview('${submissionId}')">Reject</button>
-            <button class="btn btn-success" onclick="adminPage.approvePanelReview('${submissionId}')">Approve</button>
-        `;
-
+        // Show loading state
+        body.innerHTML = '<div class="flex-center p-8"><div class="loading-spinner"></div></div>';
         backdrop.classList.add('active');
         modal.classList.add('active');
+
+        try {
+            // Try to fetch from database first
+            let submission;
+            try {
+                submission = await window.championDB.getSubmissionWithIndicatorReviews(submissionId);
+            } catch (dbError) {
+                console.warn('Database fetch failed, trying localStorage:', dbError);
+                // Fallback to localStorage
+                submission = this.panelReviews.find(r => r.id === submissionId);
+            }
+
+            if (!submission) {
+                body.innerHTML = '<p class="text-error">Submission not found.</p>';
+                return;
+            }
+
+            this.selectedPanelReview = submission;
+
+            // Handle both database and localStorage formats
+            const panelName = submission.panels?.name || submission.panelName || 'Unknown Panel';
+            const panelCategory = submission.panels?.category || 'environmental';
+            const championName = submission.champions?.full_name || submission.championName || 'Anonymous';
+            const championEmail = submission.champions?.email || '';
+            const submittedAt = submission.created_at || submission.submittedAt;
+            const indicatorReviews = submission.indicatorReviews || [];
+
+            title.textContent = `Review: ${panelName}`;
+
+            body.innerHTML = `
+                <div style="margin-bottom: var(--space-4); background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4);">
+                    <div class="flex-between mb-3">
+                        <span class="text-secondary">Panel:</span>
+                        <span><span class="badge badge-${panelCategory}">${panelCategory}</span> <strong>${panelName}</strong></span>
+                    </div>
+                    <div class="flex-between mb-3">
+                        <span class="text-secondary">Submitted by:</span>
+                        <div class="text-right">
+                            <strong>${championName}</strong>
+                            ${championEmail ? `<div class="text-muted" style="font-size: var(--text-sm);">${championEmail}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex-between mb-3">
+                        <span class="text-secondary">Submitted at:</span>
+                        <strong>${this.formatDate(submittedAt)}</strong>
+                    </div>
+                    <div class="flex-between">
+                        <span class="text-secondary">Indicators reviewed:</span>
+                        <strong>${indicatorReviews.length}</strong>
+                    </div>
+                </div>
+                
+                <h4 style="margin-bottom: var(--space-3);">Indicator Reviews</h4>
+                <div class="indicators-reviewed-list">
+                    ${indicatorReviews.length > 0 ? indicatorReviews.map((review, idx) => {
+                        const indicator = review.indicators || {};
+                        return `
+                        <div class="indicator-review-item">
+                            <div class="flex-between mb-2">
+                                <span class="badge badge-primary">#${idx + 1}</span>
+                                <div>
+                                    ${this.renderStars(review.clarity_rating || review.clarityRating || 0)}
+                                </div>
+                            </div>
+                            <h5 style="margin-bottom: var(--space-1);">${indicator.name || 'Unknown Indicator'}</h5>
+                            <p class="text-secondary" style="font-size: var(--text-sm); margin-bottom: var(--space-3);">${indicator.description || ''}</p>
+                            
+                            <div style="margin-bottom: var(--space-2);">
+                                <span class="text-secondary" style="font-size: var(--text-sm);">Is necessary:</span>
+                                <span class="badge badge-${review.is_necessary === 'yes' ? 'success' : review.is_necessary === 'no' ? 'error' : 'secondary'}" style="margin-left: var(--space-2);">
+                                    ${review.is_necessary || 'Not specified'}
+                                </span>
+                            </div>
+                            
+                            <div style="background: white; border-radius: var(--radius-md); padding: var(--space-3); border: 1px solid var(--gray-200);">
+                                <div class="text-secondary" style="font-size: var(--text-xs); margin-bottom: var(--space-1);">Analysis/Comment:</div>
+                                <p style="margin: 0; font-size: var(--text-sm);">${review.analysis || 'No comment provided'}</p>
+                            </div>
+                        </div>
+                    `}).join('') : `
+                        <p class="text-secondary">No indicator reviews found.</p>
+                    `}
+                </div>
+            `;
+
+            footer.innerHTML = `
+                <button class="btn btn-ghost" onclick="adminPage.closePanelReviewModal()">Cancel</button>
+                <button class="btn btn-error" onclick="adminPage.rejectPanelReview('${submissionId}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Reject
+                </button>
+                <button class="btn btn-success" onclick="adminPage.approvePanelReview('${submissionId}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Approve Panel Review
+                </button>
+            `;
+
+        } catch (error) {
+            console.error('Error opening panel review modal:', error);
+            body.innerHTML = '<p class="text-error">Failed to load submission details.</p>';
+        }
     }
 
     closePanelReviewModal() {
@@ -174,20 +241,26 @@ class AdminReviewPage {
     }
 
     async approvePanelReview(submissionId) {
+        const approveBtn = document.querySelector('.modal-footer .btn-success');
+        if (approveBtn) {
+            approveBtn.disabled = true;
+            approveBtn.innerHTML = '<span class="loading-spinner-sm"></span> Approving...';
+        }
+
         try {
-            // Update localStorage
+            // Update in database
+            await window.championDB.updateSubmissionStatus(submissionId, 'approved');
+
+            // Also update localStorage for backwards compatibility
             const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
             const idx = submissions.findIndex(s => s.id === submissionId);
             if (idx !== -1) {
                 submissions[idx].status = 'approved';
                 localStorage.setItem('panelSubmissions', JSON.stringify(submissions));
-            }
-
-            // Update panelReviews in sessionStorage
-            const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
-            const submission = submissions[idx];
-            if (submission) {
-                panelReviews[submission.panelId] = 'approved';
+                
+                // Update panelReviews in sessionStorage
+                const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+                panelReviews[submissions[idx].panelId] = 'approved';
                 sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
             }
 
@@ -198,24 +271,39 @@ class AdminReviewPage {
         } catch (error) {
             console.error('Error approving panel review:', error);
             window.showToast?.('Failed to approve. Please try again.', 'error');
+            if (approveBtn) {
+                approveBtn.disabled = false;
+                approveBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Approve Panel Review
+                `;
+            }
         }
     }
 
     async rejectPanelReview(submissionId) {
+        const rejectBtn = document.querySelector('.modal-footer .btn-error');
+        if (rejectBtn) {
+            rejectBtn.disabled = true;
+            rejectBtn.innerHTML = '<span class="loading-spinner-sm"></span> Rejecting...';
+        }
+
         try {
-            // Update localStorage
+            // Update in database
+            await window.championDB.updateSubmissionStatus(submissionId, 'rejected');
+
+            // Also update localStorage for backwards compatibility
             const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
             const idx = submissions.findIndex(s => s.id === submissionId);
             if (idx !== -1) {
                 submissions[idx].status = 'rejected';
                 localStorage.setItem('panelSubmissions', JSON.stringify(submissions));
-            }
-
-            // Remove from panelReviews in sessionStorage
-            const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
-            const submission = submissions[idx];
-            if (submission) {
-                delete panelReviews[submission.panelId];
+                
+                // Remove from panelReviews in sessionStorage
+                const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+                delete panelReviews[submissions[idx].panelId];
                 sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
             }
 
@@ -226,6 +314,16 @@ class AdminReviewPage {
         } catch (error) {
             console.error('Error rejecting panel review:', error);
             window.showToast?.('Failed to reject. Please try again.', 'error');
+            if (rejectBtn) {
+                rejectBtn.disabled = false;
+                rejectBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Reject
+                `;
+            }
         }
     }
 

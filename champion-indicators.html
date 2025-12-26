@@ -374,9 +374,26 @@
                 <div class="indicators-layout flex" style="gap: var(--space-6);">
                     <!-- Indicators Sidebar -->
                     <div class="indicators-sidebar" style="width: 320px; flex-shrink: 0;">
-                        <h3 class="mb-4">Indicators</h3>
+                        <div class="flex-between mb-4">
+                            <h3>Indicators</h3>
+                            <span id="progress-counter" class="text-sm text-secondary">0/0 completed</span>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class="progress-bar-container mb-4" style="height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden;">
+                            <div id="progress-bar" class="progress-bar-fill" style="height: 100%; background: var(--primary-500); width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
                         <div id="indicators-list">
                             <!-- Populated by JS -->
+                        </div>
+                        
+                        <!-- Submit Panel Review Button -->
+                        <div class="mt-6 pt-4" style="border-top: 1px solid var(--gray-200);">
+                            <button id="submit-panel-review-btn" class="btn btn-primary" style="width: 100%;" disabled onclick="indicatorsPage.submitPanelReview()">
+                                Submit Panel Review
+                            </button>
+                            <p id="submit-helper-text" class="text-sm text-secondary text-center mt-2">
+                                Complete all indicators to submit
+                            </p>
                         </div>
                     </div>
 
@@ -389,9 +406,32 @@
                                     <line x1="12" y1="16" x2="12" y2="12"></line>
                                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                                 </svg>
-                                <p class="text-secondary">Select an indicator to view details and submit a review</p>
+                                <p class="text-secondary">Select an indicator to view details and fill in your review</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Panel Review Success State (hidden by default) -->
+                <div id="panel-review-success" class="hidden panel-review-success">
+                    <div class="success-icon">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <h2 class="success-title">Panel Review Submitted!</h2>
+                    <p class="success-text">
+                        Thank you for your contribution. Your review for <strong id="success-panel-name"></strong> has been submitted and is now pending admin approval.
+                    </p>
+                    <div class="success-badge">
+                        <span class="badge badge-warning" style="font-size: var(--text-base); padding: var(--space-2) var(--space-4);">
+                            ⏳ Awaiting Approval
+                        </span>
+                    </div>
+                    <div class="flex-center gap-4 mt-6">
+                        <a href="/champion-panels.html" class="btn btn-primary">Review Another Panel</a>
+                        <a href="/champion-dashboard.html" class="btn btn-ghost">Go to Dashboard</a>
                     </div>
                 </div>
             </div>
@@ -402,7 +442,7 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                <p>&copy; 2024 STIF. All rights reserved.</p>
+                <p>&copy; 2025 STIF. All rights reserved.</p>
             </div>
         </div>
     </footer>

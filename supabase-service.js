@@ -809,6 +809,117 @@ class SupabaseService {
         if (error) throw error;
         return data;
     }
+
+    // =====================================================
+    // PANEL REVIEW SUBMISSIONS
+    // =====================================================
+
+    /**
+     * Create a panel review submission
+     */
+    async createPanelReviewSubmission(panelId, reviewerUserId) {
+        const { data, error } = await this.client
+            .from('panel_review_submissions')
+            .insert({
+                panel_id: panelId,
+                reviewer_user_id: reviewerUserId,
+                status: 'pending'
+            })
+            .select('*, panels(name, category)')
+            .single();
+        if (error) throw error;
+        return data;
+    }
+
+    /**
+     * Add indicator reviews to a submission
+     */
+    async addIndicatorReviewsToSubmission(submissionId, indicatorReviews) {
+        const reviewsWithSubmissionId = indicatorReviews.map(review => ({
+            submission_id: submissionId,
+            indicator_id: review.indicatorId,
+            is_necessary: review.isNecessary,
+            clarity_rating: review.clarityRating,
+            analysis: review.analysis
+        }));
+
+        const { data, error } = await this.client
+            .from('panel_review_indicator_reviews')
+            .insert(reviewsWithSubmissionId)
+            .select('*, indicators(name, description)');
+        if (error) throw error;
+        return data;
+    }
+
+    /**
+     * Get all panel review submissions (for admin)
+     */
+    async getAdminPanelReviewSubmissions(status = null) {
+        let query = this.client
+            .from('panel_review_submissions')
+            .select('*, panels(name, category), champions:reviewer_user_id(id, full_name, email)')
+            .order('created_at', { ascending: false });
+
+        if (status) {
+            query = query.eq('status', status);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data || [];
+    }
+
+    /**
+     * Get a submission with its indicator reviews
+     */
+    async getSubmissionWithIndicatorReviews(submissionId) {
+        // Get submission
+        const { data: submission, error: subError } = await this.client
+            .from('panel_review_submissions')
+            .select('*, panels(name, category), champions:reviewer_user_id(id, full_name, email)')
+            .eq('id', submissionId)
+            .single();
+        if (subError) throw subError;
+
+        // Get indicator reviews
+        const { data: indicatorReviews, error: revError } = await this.client
+            .from('panel_review_indicator_reviews')
+            .select('*, indicators(id, name, description, panels(name, category))')
+            .eq('submission_id', submissionId);
+        if (revError) throw revError;
+
+        return {
+            ...submission,
+            indicatorReviews: indicatorReviews || []
+        };
+    }
+
+    /**
+     * Update submission status (admin only)
+     */
+    async updateSubmissionStatus(submissionId, status) {
+        const { data, error } = await this.client
+            .from('panel_review_submissions')
+            .update({ status })
+            .eq('id', submissionId)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    }
+
+    /**
+     * Get user's panel review submissions
+     */
+    async getUserPanelReviewSubmissions(userId) {
+        const { data, error } = await this.client
+            .from('panel_review_submissions')
+            .select('*, panels(name, category)')
+            .eq('reviewer_user_id', userId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    }
 }
 
 // Create and export singleton instance

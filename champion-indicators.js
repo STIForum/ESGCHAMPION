@@ -129,7 +129,7 @@ class ChampionIndicators {
         container.innerHTML = this.indicators.map((indicator, index) => {
             const hasReview = this.reviewsData[indicator.id] && this.reviewsData[indicator.id].completed;
             const statusBadge = hasReview 
-                ? '<span class="badge badge-success" style="font-size: 10px;">✓ Reviewed</span>'
+                ? '<span class="badge badge-success" style="font-size: 10px;">✓ Completed</span>'
                 : '<span class="badge badge-warning" style="font-size: 10px;">Pending</span>';
             
             return `
@@ -145,42 +145,52 @@ class ChampionIndicators {
             </div>
         `}).join('');
         
-        // Check if all reviews are complete and show submit all button
-        this.updateSubmitAllButton();
+        // Update the progress counter and submit button
+        this.updateProgress();
     }
 
-    updateSubmitAllButton() {
+    updateProgress() {
         const completedCount = Object.values(this.reviewsData).filter(r => r.completed).length;
         const totalCount = this.indicators.length;
+        const allCompleted = completedCount === totalCount && totalCount > 0;
         
-        let submitAllContainer = document.getElementById('submit-all-container');
+        // Update progress counter
+        const progressCounter = document.getElementById('progress-counter');
+        if (progressCounter) {
+            progressCounter.textContent = `${completedCount}/${totalCount} completed`;
+        }
         
-        if (completedCount > 0) {
-            if (!submitAllContainer) {
-                // Create the submit all button container
-                const indicatorsList = document.getElementById('indicators-list');
-                submitAllContainer = document.createElement('div');
-                submitAllContainer.id = 'submit-all-container';
-                submitAllContainer.className = 'submit-all-container';
-                indicatorsList.parentNode.insertBefore(submitAllContainer, indicatorsList.nextSibling);
+        // Update progress bar
+        const progressBar = document.getElementById('progress-bar');
+        if (progressBar) {
+            const percentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+            progressBar.style.width = `${percentage}%`;
+            progressBar.style.background = allCompleted ? 'var(--success)' : 'var(--primary-500)';
+        }
+        
+        // Update submit button
+        const submitBtn = document.getElementById('submit-panel-review-btn');
+        const helperText = document.getElementById('submit-helper-text');
+        
+        if (submitBtn) {
+            submitBtn.disabled = !allCompleted;
+            if (allCompleted) {
+                submitBtn.textContent = 'Submit Panel Review';
+                submitBtn.classList.add('pulse-animation');
+            } else {
+                submitBtn.textContent = `Submit Panel Review (${completedCount}/${totalCount})`;
+                submitBtn.classList.remove('pulse-animation');
             }
-            
-            submitAllContainer.innerHTML = `
-                <div style="background: var(--primary-50); border-radius: var(--radius-lg); padding: var(--space-4); margin-top: var(--space-4);">
-                    <div class="flex-between mb-3">
-                        <span style="font-weight: 500; color: var(--gray-700);">Reviews Progress</span>
-                        <span class="badge ${completedCount === totalCount ? 'badge-success' : 'badge-primary'}">${completedCount} of ${totalCount} complete</span>
-                    </div>
-                    <div style="background: var(--gray-200); border-radius: 9999px; height: 8px; overflow: hidden; margin-bottom: var(--space-3);">
-                        <div style="background: var(--primary-500); height: 100%; width: ${(completedCount / totalCount) * 100}%; transition: width 0.3s;"></div>
-                    </div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="indicatorsPage.submitAllReviews()" ${completedCount === 0 ? 'disabled' : ''}>
-                        Submit ${completedCount} Review${completedCount !== 1 ? 's' : ''} for ${this.currentPanelName || 'this Panel'}
-                    </button>
-                </div>
-            `;
-        } else if (submitAllContainer) {
-            submitAllContainer.remove();
+        }
+        
+        if (helperText) {
+            if (allCompleted) {
+                helperText.textContent = 'All indicators completed! Ready to submit.';
+                helperText.style.color = 'var(--success-500)';
+            } else {
+                helperText.textContent = `Complete ${totalCount - completedCount} more indicator${totalCount - completedCount !== 1 ? 's' : ''} to submit`;
+                helperText.style.color = '';
+            }
         }
     }
 
@@ -291,7 +301,7 @@ class ChampionIndicators {
                     </div>
 
                     <div class="review-form">
-                        <form id="review-form" onsubmit="indicatorsPage.submitReview(event)">
+                        <form id="review-form" onsubmit="indicatorsPage.saveIndicatorReview(event)">
                             <div class="form-group">
                                 <label class="form-label" for="review-content">Comment</label>
                                 <textarea 
@@ -302,8 +312,11 @@ class ChampionIndicators {
                                     required
                                 ></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary" id="submit-review-btn">
-                                Submit Review
+                            <button type="submit" class="btn btn-primary" id="save-review-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-2); vertical-align: middle;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                Save & Continue
                             </button>
                         </form>
                     </div>
@@ -440,7 +453,7 @@ class ChampionIndicators {
         });
     }
 
-    async submitReview(event) {
+    async saveIndicatorReview(event) {
         event.preventDefault();
         
         if (!window.championAuth.isAuthenticated()) {
@@ -462,7 +475,6 @@ class ChampionIndicators {
 
         // Get additional form data
         const isNecessary = document.querySelector('input[name="is_necessary"]:checked')?.value || null;
-        const comments = document.getElementById('indicator-comments')?.value?.trim() || '';
 
         // Save review data locally (not submit yet)
         this.reviewsData[this.selectedIndicator.id] = {
@@ -470,12 +482,13 @@ class ChampionIndicators {
             indicatorName: this.selectedIndicator.name,
             content: content,
             rating: this.clarityRating,
+            clarityRating: this.clarityRating,
             isNecessary: isNecessary,
-            comments: comments,
+            analysis: content,
             completed: true
         };
 
-        window.showToast('Review saved! Complete other indicators or submit all reviews.', 'success');
+        window.showToast('Review saved! Continue to the next indicator.', 'success');
         
         // Update the indicators list to show this one as reviewed
         this.renderIndicatorsList();
@@ -490,10 +503,16 @@ class ChampionIndicators {
         } else {
             // Show the reviewed state for current indicator
             await this.renderIndicatorDetail(this.selectedIndicator);
+            
+            // Check if all are complete
+            const allComplete = Object.values(this.reviewsData).filter(r => r.completed).length === this.indicators.length;
+            if (allComplete) {
+                window.showToast('All indicators reviewed! Click "Submit Panel Review" to submit.', 'success');
+            }
         }
     }
 
-    async submitAllReviews() {
+    async submitPanelReview() {
         const reviewsToSubmit = Object.values(this.reviewsData).filter(r => r.completed);
         
         if (reviewsToSubmit.length === 0) {
@@ -501,21 +520,33 @@ class ChampionIndicators {
             return;
         }
 
-        const btn = document.querySelector('#submit-all-container button');
+        if (reviewsToSubmit.length !== this.indicators.length) {
+            window.showToast('Please complete all indicator reviews before submitting', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('submit-panel-review-btn');
         if (btn) {
             btn.disabled = true;
-            btn.textContent = 'Submitting...';
+            btn.innerHTML = '<span class="loading-spinner-sm"></span> Submitting...';
         }
 
         try {
-            // Submit all reviews
+            // Create panel review submission with all indicator reviews
+            const indicatorReviews = reviewsToSubmit.map(review => ({
+                indicatorId: review.indicatorId,
+                isNecessary: review.isNecessary,
+                clarityRating: review.clarityRating || review.rating,
+                analysis: review.analysis || review.content
+            }));
+
+            await window.championDB.createPanelReviewSubmission(
+                this.currentPanelId,
+                indicatorReviews
+            );
+
+            // Mark indicators as reviewed in session
             for (const review of reviewsToSubmit) {
-                await window.championDB.submitReview(
-                    review.indicatorId,
-                    review.content,
-                    review.rating
-                );
-                // Mark as reviewed in session
                 this.markIndicatorAsReviewed(review.indicatorId);
             }
 
@@ -529,11 +560,11 @@ class ChampionIndicators {
             this.showPanelReviewSuccess(reviewsToSubmit.length);
 
         } catch (error) {
-            console.error('Error submitting reviews:', error);
-            window.showToast('Failed to submit reviews. Please try again.', 'error');
+            console.error('Error submitting panel review:', error);
+            window.showToast('Failed to submit panel review. Please try again.', 'error');
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = `Submit ${reviewsToSubmit.length} Reviews`;
+                btn.textContent = 'Submit Panel Review';
             }
         }
     }
