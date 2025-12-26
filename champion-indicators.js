@@ -5,8 +5,8 @@
 
 class ChampionIndicators {
     constructor() {
-        this.panel = null;
         this.indicators = [];
+        this.selectedIndicatorIds = [];
         this.selectedIndicator = null;
         this.rating = 0;
     }
@@ -15,68 +15,99 @@ class ChampionIndicators {
         // Wait for services to be ready
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Get panel ID from URL
+        // Get selected indicator IDs from URL
         const params = new URLSearchParams(window.location.search);
-        const panelId = params.get('panel');
+        const selectedParam = params.get('selected');
         
-        if (!panelId) {
+        if (selectedParam) {
+            this.selectedIndicatorIds = selectedParam.split(',').filter(id => id.trim());
+        } else {
+            // Fallback to sessionStorage
+            const stored = sessionStorage.getItem('selectedIndicators');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    this.selectedIndicatorIds = data.indicatorIds || [];
+                } catch (e) {
+                    console.error('Error parsing stored indicators:', e);
+                }
+            }
+        }
+
+        if (this.selectedIndicatorIds.length === 0) {
+            // No indicators selected, redirect to panels
             window.location.href = '/champion-panels.html';
             return;
         }
 
-        // Check if specific indicator requested
-        const indicatorId = params.get('indicator');
-        
-        // Load panel and indicators
-        await this.loadPanel(panelId);
-        
-        // Select indicator if specified
-        if (indicatorId) {
-            this.selectIndicator(indicatorId);
-        }
+        // Load selected indicators
+        await this.loadIndicators();
     }
 
-    async loadPanel(panelId) {
+    async loadIndicators() {
         try {
-            const data = await window.championDB.getPanelWithIndicators(panelId);
-            this.panel = data;
-            this.indicators = data.indicators || [];
+            // Fetch only the selected indicators
+            this.indicators = await window.championDB.getIndicatorsByIds(this.selectedIndicatorIds);
+            
+            if (this.indicators.length === 0) {
+                this.showError('No indicators found. Please go back and select indicators.');
+                return;
+            }
             
             // Update UI
-            this.renderPanelHeader();
+            this.renderHeader();
             this.renderIndicatorsList();
             
             // Show content
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('indicators-content').classList.remove('hidden');
             
-            // Log activity
-            if (window.championAuth.isAuthenticated()) {
-                window.championDB.logActivity('view_panel', panelId);
+            // Select first indicator by default
+            if (this.indicators.length > 0) {
+                this.selectIndicator(this.indicators[0].id);
             }
             
         } catch (error) {
-            console.error('Error loading panel:', error);
-            this.showError('Failed to load panel. Please try again.');
+            console.error('Error loading indicators:', error);
+            this.showError('Failed to load indicators. Please try again.');
         }
     }
 
-    renderPanelHeader() {
-        const categoryBadge = document.getElementById('panel-category-badge');
-        categoryBadge.textContent = this.panel.category;
-        categoryBadge.className = `badge badge-${this.panel.category}`;
+    renderHeader() {
+        const countEl = document.getElementById('indicator-count');
+        if (countEl) {
+            countEl.textContent = this.indicators.length;
+        }
         
-        document.getElementById('panel-name').textContent = this.panel.name;
-        document.getElementById('panel-description').textContent = this.panel.description || '';
-        document.getElementById('indicator-count').textContent = this.indicators.length;
-        document.getElementById('breadcrumb-panel').textContent = this.panel.name;
+        // Update breadcrumb
+        const breadcrumb = document.getElementById('breadcrumb-panel');
+        if (breadcrumb) {
+            breadcrumb.textContent = 'Selected Indicators';
+        }
+        
+        // Update panel name to show selected count
+        const panelName = document.getElementById('panel-name');
+        if (panelName) {
+            panelName.textContent = `Reviewing ${this.indicators.length} Indicator${this.indicators.length > 1 ? 's' : ''}`;
+        }
+        
+        const panelDesc = document.getElementById('panel-description');
+        if (panelDesc) {
+            panelDesc.textContent = 'Review and submit your expert analysis for the selected indicators.';
+        }
+
+        const categoryBadge = document.getElementById('panel-category-badge');
+        if (categoryBadge) {
+            categoryBadge.textContent = 'Selected';
+            categoryBadge.className = 'badge badge-primary';
+        }
     }
 
     renderIndicatorsList() {
         const container = document.getElementById('indicators-list');
         
         if (this.indicators.length === 0) {
-            container.innerHTML = '<p class="text-secondary">No indicators available for this panel yet.</p>';
+            container.innerHTML = '<p class="text-secondary">No indicators selected.</p>';
             return;
         }
 
@@ -84,6 +115,7 @@ class ChampionIndicators {
             <div class="indicator-card" data-id="${indicator.id}" onclick="indicatorsPage.selectIndicator('${indicator.id}')">
                 <div class="flex-between mb-2">
                     <span class="badge badge-primary">#${index + 1}</span>
+                    ${indicator.panels ? `<span class="badge badge-${indicator.panels.category || 'default'}" style="font-size: 10px;">${indicator.panels.name}</span>` : ''}
                 </div>
                 <h4 style="font-size: var(--text-base); margin-bottom: var(--space-1);">${indicator.name}</h4>
                 <p class="text-secondary" style="font-size: var(--text-sm); margin: 0;">
@@ -114,8 +146,8 @@ class ChampionIndicators {
         await this.renderIndicatorDetail(indicator);
 
         // Log activity
-        if (window.championAuth.isAuthenticated()) {
-            window.championDB.logActivity('view_indicator', this.panel.id, indicatorId);
+        if (window.championAuth?.isAuthenticated()) {
+            window.championDB.logActivity('view_indicator', indicator.panel_id, indicatorId);
         }
     }
 
@@ -136,6 +168,7 @@ class ChampionIndicators {
             <div class="indicator-header">
                 <h2 style="margin-bottom: var(--space-2);">${indicator.name}</h2>
                 <p class="text-secondary">${indicator.description || 'No description available'}</p>
+                ${indicator.panels ? `<span class="badge badge-${indicator.panels.category}" style="margin-top: var(--space-2);">Panel: ${indicator.panels.name}</span>` : ''}
             </div>
             <div class="indicator-body">
                 ${indicator.methodology ? `
@@ -257,7 +290,7 @@ class ChampionIndicators {
                             <button class="btn btn-ghost btn-sm" onclick="indicatorsPage.vote('${review.id}', 'downvote')">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
-                                </svg>
+                            </svg>
                                 ${review.downvotes || 0}
                             </button>
                         </div>
@@ -386,4 +419,3 @@ document.addEventListener('DOMContentLoaded', () => {
     indicatorsPage = new ChampionIndicators();
     indicatorsPage.init();
 });
-

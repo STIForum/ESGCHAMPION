@@ -343,13 +343,44 @@ class SupabaseService {
      * Get all indicators
      */
     async getAllIndicators() {
-        const { data, error } = await this.client
-            .from('indicators')
-            .select('*, panels(name, category)')
-            .eq('is_active', true)
-            .order('order_index');
-        if (error) throw error;
-        return data;
+        try {
+            const { data, error } = await this.client
+                .from('indicators')
+                .select('*, panels(name, category)')
+                .eq('is_active', true)
+                .order('order_index');
+            if (error) {
+                console.warn('getAllIndicators error:', error.message);
+                return [];
+            }
+            return data || [];
+        } catch (err) {
+            console.warn('getAllIndicators failed:', err.message);
+            return [];
+        }
+    }
+
+    /**
+     * Get indicators by their IDs
+     */
+    async getIndicatorsByIds(ids) {
+        if (!ids || ids.length === 0) return [];
+        try {
+            const { data, error } = await this.client
+                .from('indicators')
+                .select('*, panels(name, category)')
+                .in('id', ids)
+                .eq('is_active', true)
+                .order('order_index');
+            if (error) {
+                console.warn('getIndicatorsByIds error:', error.message);
+                return [];
+            }
+            return data || [];
+        } catch (err) {
+            console.warn('getIndicatorsByIds failed:', err.message);
+            return [];
+        }
     }
 
     /**

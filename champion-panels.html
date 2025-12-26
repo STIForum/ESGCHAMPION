@@ -110,6 +110,74 @@
         </div>
     </main>
 
+    <!-- Indicator Selection Modal -->
+    <div class="modal-backdrop hidden" id="indicator-modal-backdrop">
+        <div class="modal" id="indicator-modal" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 class="modal-title">Select Indicators to Review</h3>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                <!-- Search and Controls -->
+                <div style="margin-bottom: var(--space-4);">
+                    <input type="text" id="indicator-search" class="form-input" placeholder="Search indicators..." style="margin-bottom: var(--space-3);">
+                    <div class="flex-between">
+                        <button type="button" class="btn btn-ghost btn-sm" id="select-all-btn">Select All</button>
+                        <span id="selection-count" class="text-secondary" style="font-size: var(--text-sm);">0 of 0 selected</span>
+                    </div>
+                </div>
+                
+                <!-- Indicators List -->
+                <div id="indicators-list" style="flex: 1; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--space-2);">
+                    <div class="text-center p-6">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--gray-100); padding: var(--space-4); display: flex; justify-content: flex-end; gap: var(--space-3);">
+                <button type="button" class="btn btn-ghost" id="modal-cancel-btn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="review-selected-btn" disabled>Review Selected Indicators</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .indicator-checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .indicator-checkbox-item:hover {
+            background: var(--gray-50);
+        }
+        .indicator-checkbox-item input[type="checkbox"] {
+            margin-top: 4px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .indicator-checkbox-item .indicator-info {
+            flex: 1;
+        }
+        .indicator-checkbox-item .indicator-name {
+            font-weight: 500;
+            margin-bottom: var(--space-1);
+        }
+        .indicator-checkbox-item .indicator-desc {
+            font-size: var(--text-sm);
+            color: var(--gray-500);
+        }
+        .indicator-checkbox-item .indicator-panel {
+            font-size: var(--text-xs);
+            color: var(--gray-400);
+            margin-top: var(--space-1);
+        }
+    </style>
+
     <!-- Footer -->
     <footer class="footer">
         <div class="container">

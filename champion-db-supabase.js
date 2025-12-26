@@ -60,6 +60,30 @@ class ChampionDB {
     }
 
     /**
+     * Get ALL indicators (system-wide, not panel-specific)
+     */
+    async getAllIndicators() {
+        try {
+            return await this.service.getAllIndicators();
+        } catch (error) {
+            console.error('Error getting all indicators:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get indicators by their IDs
+     */
+    async getIndicatorsByIds(ids) {
+        try {
+            return await this.service.getIndicatorsByIds(ids);
+        } catch (error) {
+            console.error('Error getting indicators by IDs:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get indicator with reviews and stats
      */
     async getIndicatorWithReviews(indicatorId) {

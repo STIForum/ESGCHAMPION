@@ -1180,8 +1180,10 @@ p {
 }
 
 .dashboard-container {
+    max-width: 1200px;
     width: 100%;
-    padding: 0;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
     box-sizing: border-box;
 }
 
