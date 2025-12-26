@@ -194,7 +194,7 @@ class ChampionIndicators {
                     </div>
                 </div>
 
-                ${isAuthenticated ? `
+                ${isAuthenticated && !this.hasUserReviewed(indicator.id) ? `
                     <!-- Assessment Questions -->
                     <div class="assessment-section">
                         <div class="form-group">
@@ -244,6 +244,21 @@ class ChampionIndicators {
                                 Submit Review
                             </button>
                         </form>
+                    </div>
+                ` : isAuthenticated && this.hasUserReviewed(indicator.id) ? `
+                    <!-- Review Submitted State -->
+                    <div class="review-submitted-card">
+                        <div class="review-submitted-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <h4 class="review-submitted-title">Review Awaiting Approval</h4>
+                        <p class="review-submitted-text">Thank you for your review! Your submission is being reviewed by our team and will be published once approved.</p>
+                        <div class="review-submitted-badge">
+                            <span class="badge badge-warning">Pending Review</span>
+                        </div>
                     </div>
                 ` : `
                     <div class="alert alert-info">
@@ -379,16 +394,32 @@ class ChampionIndicators {
 
             window.showToast('Review submitted successfully!', 'success');
             
-            // Refresh the indicator detail
+            // Mark this indicator as reviewed
+            this.markIndicatorAsReviewed(this.selectedIndicator.id);
+            
+            // Refresh the indicator detail to show pending state
             await this.selectIndicator(this.selectedIndicator.id);
             
         } catch (error) {
             console.error('Error submitting review:', error);
             window.showToast('Failed to submit review. Please try again.', 'error');
-        } finally {
             btn.disabled = false;
             btn.textContent = 'Submit Review';
         }
+    }
+
+    markIndicatorAsReviewed(indicatorId) {
+        // Store reviewed indicators in session
+        let reviewedIndicators = JSON.parse(sessionStorage.getItem('reviewedIndicators') || '[]');
+        if (!reviewedIndicators.includes(indicatorId)) {
+            reviewedIndicators.push(indicatorId);
+            sessionStorage.setItem('reviewedIndicators', JSON.stringify(reviewedIndicators));
+        }
+    }
+
+    hasUserReviewed(indicatorId) {
+        const reviewedIndicators = JSON.parse(sessionStorage.getItem('reviewedIndicators') || '[]');
+        return reviewedIndicators.includes(indicatorId);
     }
 
     async vote(reviewId, type) {

@@ -175,6 +175,40 @@
             color: #f59e0b;
         }
         
+        /* Review Submitted State */
+        .review-submitted-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1px solid #86efac;
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            text-align: center;
+            margin-top: var(--space-4);
+        }
+        .review-submitted-icon {
+            color: #22c55e;
+            margin-bottom: var(--space-4);
+        }
+        .review-submitted-icon svg {
+            width: 64px;
+            height: 64px;
+        }
+        .review-submitted-title {
+            font-size: var(--text-xl);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+        }
+        .review-submitted-text {
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+            max-width: 400px;
+            margin: 0 auto var(--space-4);
+            line-height: 1.6;
+        }
+        .review-submitted-badge {
+            margin-top: var(--space-3);
+        }
+        
         @media (max-width: 1024px) {
             .indicators-layout {
                 flex-direction: column !important;
