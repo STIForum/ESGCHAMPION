@@ -10,6 +10,7 @@ class ChampionIndicators {
         this.selectedIndicator = null;
         this.rating = 0;
         this.clarityRating = 0;
+        this.currentPanelId = null;
     }
 
     async init() {
@@ -20,19 +21,28 @@ class ChampionIndicators {
         const params = new URLSearchParams(window.location.search);
         const selectedParam = params.get('selected');
         
+        // Get panel ID from URL or sessionStorage
+        const panelParam = params.get('panel');
+        
         if (selectedParam) {
             this.selectedIndicatorIds = selectedParam.split(',').filter(id => id.trim());
-        } else {
-            // Fallback to sessionStorage
-            const stored = sessionStorage.getItem('selectedIndicators');
-            if (stored) {
-                try {
-                    const data = JSON.parse(stored);
+        }
+        
+        // Get panel context from sessionStorage
+        const stored = sessionStorage.getItem('selectedIndicators');
+        if (stored) {
+            try {
+                const data = JSON.parse(stored);
+                if (!this.selectedIndicatorIds.length) {
                     this.selectedIndicatorIds = data.indicatorIds || [];
-                } catch (e) {
-                    console.error('Error parsing stored indicators:', e);
                 }
+                // Set the panel ID from stored data
+                this.currentPanelId = data.panelId || panelParam || null;
+            } catch (e) {
+                console.error('Error parsing stored indicators:', e);
             }
+        } else if (panelParam) {
+            this.currentPanelId = panelParam;
         }
 
         if (this.selectedIndicatorIds.length === 0) {
@@ -409,17 +419,25 @@ class ChampionIndicators {
     }
 
     markIndicatorAsReviewed(indicatorId) {
-        // Store reviewed indicators in session
+        // Store reviewed indicators with panel context in session
+        // Key format: "panelId:indicatorId"
+        const panelId = this.currentPanelId || 'default';
+        const reviewKey = `${panelId}:${indicatorId}`;
+        
         let reviewedIndicators = JSON.parse(sessionStorage.getItem('reviewedIndicators') || '[]');
-        if (!reviewedIndicators.includes(indicatorId)) {
-            reviewedIndicators.push(indicatorId);
+        if (!reviewedIndicators.includes(reviewKey)) {
+            reviewedIndicators.push(reviewKey);
             sessionStorage.setItem('reviewedIndicators', JSON.stringify(reviewedIndicators));
         }
     }
 
     hasUserReviewed(indicatorId) {
+        // Check if user has reviewed this indicator for the current panel
+        const panelId = this.currentPanelId || 'default';
+        const reviewKey = `${panelId}:${indicatorId}`;
+        
         const reviewedIndicators = JSON.parse(sessionStorage.getItem('reviewedIndicators') || '[]');
-        return reviewedIndicators.includes(indicatorId);
+        return reviewedIndicators.includes(reviewKey);
     }
 
     async vote(reviewId, type) {
