@@ -67,23 +67,69 @@ class ChampionPanels {
             return;
         }
 
-        container.innerHTML = panels.map(panel => `
+        container.innerHTML = panels.map(panel => {
+            const icon = this.getPanelIcon(panel.name, panel.category);
+            const impactLevel = panel.impact_level || 'high';
+            const estimatedTime = panel.estimated_time || '10-13 min';
+            const points = panel.indicator_count ? panel.indicator_count * 90 : 0;
+            
+            return `
             <div class="panel-card ${panel.category}" style="cursor: pointer;" onclick="panelsPage.openIndicatorModal('${panel.id}', '${panel.name}')">
-                <div class="flex-between mb-4">
-                    <span class="badge badge-${panel.category}">${panel.category}</span>
-                    <span class="text-muted" style="font-size: var(--text-sm);">
-                        ${panel.indicator_count || 0} indicators
-                    </span>
+                <h3 style="font-size: var(--text-xl); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+                    <span style="font-size: 1.2em;">${icon}</span>
+                    ${panel.name}
+                </h3>
+                
+                <div style="margin-bottom: var(--space-3);">
+                    <span class="impact-badge impact-${impactLevel}">Impact: ${impactLevel.charAt(0).toUpperCase() + impactLevel.slice(1)}</span>
                 </div>
-                <h3 style="font-size: var(--text-xl); margin-bottom: var(--space-2);">${panel.name}</h3>
-                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
-                    ${panel.description || 'Explore indicators in this panel'}
-                </p>
-                <div class="flex-between">
-                    <span class="btn btn-secondary btn-sm">Select Indicators</span>
+                
+                <div class="flex-between" style="margin-bottom: var(--space-3); color: var(--gray-500); font-size: var(--text-sm);">
+                    <span>Estimated time</span>
+                    <span style="font-weight: 500;">${estimatedTime}</span>
                 </div>
+                
+                <div class="flex-between" style="margin-bottom: var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--gray-100);">
+                    <span class="status-badge status-not-started">Not Started</span>
+                    <span style="color: var(--primary-500); font-weight: 600; font-size: var(--text-sm);">+${points} points</span>
+                </div>
+                
+                <button class="btn btn-primary" style="width: 100%;">Select Indicators</button>
             </div>
-        `).join('');
+        `}).join('');
+    }
+
+    getPanelIcon(name, category) {
+        const iconMap = {
+            'climate': '🌍',
+            'energy': '⚡',
+            'water': '💧',
+            'waste': '♻️',
+            'biodiversity': '🌿',
+            'emissions': '🌡️',
+            'human rights': '✊',
+            'labor': '👷',
+            'health': '🏥',
+            'diversity': '🤝',
+            'community': '👥',
+            'ethics': '⚖️',
+            'governance': '🏛️',
+            'compliance': '📋',
+            'risk': '🛡️',
+            'supply': '🔗',
+            'data': '🔒'
+        };
+        
+        const nameLower = name.toLowerCase();
+        for (const [key, icon] of Object.entries(iconMap)) {
+            if (nameLower.includes(key)) return icon;
+        }
+        
+        // Default icons by category
+        if (category === 'environmental') return '🌱';
+        if (category === 'social') return '👥';
+        if (category === 'governance') return '🏛️';
+        return '📊';
     }
 
     setupFilters() {
@@ -176,18 +222,50 @@ class ChampionPanels {
             return;
         }
 
-        container.innerHTML = indicators.map(indicator => `
+        container.innerHTML = indicators.map(indicator => {
+            const importance = indicator.importance_level || 'medium';
+            const difficulty = indicator.difficulty || 'moderate';
+            const timeEstimate = indicator.time_estimate || '3-5 min';
+            const griStandard = indicator.gri_standard || '';
+            const impactRating = indicator.impact_rating || 4;
+            
+            return `
             <label class="indicator-checkbox-item" data-id="${indicator.id}">
                 <input type="checkbox" value="${indicator.id}" ${this.selectedIndicators.has(indicator.id) ? 'checked' : ''} onchange="panelsPage.toggleIndicator('${indicator.id}')">
                 <div class="indicator-info">
                     <div class="indicator-name">${indicator.name}</div>
                     <div class="indicator-desc">${indicator.description || 'No description'}</div>
+                    
+                    <div class="indicator-meta-badges">
+                        <span class="meta-badge importance-${importance}">${importance.charAt(0).toUpperCase() + importance.slice(1)} Importance</span>
+                        <span class="meta-badge difficulty-badge">${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
+                        <span class="meta-badge time-badge">${timeEstimate}</span>
+                        ${griStandard ? `<span class="meta-badge gri-badge">${griStandard}</span>` : ''}
+                    </div>
+                    
+                    <div class="indicator-impact">
+                        Impact: ${this.renderStars(impactRating)}
+                    </div>
+                    
                     ${indicator.panels ? `<div class="indicator-panel">Panel: ${indicator.panels.name}</div>` : ''}
                 </div>
             </label>
-        `).join('');
+        `}).join('');
 
         this.updateSelectionCount();
+    }
+
+    renderStars(rating) {
+        const maxStars = 5;
+        let stars = '';
+        for (let i = 0; i < maxStars; i++) {
+            if (i < rating) {
+                stars += '<span class="star filled">★</span>';
+            } else {
+                stars += '<span class="star empty">☆</span>';
+            }
+        }
+        return stars;
     }
 
     toggleIndicator(indicatorId) {
