@@ -114,12 +114,13 @@
     <div class="modal-backdrop" id="indicator-modal-backdrop">
         <div class="modal" id="indicator-modal" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
             <div class="modal-header">
-                <h3 class="modal-title">Select Indicators to Review</h3>
+                <h3 class="modal-title">Review Panel</h3>
                 <button class="modal-close" id="modal-close-btn">&times;</button>
             </div>
             <div class="modal-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
                 <!-- Search and Controls -->
                 <div style="margin-bottom: var(--space-4);">
+                    <p class="text-secondary" style="margin-bottom: var(--space-3); font-size: var(--text-sm);">Select the indicators you want to review for this panel:</p>
                     <input type="text" id="indicator-search" class="form-input" placeholder="Search indicators..." style="margin-bottom: var(--space-3);">
                     <div class="flex-between">
                         <button type="button" class="btn btn-ghost btn-sm" id="select-all-btn">Select All</button>
@@ -136,7 +137,7 @@
             </div>
             <div class="modal-footer" style="border-top: 1px solid var(--gray-100); padding: var(--space-4); display: flex; justify-content: flex-end; gap: var(--space-3);">
                 <button type="button" class="btn btn-ghost" id="modal-cancel-btn">Cancel</button>
-                <button type="button" class="btn btn-primary" id="review-selected-btn" disabled>Review Selected Indicators</button>
+                <button type="button" class="btn btn-primary" id="review-selected-btn" disabled>Start Review</button>
             </div>
         </div>
     </div>

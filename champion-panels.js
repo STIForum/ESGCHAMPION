@@ -98,7 +98,7 @@ class ChampionPanels {
                     <span style="color: var(--primary-500); font-weight: 600; font-size: var(--text-sm);">+${points} points</span>
                 </div>
                 
-                <button class="btn btn-primary" style="width: 100%;">Select Indicators</button>
+                <button class="btn btn-primary" style="width: 100%;">Review Panel</button>
             </div>
         `}).join('');
     }
@@ -182,15 +182,23 @@ class ChampionPanels {
 
     async openIndicatorModal(panelId, panelName) {
         this.currentPanelId = panelId;
+        this.currentPanelName = panelName;
         this.selectedIndicators.clear();
         
         const backdrop = document.getElementById('indicator-modal-backdrop');
         const modal = document.getElementById('indicator-modal');
         const indicatorsList = document.getElementById('indicators-list');
         const reviewBtn = document.getElementById('review-selected-btn');
+        const modalTitle = document.querySelector('.modal-title');
+        
+        // Update modal title with panel name
+        if (modalTitle) {
+            modalTitle.textContent = `Review ${panelName}`;
+        }
         
         // Reset UI
         reviewBtn.disabled = true;
+        reviewBtn.textContent = 'Start Review';
         document.getElementById('indicator-search').value = '';
         indicatorsList.innerHTML = '<div class="text-center p-6"><div class="loading-spinner"></div></div>';
         
@@ -200,8 +208,9 @@ class ChampionPanels {
         document.body.style.overflow = 'hidden';
         
         try {
-            // Fetch ALL indicators (not panel-specific)
-            this.allIndicators = await window.championDB.getAllIndicators();
+            // Fetch indicators for THIS PANEL ONLY
+            const panelData = await window.championDB.getPanelWithIndicators(panelId);
+            this.allIndicators = panelData.indicators || [];
             this.renderIndicatorsList(this.allIndicators);
         } catch (error) {
             console.error('Error loading indicators:', error);
@@ -343,6 +352,7 @@ class ChampionPanels {
         // Store in sessionStorage as backup
         sessionStorage.setItem('selectedIndicators', JSON.stringify({
             panelId: this.currentPanelId,
+            panelName: this.currentPanelName,
             indicatorIds: Array.from(this.selectedIndicators)
         }));
 

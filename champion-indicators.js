@@ -11,6 +11,9 @@ class ChampionIndicators {
         this.rating = 0;
         this.clarityRating = 0;
         this.currentPanelId = null;
+        this.currentPanelName = null;
+        this.reviewsData = {}; // Store reviews for each indicator
+        this.currentIndicatorIndex = 0;
     }
 
     async init() {
@@ -36,8 +39,9 @@ class ChampionIndicators {
                 if (!this.selectedIndicatorIds.length) {
                     this.selectedIndicatorIds = data.indicatorIds || [];
                 }
-                // Set the panel ID from stored data
+                // Set the panel ID and name from stored data
                 this.currentPanelId = data.panelId || panelParam || null;
+                this.currentPanelName = data.panelName || 'Panel Review';
             } catch (e) {
                 console.error('Error parsing stored indicators:', e);
             }
@@ -93,23 +97,23 @@ class ChampionIndicators {
         // Update breadcrumb
         const breadcrumb = document.getElementById('breadcrumb-panel');
         if (breadcrumb) {
-            breadcrumb.textContent = 'Selected Indicators';
+            breadcrumb.textContent = this.currentPanelName || 'Panel Review';
         }
         
-        // Update panel name to show selected count
+        // Update panel name to show panel being reviewed
         const panelName = document.getElementById('panel-name');
         if (panelName) {
-            panelName.textContent = `Reviewing ${this.indicators.length} Indicator${this.indicators.length > 1 ? 's' : ''}`;
+            panelName.textContent = this.currentPanelName || `Reviewing ${this.indicators.length} Indicator${this.indicators.length > 1 ? 's' : ''}`;
         }
         
         const panelDesc = document.getElementById('panel-description');
         if (panelDesc) {
-            panelDesc.textContent = 'Review and submit your expert analysis for the selected indicators.';
+            panelDesc.textContent = `Review ${this.indicators.length} indicator${this.indicators.length > 1 ? 's' : ''} in this panel. Complete all reviews and submit.`;
         }
 
         const categoryBadge = document.getElementById('panel-category-badge');
         if (categoryBadge) {
-            categoryBadge.textContent = 'Selected';
+            categoryBadge.textContent = 'Panel Review';
             categoryBadge.className = 'badge badge-primary';
         }
     }
@@ -122,18 +126,62 @@ class ChampionIndicators {
             return;
         }
 
-        container.innerHTML = this.indicators.map((indicator, index) => `
-            <div class="indicator-card" data-id="${indicator.id}" onclick="indicatorsPage.selectIndicator('${indicator.id}')">
+        container.innerHTML = this.indicators.map((indicator, index) => {
+            const hasReview = this.reviewsData[indicator.id] && this.reviewsData[indicator.id].completed;
+            const statusBadge = hasReview 
+                ? '<span class="badge badge-success" style="font-size: 10px;">✓ Reviewed</span>'
+                : '<span class="badge badge-warning" style="font-size: 10px;">Pending</span>';
+            
+            return `
+            <div class="indicator-card ${hasReview ? 'reviewed' : ''}" data-id="${indicator.id}" onclick="indicatorsPage.selectIndicator('${indicator.id}')">
                 <div class="flex-between mb-2">
                     <span class="badge badge-primary">#${index + 1}</span>
-                    ${indicator.panels ? `<span class="badge badge-${indicator.panels.category || 'default'}" style="font-size: 10px;">${indicator.panels.name}</span>` : ''}
+                    ${statusBadge}
                 </div>
                 <h4 style="font-size: var(--text-base); margin-bottom: var(--space-1);">${indicator.name}</h4>
                 <p class="text-secondary" style="font-size: var(--text-sm); margin: 0;">
                     ${this.truncate(indicator.description, 80)}
                 </p>
             </div>
-        `).join('');
+        `}).join('');
+        
+        // Check if all reviews are complete and show submit all button
+        this.updateSubmitAllButton();
+    }
+
+    updateSubmitAllButton() {
+        const completedCount = Object.values(this.reviewsData).filter(r => r.completed).length;
+        const totalCount = this.indicators.length;
+        
+        let submitAllContainer = document.getElementById('submit-all-container');
+        
+        if (completedCount > 0) {
+            if (!submitAllContainer) {
+                // Create the submit all button container
+                const indicatorsList = document.getElementById('indicators-list');
+                submitAllContainer = document.createElement('div');
+                submitAllContainer.id = 'submit-all-container';
+                submitAllContainer.className = 'submit-all-container';
+                indicatorsList.parentNode.insertBefore(submitAllContainer, indicatorsList.nextSibling);
+            }
+            
+            submitAllContainer.innerHTML = `
+                <div style="background: var(--primary-50); border-radius: var(--radius-lg); padding: var(--space-4); margin-top: var(--space-4);">
+                    <div class="flex-between mb-3">
+                        <span style="font-weight: 500; color: var(--gray-700);">Reviews Progress</span>
+                        <span class="badge ${completedCount === totalCount ? 'badge-success' : 'badge-primary'}">${completedCount} of ${totalCount} complete</span>
+                    </div>
+                    <div style="background: var(--gray-200); border-radius: 9999px; height: 8px; overflow: hidden; margin-bottom: var(--space-3);">
+                        <div style="background: var(--primary-500); height: 100%; width: ${(completedCount / totalCount) * 100}%; transition: width 0.3s;"></div>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="indicatorsPage.submitAllReviews()" ${completedCount === 0 ? 'disabled' : ''}>
+                        Submit ${completedCount} Review${completedCount !== 1 ? 's' : ''} for ${this.currentPanelName || 'this Panel'}
+                    </button>
+                </div>
+            `;
+        } else if (submitAllContainer) {
+            submitAllContainer.remove();
+        }
     }
 
     async selectIndicator(indicatorId) {
@@ -165,6 +213,10 @@ class ChampionIndicators {
     async renderIndicatorDetail(indicator) {
         const container = document.getElementById('indicator-detail');
         const isAuthenticated = window.championAuth?.isAuthenticated() || false;
+        
+        // Check if this indicator has a local review saved (not yet submitted)
+        const savedReview = this.reviewsData[indicator.id];
+        const hasLocalReview = savedReview && savedReview.completed;
 
         // Get reviews for this indicator
         let reviews = [];
@@ -204,7 +256,7 @@ class ChampionIndicators {
                     </div>
                 </div>
 
-                ${isAuthenticated && !this.hasUserReviewed(indicator.id) ? `
+                ${isAuthenticated && !this.hasUserReviewed(indicator.id) && !hasLocalReview ? `
                     <!-- Assessment Questions -->
                     <div class="assessment-section">
                         <div class="form-group">
@@ -254,6 +306,23 @@ class ChampionIndicators {
                                 Submit Review
                             </button>
                         </form>
+                    </div>
+                ` : isAuthenticated && hasLocalReview ? `
+                    <!-- Review Saved State (not yet submitted) -->
+                    <div class="review-saved-card">
+                        <div class="review-saved-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <h4 class="review-saved-title">Review Saved</h4>
+                        <p class="review-saved-text">Your review for this indicator has been saved. Complete reviewing other indicators and click "Submit All Reviews" to submit.</p>
+                        <div class="review-saved-summary">
+                            <div><strong>Your Rating:</strong> ${'★'.repeat(savedReview.rating)}${'☆'.repeat(5 - savedReview.rating)}</div>
+                            <div style="margin-top: var(--space-2);"><strong>Your Comment:</strong> ${this.truncate(savedReview.content, 100)}</div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" style="margin-top: var(--space-3);" onclick="indicatorsPage.editReview('${indicator.id}')">Edit Review</button>
                     </div>
                 ` : isAuthenticated && this.hasUserReviewed(indicator.id) ? `
                     <!-- Review Submitted State -->
@@ -391,31 +460,127 @@ class ChampionIndicators {
             return;
         }
 
-        const btn = document.getElementById('submit-review-btn');
-        btn.disabled = true;
-        btn.textContent = 'Submitting...';
+        // Get additional form data
+        const isNecessary = document.querySelector('input[name="is_necessary"]:checked')?.value || null;
+        const comments = document.getElementById('indicator-comments')?.value?.trim() || '';
+
+        // Save review data locally (not submit yet)
+        this.reviewsData[this.selectedIndicator.id] = {
+            indicatorId: this.selectedIndicator.id,
+            indicatorName: this.selectedIndicator.name,
+            content: content,
+            rating: this.clarityRating,
+            isNecessary: isNecessary,
+            comments: comments,
+            completed: true
+        };
+
+        window.showToast('Review saved! Complete other indicators or submit all reviews.', 'success');
+        
+        // Update the indicators list to show this one as reviewed
+        this.renderIndicatorsList();
+        
+        // Move to next indicator if available
+        const currentIndex = this.indicators.findIndex(i => i.id === this.selectedIndicator.id);
+        const nextIndicator = this.indicators[currentIndex + 1];
+        
+        if (nextIndicator && !this.reviewsData[nextIndicator.id]?.completed) {
+            // Auto-select next unreviewed indicator
+            setTimeout(() => this.selectIndicator(nextIndicator.id), 500);
+        } else {
+            // Show the reviewed state for current indicator
+            await this.renderIndicatorDetail(this.selectedIndicator);
+        }
+    }
+
+    async submitAllReviews() {
+        const reviewsToSubmit = Object.values(this.reviewsData).filter(r => r.completed);
+        
+        if (reviewsToSubmit.length === 0) {
+            window.showToast('No reviews to submit', 'error');
+            return;
+        }
+
+        const btn = document.querySelector('#submit-all-container button');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+        }
 
         try {
-            await window.championDB.submitReview(
-                this.selectedIndicator.id,
-                content,
-                this.clarityRating
-            );
+            // Submit all reviews
+            for (const review of reviewsToSubmit) {
+                await window.championDB.submitReview(
+                    review.indicatorId,
+                    review.content,
+                    review.rating
+                );
+                // Mark as reviewed in session
+                this.markIndicatorAsReviewed(review.indicatorId);
+            }
 
-            window.showToast('Review submitted successfully!', 'success');
+            // Clear local review data
+            this.reviewsData = {};
             
-            // Mark this indicator as reviewed
-            this.markIndicatorAsReviewed(this.selectedIndicator.id);
-            
-            // Refresh the indicator detail to show pending state
-            await this.selectIndicator(this.selectedIndicator.id);
-            
+            // Show success state
+            this.showPanelReviewSuccess(reviewsToSubmit.length);
+
         } catch (error) {
-            console.error('Error submitting review:', error);
-            window.showToast('Failed to submit review. Please try again.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'Submit Review';
+            console.error('Error submitting reviews:', error);
+            window.showToast('Failed to submit reviews. Please try again.', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = `Submit ${reviewsToSubmit.length} Reviews`;
+            }
         }
+    }
+
+    showPanelReviewSuccess(count) {
+        const container = document.getElementById('indicator-detail');
+        const sidebar = document.querySelector('.indicators-sidebar');
+        
+        // Hide sidebar
+        if (sidebar) {
+            sidebar.style.display = 'none';
+        }
+        
+        // Show success message
+        container.innerHTML = `
+            <div class="panel-review-success">
+                <div class="success-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="9 12 12 15 16 10"></polyline>
+                    </svg>
+                </div>
+                <h2 class="success-title">Reviews Submitted Successfully!</h2>
+                <p class="success-text">
+                    You have submitted ${count} review${count !== 1 ? 's' : ''} for <strong>${this.currentPanelName || 'this panel'}</strong>.
+                    <br><br>
+                    Your reviews are now awaiting approval from the admin team.
+                </p>
+                <div class="success-badge">
+                    <span class="badge badge-warning" style="font-size: 14px; padding: 8px 16px;">⏳ Awaiting Approval</span>
+                </div>
+                <div style="margin-top: var(--space-6);">
+                    <a href="/champion-panels.html" class="btn btn-primary">Review Another Panel</a>
+                    <a href="/champion-dashboard.html" class="btn btn-ghost" style="margin-left: var(--space-3);">Go to Dashboard</a>
+                </div>
+            </div>
+        `;
+        
+        // Hide submit all container
+        const submitAllContainer = document.getElementById('submit-all-container');
+        if (submitAllContainer) {
+            submitAllContainer.remove();
+        }
+    }
+
+    editReview(indicatorId) {
+        // Remove the saved review to allow editing
+        delete this.reviewsData[indicatorId];
+        this.renderIndicatorsList();
+        this.selectIndicator(indicatorId);
     }
 
     markIndicatorAsReviewed(indicatorId) {

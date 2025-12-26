@@ -209,6 +209,77 @@
             margin-top: var(--space-3);
         }
         
+        /* Review Saved State (not yet submitted) */
+        .review-saved-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            text-align: center;
+            margin-top: var(--space-4);
+        }
+        .review-saved-icon {
+            color: #3b82f6;
+            margin-bottom: var(--space-3);
+        }
+        .review-saved-icon svg {
+            width: 48px;
+            height: 48px;
+        }
+        .review-saved-title {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+        }
+        .review-saved-text {
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+            max-width: 400px;
+            margin: 0 auto var(--space-3);
+            line-height: 1.5;
+        }
+        .review-saved-summary {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--space-3);
+            text-align: left;
+            font-size: var(--text-sm);
+            color: var(--gray-700);
+        }
+        
+        /* Indicator card reviewed state */
+        .indicator-card.reviewed {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+        
+        /* Panel Review Success */
+        .panel-review-success {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+        }
+        .panel-review-success .success-icon {
+            color: #22c55e;
+            margin-bottom: var(--space-4);
+        }
+        .panel-review-success .success-title {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: var(--space-3);
+        }
+        .panel-review-success .success-text {
+            color: var(--gray-600);
+            font-size: var(--text-base);
+            max-width: 500px;
+            margin: 0 auto var(--space-4);
+            line-height: 1.6;
+        }
+        .panel-review-success .success-badge {
+            margin-bottom: var(--space-6);
+        }
+        
         @media (max-width: 1024px) {
             .indicators-layout {
                 flex-direction: column !important;
