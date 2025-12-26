@@ -125,11 +125,36 @@ class ChampionPanels {
         return panelReviews[panelId] || null;
     }
 
+    clearPanelReviewStatus(panelId) {
+        // Clear from sessionStorage
+        const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+        delete panelReviews[panelId];
+        sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
+        
+        // Also remove from localStorage submissions
+        const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
+        const filtered = submissions.filter(s => s.panelId !== panelId);
+        localStorage.setItem('panelSubmissions', JSON.stringify(filtered));
+    }
+
+    clearAllPanelStatuses() {
+        // Clear all panel review statuses (useful for debugging/reset)
+        sessionStorage.removeItem('panelReviews');
+        sessionStorage.removeItem('reviewedIndicators');
+        localStorage.removeItem('panelSubmissions');
+        window.showToast?.('Panel statuses cleared. Refreshing...', 'success');
+        setTimeout(() => location.reload(), 1000);
+    }
+
     async startPanelReview(panelId, panelName) {
         // Check if panel is already awaiting approval
         const status = this.getPanelReviewStatus(panelId);
         if (status === 'pending') {
-            window.showToast?.('This panel review is already awaiting approval', 'info');
+            // Ask user if they want to re-review or clear
+            if (confirm('This panel shows as "Awaiting Approval". If the submission failed, click OK to clear and re-review.')) {
+                this.clearPanelReviewStatus(panelId);
+                await this.loadPanels(); // Refresh the display
+            }
             return;
         }
 

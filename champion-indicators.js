@@ -540,28 +540,42 @@ class ChampionIndicators {
                 analysis: review.analysis || review.content
             }));
 
-            await window.championDB.createPanelReviewSubmission(
+            // Submit to database - this must succeed before we update any local state
+            const result = await window.championDB.createPanelReviewSubmission(
                 this.currentPanelId,
                 indicatorReviews
             );
 
-            // Mark indicators as reviewed in session
-            for (const review of reviewsToSubmit) {
-                this.markIndicatorAsReviewed(review.indicatorId);
-            }
+            // Only if database submission was successful:
+            if (result && result.submission) {
+                // Mark indicators as reviewed in session
+                for (const review of reviewsToSubmit) {
+                    this.markIndicatorAsReviewed(review.indicatorId);
+                }
 
-            // Clear local review data
-            this.reviewsData = {};
-            
-            // Mark this panel as awaiting approval
-            this.markPanelAsAwaitingApproval();
-            
-            // Show success state
-            this.showPanelReviewSuccess(reviewsToSubmit.length);
+                // Clear local review data
+                this.reviewsData = {};
+                
+                // Mark this panel as awaiting approval (with database ID)
+                this.markPanelAsAwaitingApproval(result.submission.id);
+                
+                // Show success state
+                this.showPanelReviewSuccess(reviewsToSubmit.length);
+            } else {
+                throw new Error('No submission returned from database');
+            }
 
         } catch (error) {
             console.error('Error submitting panel review:', error);
-            window.showToast('Failed to submit panel review. Please try again.', 'error');
+            
+            // Check if it's a database table not found error
+            const errorMessage = error.message || error.toString();
+            if (errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+                window.showToast('Database not configured. Please run the SQL migration first.', 'error');
+            } else {
+                window.showToast('Failed to submit panel review. Please try again.', 'error');
+            }
+            
             if (btn) {
                 btn.disabled = false;
                 btn.textContent = 'Submit Panel Review';
@@ -617,29 +631,38 @@ class ChampionIndicators {
         this.selectIndicator(indicatorId);
     }
 
-    markPanelAsAwaitingApproval() {
+    markPanelAsAwaitingApproval(submissionId) {
         if (!this.currentPanelId) return;
         
-        // Store in sessionStorage
+        // Store in sessionStorage - used for UI display on panels page
         const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
         panelReviews[this.currentPanelId] = 'pending';
         sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
         
-        // Also store the panel review submission for admin
+        // Also store reference to the database submission for admin fallback
         const panelSubmissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
         const submission = {
-            id: `${this.currentPanelId}-${Date.now()}`,
+            id: submissionId, // Use the real database submission ID
             panelId: this.currentPanelId,
             panelName: this.currentPanelName,
             indicatorIds: this.selectedIndicatorIds,
             indicatorCount: this.indicators.length,
             submittedAt: new Date().toISOString(),
             status: 'pending',
-            championId: window.championAuth?.getCurrentUser()?.id || null,
-            championName: window.championAuth?.getCurrentUser()?.user_metadata?.full_name || 'Anonymous'
+            championId: window.championAuth?.getUser()?.id || null,
+            championName: window.championAuth?.getUser()?.user_metadata?.full_name || 'Anonymous'
         };
         panelSubmissions.push(submission);
         localStorage.setItem('panelSubmissions', JSON.stringify(panelSubmissions));
+    }
+
+    clearPanelAwaitingApproval() {
+        if (!this.currentPanelId) return;
+        
+        // Remove from sessionStorage
+        const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+        delete panelReviews[this.currentPanelId];
+        sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
     }
 
     markIndicatorAsReviewed(indicatorId) {
