@@ -361,8 +361,8 @@ class ChampionIndicators {
             return;
         }
 
-        if (this.rating === 0) {
-            window.showToast('Please select a rating', 'error');
+        if (this.clarityRating === 0) {
+            window.showToast('Please rate the clarity and relevance', 'error');
             return;
         }
 
@@ -374,7 +374,7 @@ class ChampionIndicators {
             await window.championDB.submitReview(
                 this.selectedIndicator.id,
                 content,
-                this.rating
+                this.clarityRating
             );
 
             window.showToast('Review submitted successfully!', 'success');
