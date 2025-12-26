@@ -226,60 +226,10 @@ class ChampionIndicators {
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label" style="color: var(--gray-700); font-weight: 500;">Comments</label>
-                            <textarea 
-                                id="indicator-comments" 
-                                class="form-textarea" 
-                                placeholder="Enter comments or references...."
-                                rows="4"
-                            ></textarea>
-                        </div>
                     </div>
 
-                    ${indicator.methodology ? `
-                        <div class="methodology-section">
-                            <h4 style="margin-bottom: var(--space-3); color: var(--gray-700);">Methodology</h4>
-                            <p class="text-secondary" style="font-size: var(--text-sm); margin-bottom: var(--space-4);">${indicator.methodology}</p>
-                            
-                            <div class="methodology-grid">
-                                ${indicator.data_source ? `
-                                    <div class="methodology-item">
-                                        <div class="methodology-label">DATA SOURCE</div>
-                                        <div class="methodology-value">${indicator.data_source}</div>
-                                    </div>
-                                ` : ''}
-                                ${indicator.unit ? `
-                                    <div class="methodology-item">
-                                        <div class="methodology-label">UNIT</div>
-                                        <div class="methodology-value">${indicator.unit}</div>
-                                    </div>
-                                ` : ''}
-                                ${indicator.frequency ? `
-                                    <div class="methodology-item">
-                                        <div class="methodology-label">FREQUENCY</div>
-                                        <div class="methodology-value">${indicator.frequency}</div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
-
                     <div class="review-form">
-                        <h4 style="margin-bottom: var(--space-4);">Submit Your Review</h4>
                         <form id="review-form" onsubmit="indicatorsPage.submitReview(event)">
-                            <div class="form-group">
-                                <label class="form-label">Your Rating</label>
-                                <div class="rating-input" id="rating-input">
-                                    ${[1, 2, 3, 4, 5].map(n => `
-                                        <button type="button" class="rating-star" data-value="${n}" onclick="indicatorsPage.setRating(${n})">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                            </svg>
-                                        </button>
-                                    `).join('')}
-                                </div>
-                            </div>
                             <div class="form-group">
                                 <label class="form-label" for="review-content">Comment</label>
                                 <textarea 
