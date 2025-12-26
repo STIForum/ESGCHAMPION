@@ -75,10 +75,14 @@ class ChampionPanels {
             
             return `
             <div class="panel-card ${panel.category}" style="cursor: pointer;" onclick="panelsPage.openIndicatorModal('${panel.id}', '${panel.name}')">
-                <h3 style="font-size: var(--text-xl); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+                <h3 style="font-size: var(--text-xl); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2);">
                     <span style="font-size: 1.2em;">${icon}</span>
                     ${panel.name}
                 </h3>
+                
+                <p class="text-secondary" style="margin-bottom: var(--space-3); font-size: var(--text-sm); line-height: 1.5;">
+                    ${panel.description || 'Explore indicators in this panel'}
+                </p>
                 
                 <div style="margin-bottom: var(--space-3);">
                     <span class="impact-badge impact-${impactLevel}">Impact: ${impactLevel.charAt(0).toUpperCase() + impactLevel.slice(1)}</span>
