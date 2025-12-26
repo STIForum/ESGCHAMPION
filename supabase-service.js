@@ -840,28 +840,48 @@ class SupabaseService {
             return [];
         }
 
-        const reviewsWithSubmissionId = indicatorReviews.map(review => ({
-            submission_id: submissionId,
-            indicator_id: review.indicatorId,
-            is_necessary: review.isNecessary || 'not_sure',
-            clarity_rating: review.clarityRating || 3,
-            analysis: review.analysis || 'No analysis provided'
-        }));
+        console.log('=== ADDING INDICATOR REVIEWS ===');
+        console.log('Submission ID:', submissionId);
+        console.log('Raw indicator reviews:', JSON.stringify(indicatorReviews, null, 2));
 
-        console.log('Inserting indicator reviews:', reviewsWithSubmissionId);
-
-        const { data, error } = await this.client
-            .from('panel_review_indicator_reviews')
-            .insert(reviewsWithSubmissionId)
-            .select('*, indicators(name, description)');
+        // Insert one by one for better error tracking
+        const insertedReviews = [];
         
-        if (error) {
-            console.error('Error inserting indicator reviews:', error);
-            throw error;
+        for (const review of indicatorReviews) {
+            const reviewData = {
+                submission_id: submissionId,
+                indicator_id: review.indicatorId,
+                is_necessary: review.isNecessary || 'not_sure',
+                clarity_rating: parseInt(review.clarityRating) || 3,
+                analysis: review.analysis || 'No analysis provided'
+            };
+
+            console.log('Inserting single review:', reviewData);
+
+            try {
+                const { data, error } = await this.client
+                    .from('panel_review_indicator_reviews')
+                    .insert(reviewData)
+                    .select('*, indicators(name, description)')
+                    .single();
+                
+                if (error) {
+                    console.error('Error inserting indicator review:', error);
+                    console.error('Review data that failed:', reviewData);
+                    // Continue with other reviews but log the error
+                    continue;
+                }
+                
+                console.log('Successfully inserted review:', data);
+                insertedReviews.push(data);
+            } catch (err) {
+                console.error('Exception inserting review:', err);
+                console.error('Review data:', reviewData);
+            }
         }
         
-        console.log('Inserted indicator reviews result:', data);
-        return data || [];
+        console.log(`Inserted ${insertedReviews.length} of ${indicatorReviews.length} reviews`);
+        return insertedReviews;
     }
 
     /**
@@ -870,7 +890,7 @@ class SupabaseService {
     async getAdminPanelReviewSubmissions(status = null) {
         let query = this.client
             .from('panel_review_submissions')
-            .select('*, panels(name, category), champions:reviewer_user_id(id, full_name, email)')
+            .select('*, panels(name, category)')
             .order('created_at', { ascending: false });
 
         if (status) {
@@ -879,6 +899,26 @@ class SupabaseService {
 
         const { data, error } = await query;
         if (error) throw error;
+        
+        // Fetch champion details separately for each submission
+        if (data && data.length > 0) {
+            const userIds = [...new Set(data.map(s => s.reviewer_user_id))];
+            const { data: champions } = await this.client
+                .from('champions')
+                .select('id, full_name, email')
+                .in('id', userIds);
+            
+            const championsMap = {};
+            if (champions) {
+                champions.forEach(c => championsMap[c.id] = c);
+            }
+            
+            // Attach champion data to submissions
+            data.forEach(submission => {
+                submission.champions = championsMap[submission.reviewer_user_id] || null;
+            });
+        }
+        
         return data || [];
     }
 
@@ -889,15 +929,25 @@ class SupabaseService {
         // Get submission
         const { data: submission, error: subError } = await this.client
             .from('panel_review_submissions')
-            .select('*, panels(name, category), champions:reviewer_user_id(id, full_name, email)')
+            .select('*, panels(name, category)')
             .eq('id', submissionId)
             .single();
         if (subError) throw subError;
 
+        // Get champion details separately
+        if (submission && submission.reviewer_user_id) {
+            const { data: champion } = await this.client
+                .from('champions')
+                .select('id, full_name, email')
+                .eq('id', submission.reviewer_user_id)
+                .single();
+            submission.champions = champion || null;
+        }
+
         // Get indicator reviews
         const { data: indicatorReviews, error: revError } = await this.client
             .from('panel_review_indicator_reviews')
-            .select('*, indicators(id, name, description, panels(name, category))')
+            .select('*, indicators(id, name, description)')
             .eq('submission_id', submissionId);
         if (revError) throw revError;
 
