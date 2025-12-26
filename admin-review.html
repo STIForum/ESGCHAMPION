@@ -57,6 +57,35 @@
             padding-top: var(--space-4);
             border-top: 1px solid var(--gray-100);
         }
+        .panel-review-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-4);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all var(--transition);
+            border-left: 4px solid var(--warning);
+        }
+        .panel-review-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateX(4px);
+        }
+        .panel-review-card.approved {
+            border-left-color: var(--success);
+        }
+        .panel-review-card.rejected {
+            border-left-color: var(--error);
+        }
+        .indicator-review-item {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-3);
+        }
+        .indicator-review-item:last-child {
+            margin-bottom: 0;
+        }
     </style>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -112,8 +141,12 @@
 
             <!-- Admin Tabs -->
             <div class="admin-tabs">
-                <button class="admin-tab active" data-tab="reviews">
-                    Review Queue
+                <button class="admin-tab active" data-tab="panel-reviews">
+                    Panel Reviews
+                    <span class="badge badge-warning" id="panel-pending-count" style="margin-left: var(--space-2);">0</span>
+                </button>
+                <button class="admin-tab" data-tab="reviews">
+                    Indicator Reviews
                     <span class="badge badge-warning" id="pending-count" style="margin-left: var(--space-2);">0</span>
                 </button>
                 <button class="admin-tab" data-tab="panels">Panels</button>
@@ -128,8 +161,15 @@
 
             <!-- Tab Content -->
             <div id="admin-content" class="hidden">
-                <!-- Reviews Tab -->
-                <div id="tab-reviews" class="tab-content">
+                <!-- Panel Reviews Tab -->
+                <div id="tab-panel-reviews" class="tab-content">
+                    <div id="panel-reviews-queue">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Indicator Reviews Tab -->
+                <div id="tab-reviews" class="tab-content hidden">
                     <div id="reviews-queue">
                         <!-- Populated by JS -->
                     </div>
@@ -191,6 +231,22 @@
                 <!-- Populated by JS -->
             </div>
             <div class="modal-footer" id="review-modal-footer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Review Modal -->
+    <div class="modal-backdrop" id="panel-review-modal-backdrop">
+        <div class="modal" id="panel-review-modal" style="max-width: 700px; max-height: 80vh;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="panel-review-modal-title">Panel Review Details</h3>
+                <button class="modal-close" id="panel-review-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="panel-review-modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-footer" id="panel-review-modal-footer">
                 <!-- Populated by JS -->
             </div>
         </div>

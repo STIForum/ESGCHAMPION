@@ -522,6 +522,9 @@ class ChampionIndicators {
             // Clear local review data
             this.reviewsData = {};
             
+            // Mark this panel as awaiting approval
+            this.markPanelAsAwaitingApproval();
+            
             // Show success state
             this.showPanelReviewSuccess(reviewsToSubmit.length);
 
@@ -581,6 +584,31 @@ class ChampionIndicators {
         delete this.reviewsData[indicatorId];
         this.renderIndicatorsList();
         this.selectIndicator(indicatorId);
+    }
+
+    markPanelAsAwaitingApproval() {
+        if (!this.currentPanelId) return;
+        
+        // Store in sessionStorage
+        const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+        panelReviews[this.currentPanelId] = 'pending';
+        sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
+        
+        // Also store the panel review submission for admin
+        const panelSubmissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
+        const submission = {
+            id: `${this.currentPanelId}-${Date.now()}`,
+            panelId: this.currentPanelId,
+            panelName: this.currentPanelName,
+            indicatorIds: this.selectedIndicatorIds,
+            indicatorCount: this.indicators.length,
+            submittedAt: new Date().toISOString(),
+            status: 'pending',
+            championId: window.championAuth?.getCurrentUser()?.id || null,
+            championName: window.championAuth?.getCurrentUser()?.user_metadata?.full_name || 'Anonymous'
+        };
+        panelSubmissions.push(submission);
+        localStorage.setItem('panelSubmissions', JSON.stringify(panelSubmissions));
     }
 
     markIndicatorAsReviewed(indicatorId) {

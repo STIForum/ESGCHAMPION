@@ -6,8 +6,10 @@
 class AdminReviewPage {
     constructor() {
         this.pendingReviews = [];
-        this.currentTab = 'reviews';
+        this.panelReviews = [];
+        this.currentTab = 'panel-reviews';
         this.selectedReview = null;
+        this.selectedPanelReview = null;
     }
 
     async init() {
@@ -22,6 +24,7 @@ class AdminReviewPage {
         }
 
         // Load initial data
+        await this.loadPanelReviewQueue();
         await this.loadReviewQueue();
         
         // Setup event listeners
@@ -30,6 +33,200 @@ class AdminReviewPage {
         // Show content
         document.getElementById('loading-state').classList.add('hidden');
         document.getElementById('admin-content').classList.remove('hidden');
+    }
+
+    async loadPanelReviewQueue() {
+        try {
+            // Get panel submissions from localStorage (in production, this would be from database)
+            const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
+            this.panelReviews = submissions.filter(s => s.status === 'pending');
+            
+            const countEl = document.getElementById('panel-pending-count');
+            if (countEl) {
+                countEl.textContent = this.panelReviews.length;
+            }
+            this.renderPanelReviewQueue(this.panelReviews);
+            
+        } catch (error) {
+            console.error('Error loading panel review queue:', error);
+        }
+    }
+
+    renderPanelReviewQueue(reviews) {
+        const container = document.getElementById('panel-reviews-queue');
+        if (!container) return;
+        
+        if (reviews.length === 0) {
+            container.innerHTML = `
+                <div class="text-center p-8">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2" style="margin: 0 auto var(--space-4);">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <h3 style="color: var(--gray-600);">All caught up!</h3>
+                    <p class="text-secondary">No pending panel reviews to moderate.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = reviews.map(review => `
+            <div class="panel-review-card" data-id="${review.id}" onclick="adminPage.openPanelReviewModal('${review.id}')">
+                <div class="flex-between mb-4">
+                    <div>
+                        <h3 style="margin-bottom: var(--space-1);">${review.panelName || 'Unknown Panel'}</h3>
+                        <div class="text-secondary" style="font-size: var(--text-sm);">
+                            ${review.indicatorCount || 0} indicators reviewed
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="badge badge-warning">Pending Review</span>
+                        <div class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">
+                            ${this.formatDate(review.submittedAt)}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-between">
+                    <div class="text-secondary" style="font-size: var(--text-sm);">
+                        Submitted by: <strong>${review.championName || 'Anonymous'}</strong>
+                    </div>
+                    <button class="btn btn-primary btn-sm">View Details</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async openPanelReviewModal(submissionId) {
+        const submission = this.panelReviews.find(r => r.id === submissionId);
+        if (!submission) return;
+
+        this.selectedPanelReview = submission;
+
+        const backdrop = document.getElementById('panel-review-modal-backdrop');
+        const modal = document.getElementById('panel-review-modal');
+        const title = document.getElementById('panel-review-modal-title');
+        const body = document.getElementById('panel-review-modal-body');
+        const footer = document.getElementById('panel-review-modal-footer');
+
+        title.textContent = `Review: ${submission.panelName}`;
+
+        // Fetch indicator details
+        let indicatorDetails = [];
+        try {
+            indicatorDetails = await window.championDB.getIndicatorsByIds(submission.indicatorIds);
+        } catch (error) {
+            console.error('Error fetching indicators:', error);
+        }
+
+        body.innerHTML = `
+            <div style="margin-bottom: var(--space-4);">
+                <div class="flex-between mb-3">
+                    <span class="text-secondary">Panel:</span>
+                    <strong>${submission.panelName}</strong>
+                </div>
+                <div class="flex-between mb-3">
+                    <span class="text-secondary">Submitted by:</span>
+                    <strong>${submission.championName || 'Anonymous'}</strong>
+                </div>
+                <div class="flex-between mb-3">
+                    <span class="text-secondary">Submitted at:</span>
+                    <strong>${this.formatDate(submission.submittedAt)}</strong>
+                </div>
+                <div class="flex-between">
+                    <span class="text-secondary">Indicators reviewed:</span>
+                    <strong>${submission.indicatorCount}</strong>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom: var(--space-3);">Reviewed Indicators</h4>
+            <div class="indicators-reviewed-list">
+                ${indicatorDetails.length > 0 ? indicatorDetails.map((ind, idx) => `
+                    <div class="indicator-review-item">
+                        <div class="flex-between mb-2">
+                            <span class="badge badge-primary">#${idx + 1}</span>
+                            ${ind.panels ? `<span class="badge badge-${ind.panels.category}">${ind.panels.category}</span>` : ''}
+                        </div>
+                        <h5 style="margin-bottom: var(--space-1);">${ind.name}</h5>
+                        <p class="text-secondary" style="font-size: var(--text-sm); margin: 0;">${ind.description || 'No description'}</p>
+                    </div>
+                `).join('') : `
+                    <p class="text-secondary">Unable to load indicator details.</p>
+                `}
+            </div>
+        `;
+
+        footer.innerHTML = `
+            <button class="btn btn-ghost" onclick="adminPage.closePanelReviewModal()">Cancel</button>
+            <button class="btn btn-error" onclick="adminPage.rejectPanelReview('${submissionId}')">Reject</button>
+            <button class="btn btn-success" onclick="adminPage.approvePanelReview('${submissionId}')">Approve</button>
+        `;
+
+        backdrop.classList.add('active');
+        modal.classList.add('active');
+    }
+
+    closePanelReviewModal() {
+        const backdrop = document.getElementById('panel-review-modal-backdrop');
+        const modal = document.getElementById('panel-review-modal');
+        backdrop.classList.remove('active');
+        modal.classList.remove('active');
+        this.selectedPanelReview = null;
+    }
+
+    async approvePanelReview(submissionId) {
+        try {
+            // Update localStorage
+            const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
+            const idx = submissions.findIndex(s => s.id === submissionId);
+            if (idx !== -1) {
+                submissions[idx].status = 'approved';
+                localStorage.setItem('panelSubmissions', JSON.stringify(submissions));
+            }
+
+            // Update panelReviews in sessionStorage
+            const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+            const submission = submissions[idx];
+            if (submission) {
+                panelReviews[submission.panelId] = 'approved';
+                sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
+            }
+
+            window.showToast?.('Panel review approved successfully!', 'success');
+            this.closePanelReviewModal();
+            await this.loadPanelReviewQueue();
+            
+        } catch (error) {
+            console.error('Error approving panel review:', error);
+            window.showToast?.('Failed to approve. Please try again.', 'error');
+        }
+    }
+
+    async rejectPanelReview(submissionId) {
+        try {
+            // Update localStorage
+            const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
+            const idx = submissions.findIndex(s => s.id === submissionId);
+            if (idx !== -1) {
+                submissions[idx].status = 'rejected';
+                localStorage.setItem('panelSubmissions', JSON.stringify(submissions));
+            }
+
+            // Remove from panelReviews in sessionStorage
+            const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+            const submission = submissions[idx];
+            if (submission) {
+                delete panelReviews[submission.panelId];
+                sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
+            }
+
+            window.showToast?.('Panel review rejected.', 'info');
+            this.closePanelReviewModal();
+            await this.loadPanelReviewQueue();
+            
+        } catch (error) {
+            console.error('Error rejecting panel review:', error);
+            window.showToast?.('Failed to reject. Please try again.', 'error');
+        }
     }
 
     async loadReviewQueue() {
@@ -126,13 +323,27 @@ class AdminReviewPage {
         // Export button
         document.getElementById('export-btn').addEventListener('click', () => this.exportData());
 
-        // Modal close
+        // Modal close - Indicator Review
         document.getElementById('review-modal-close').addEventListener('click', () => this.closeModal());
         document.getElementById('review-modal-backdrop').addEventListener('click', (e) => {
             if (e.target === document.getElementById('review-modal-backdrop')) {
                 this.closeModal();
             }
         });
+
+        // Modal close - Panel Review
+        const panelModalClose = document.getElementById('panel-review-modal-close');
+        const panelModalBackdrop = document.getElementById('panel-review-modal-backdrop');
+        if (panelModalClose) {
+            panelModalClose.addEventListener('click', () => this.closePanelReviewModal());
+        }
+        if (panelModalBackdrop) {
+            panelModalBackdrop.addEventListener('click', (e) => {
+                if (e.target === panelModalBackdrop) {
+                    this.closePanelReviewModal();
+                }
+            });
+        }
     }
 
     async switchTab(tabName) {

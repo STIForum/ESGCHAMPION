@@ -73,8 +73,24 @@ class ChampionPanels {
             const estimatedTime = panel.estimated_time || '10-13 min';
             const points = panel.indicator_count ? panel.indicator_count * 90 : 0;
             
+            // Check if panel is awaiting approval
+            const panelStatus = this.getPanelReviewStatus(panel.id);
+            const isAwaitingApproval = panelStatus === 'pending';
+            const isApproved = panelStatus === 'approved';
+            
+            let statusBadge = '<span class="status-badge status-not-started">Not Started</span>';
+            let buttonHtml = `<button class="btn btn-primary" style="width: 100%;">Review Panel</button>`;
+            
+            if (isAwaitingApproval) {
+                statusBadge = '<span class="status-badge status-in-progress">⏳ Awaiting Approval</span>';
+                buttonHtml = `<button class="btn btn-secondary" style="width: 100%;" disabled>Review Submitted</button>`;
+            } else if (isApproved) {
+                statusBadge = '<span class="status-badge status-completed">✓ Approved</span>';
+                buttonHtml = `<button class="btn btn-ghost" style="width: 100%;">View Review</button>`;
+            }
+            
             return `
-            <div class="panel-card ${panel.category}" style="cursor: pointer;" onclick="panelsPage.openIndicatorModal('${panel.id}', '${panel.name}')">
+            <div class="panel-card ${panel.category} ${isAwaitingApproval ? 'awaiting-approval' : ''}" style="cursor: pointer;" onclick="panelsPage.startPanelReview('${panel.id}', '${panel.name.replace(/'/g, "\\'")}')">
                 <h3 style="font-size: var(--text-xl); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2);">
                     <span style="font-size: 1.2em;">${icon}</span>
                     ${panel.name}
@@ -94,13 +110,54 @@ class ChampionPanels {
                 </div>
                 
                 <div class="flex-between" style="margin-bottom: var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--gray-100);">
-                    <span class="status-badge status-not-started">Not Started</span>
+                    ${statusBadge}
                     <span style="color: var(--primary-500); font-weight: 600; font-size: var(--text-sm);">+${points} points</span>
                 </div>
                 
-                <button class="btn btn-primary" style="width: 100%;">Review Panel</button>
+                ${buttonHtml}
             </div>
         `}).join('');
+    }
+
+    getPanelReviewStatus(panelId) {
+        // Check sessionStorage for panel review status
+        const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+        return panelReviews[panelId] || null;
+    }
+
+    async startPanelReview(panelId, panelName) {
+        // Check if panel is already awaiting approval
+        const status = this.getPanelReviewStatus(panelId);
+        if (status === 'pending') {
+            window.showToast?.('This panel review is already awaiting approval', 'info');
+            return;
+        }
+
+        try {
+            // Fetch all indicators for this panel
+            const panelData = await window.championDB.getPanelWithIndicators(panelId);
+            const indicators = panelData.indicators || [];
+            
+            if (indicators.length === 0) {
+                window.showToast?.('No indicators available for this panel', 'error');
+                return;
+            }
+
+            // Store panel info and ALL indicator IDs
+            sessionStorage.setItem('selectedIndicators', JSON.stringify({
+                panelId: panelId,
+                panelName: panelName,
+                indicatorIds: indicators.map(i => i.id)
+            }));
+
+            // Navigate directly to review page with all indicators
+            const indicatorIds = indicators.map(i => i.id).join(',');
+            window.location.href = `/champion-indicators.html?panel=${panelId}&selected=${indicatorIds}`;
+            
+        } catch (error) {
+            console.error('Error starting panel review:', error);
+            window.showToast?.('Failed to load panel. Please try again.', 'error');
+        }
     }
 
     getPanelIcon(name, category) {
