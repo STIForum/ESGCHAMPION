@@ -115,7 +115,7 @@ class ChampionPanels {
 
         // ESC key to close
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !backdrop.classList.contains('hidden')) {
+            if (e.key === 'Escape' && backdrop.classList.contains('active')) {
                 this.closeModal();
             }
         });
@@ -135,6 +135,7 @@ class ChampionPanels {
         this.selectedIndicators.clear();
         
         const backdrop = document.getElementById('indicator-modal-backdrop');
+        const modal = document.getElementById('indicator-modal');
         const indicatorsList = document.getElementById('indicators-list');
         const reviewBtn = document.getElementById('review-selected-btn');
         
@@ -143,8 +144,9 @@ class ChampionPanels {
         document.getElementById('indicator-search').value = '';
         indicatorsList.innerHTML = '<div class="text-center p-6"><div class="loading-spinner"></div></div>';
         
-        // Show modal
-        backdrop.classList.remove('hidden');
+        // Show modal (add active class for CSS visibility)
+        backdrop.classList.add('active');
+        modal.classList.add('active');
         document.body.style.overflow = 'hidden';
         
         try {
@@ -159,7 +161,9 @@ class ChampionPanels {
 
     closeModal() {
         const backdrop = document.getElementById('indicator-modal-backdrop');
-        backdrop.classList.add('hidden');
+        const modal = document.getElementById('indicator-modal');
+        backdrop.classList.remove('active');
+        modal.classList.remove('active');
         document.body.style.overflow = '';
     }
 
