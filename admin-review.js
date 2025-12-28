@@ -442,6 +442,51 @@ class AdminReviewPage {
                 }
             });
         }
+
+        // Add Panel Modal
+        const addPanelBtn = document.getElementById('add-panel-btn');
+        const addPanelModalClose = document.getElementById('add-panel-modal-close');
+        const addPanelModalBackdrop = document.getElementById('add-panel-modal-backdrop');
+        const savePanelBtn = document.getElementById('save-panel-btn');
+        const cancelPanelBtn = document.getElementById('cancel-panel-btn');
+
+        if (addPanelBtn) {
+            addPanelBtn.addEventListener('click', () => this.openAddPanelModal());
+        }
+        if (addPanelModalClose) {
+            addPanelModalClose.addEventListener('click', () => this.closeAddPanelModal());
+        }
+        if (addPanelModalBackdrop) {
+            addPanelModalBackdrop.addEventListener('click', (e) => {
+                if (e.target === addPanelModalBackdrop) {
+                    this.closeAddPanelModal();
+                }
+            });
+        }
+        if (savePanelBtn) {
+            savePanelBtn.addEventListener('click', () => this.savePanel());
+        }
+        if (cancelPanelBtn) {
+            cancelPanelBtn.addEventListener('click', () => this.closeAddPanelModal());
+        }
+
+        // Escape key to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeModal();
+                this.closePanelReviewModal();
+                this.closeAddPanelModal();
+            }
+        });
+
+        // Clear validation errors on input
+        const addPanelForm = document.getElementById('add-panel-form');
+        if (addPanelForm) {
+            addPanelForm.querySelectorAll('input, select, textarea').forEach(field => {
+                field.addEventListener('input', () => this.clearFieldError(field));
+                field.addEventListener('change', () => this.clearFieldError(field));
+            });
+        }
     }
 
     async switchTab(tabName) {
@@ -787,6 +832,162 @@ class AdminReviewPage {
 
     editIndicator(indicatorId) {
         window.showToast('Indicator editing coming soon!', 'info');
+    }
+
+    // =====================================================
+    // ADD PANEL MODAL
+    // =====================================================
+
+    openAddPanelModal() {
+        const backdrop = document.getElementById('add-panel-modal-backdrop');
+        const modal = document.getElementById('add-panel-modal');
+        
+        if (backdrop && modal) {
+            backdrop.classList.add('active');
+            modal.classList.add('active');
+            
+            // Focus trap - focus first input
+            const firstInput = document.getElementById('panel-title');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 100);
+            }
+        }
+    }
+
+    closeAddPanelModal() {
+        const backdrop = document.getElementById('add-panel-modal-backdrop');
+        const modal = document.getElementById('add-panel-modal');
+        
+        if (backdrop && modal) {
+            backdrop.classList.remove('active');
+            modal.classList.remove('active');
+            this.resetAddPanelForm();
+        }
+    }
+
+    resetAddPanelForm() {
+        const form = document.getElementById('add-panel-form');
+        if (form) {
+            form.reset();
+            // Clear all error states
+            form.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(field => {
+                field.classList.remove('error');
+            });
+            form.querySelectorAll('.form-error').forEach(error => {
+                error.textContent = '';
+            });
+        }
+    }
+
+    clearFieldError(field) {
+        field.classList.remove('error');
+        const errorEl = document.getElementById(`${field.id}-error`);
+        if (errorEl) {
+            errorEl.textContent = '';
+        }
+    }
+
+    showFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const errorEl = document.getElementById(`${fieldId}-error`);
+        
+        if (field) {
+            field.classList.add('error');
+        }
+        if (errorEl) {
+            errorEl.textContent = message;
+        }
+    }
+
+    validateAddPanelForm() {
+        const requiredFields = [
+            { id: 'panel-title', label: 'Panel Title' },
+            { id: 'panel-category', label: 'Panel Category' },
+            { id: 'panel-impact', label: 'Impact' },
+            { id: 'panel-esg-classification', label: 'ESG Classification' },
+            { id: 'panel-framework', label: 'Primary Framework' }
+        ];
+
+        let isValid = true;
+
+        requiredFields.forEach(({ id, label }) => {
+            const field = document.getElementById(id);
+            if (!field || !field.value.trim()) {
+                this.showFieldError(id, `${label} is required`);
+                isValid = false;
+            } else {
+                this.clearFieldError(field);
+            }
+        });
+
+        return isValid;
+    }
+
+    async savePanel() {
+        if (!this.validateAddPanelForm()) {
+            return;
+        }
+
+        const saveBtn = document.getElementById('save-panel-btn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="loading-spinner-sm" style="width: 16px; height: 16px; margin-right: var(--space-2);"></span> Saving...';
+        }
+
+        try {
+            // Collect form values
+            const title = document.getElementById('panel-title').value.trim();
+            const category = document.getElementById('panel-category').value;
+            const impact = document.getElementById('panel-impact').value;
+            const description = document.getElementById('panel-description').value.trim();
+            const esgClassification = document.getElementById('panel-esg-classification').value;
+            const primaryFramework = document.getElementById('panel-framework').value;
+            const purpose = document.getElementById('panel-purpose').value.trim();
+            const unicode = document.getElementById('panel-unicode').value.trim();
+            const icon = document.getElementById('panel-icon').value.trim();
+
+            // Get selected SDGs
+            const sdgsSelect = document.getElementById('panel-sdgs');
+            const relatedSdgs = Array.from(sdgsSelect.selectedOptions).map(opt => opt.value);
+
+            // Build panel data object for API
+            const panelData = {
+                name: title,
+                category: category,
+                impact: impact,
+                description: description || null,
+                esg_classification: esgClassification,
+                primary_framework: primaryFramework,
+                related_sdgs: relatedSdgs.length > 0 ? relatedSdgs : null,
+                purpose: purpose || null,
+                unicode: unicode || null,
+                icon: icon || null,
+                is_active: true,
+                order_index: 0 // Will be set by backend or can be adjusted later
+            };
+
+            // Save to database via admin service
+            const savedPanel = await window.adminService.createPanel(panelData);
+
+            window.showToast?.('Panel created successfully!', 'success');
+            
+            // Close modal and reset form
+            this.closeAddPanelModal();
+
+            // Refresh the panels list if we're on the panels tab
+            if (this.currentTab === 'panels') {
+                await this.loadPanels();
+            }
+
+        } catch (error) {
+            console.error('Error creating panel:', error);
+            window.showToast?.('Failed to create panel. Please try again.', 'error');
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Save Panel';
+            }
+        }
     }
 
     renderStars(rating) {

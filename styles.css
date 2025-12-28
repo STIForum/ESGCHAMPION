@@ -700,9 +700,11 @@ p {
 }
 
 .form-error {
+    display: block;
     font-size: var(--text-sm);
     color: var(--error);
     margin-top: var(--space-1);
+    min-height: 1.25em;
 }
 
 /* Checkbox & Radio */

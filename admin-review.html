@@ -253,6 +253,141 @@
         </div>
     </div>
 
+    <!-- Add Panel Modal -->
+    <div class="modal-backdrop" id="add-panel-modal-backdrop">
+        <div class="modal" id="add-panel-modal" style="max-width: 700px; max-height: 90vh;">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Panel</h3>
+                <button class="modal-close" id="add-panel-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <form id="add-panel-form">
+                    <!-- Panel Title -->
+                    <div class="form-group">
+                        <label class="form-label">Panel Title <span style="color: var(--error);">*</span></label>
+                        <input type="text" class="form-input" id="panel-title" name="title" placeholder="e.g., Climate & GHG Emissions Panel" required>
+                        <span class="form-error" id="panel-title-error"></span>
+                    </div>
+
+                    <!-- Panel Category + Impact (two columns) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label">Panel Category <span style="color: var(--error);">*</span></label>
+                            <select class="form-select" id="panel-category" name="category" required>
+                                <option value="">Select category</option>
+                                <option value="Energy & Resource Use">Energy & Resource Use</option>
+                                <option value="Climate & GHG Emissions">Climate & GHG Emissions</option>
+                                <option value="Water, Waste & Circularity">Water, Waste & Circularity</option>
+                                <option value="Biodiversity & Land Use">Biodiversity & Land Use</option>
+                                <option value="Pollution & Air Quality">Pollution & Air Quality</option>
+                                <option value="Workforce & Labour Practices">Workforce & Labour Practices</option>
+                                <option value="Diversity, Equity & Inclusion (DEI)">Diversity, Equity & Inclusion (DEI)</option>
+                                <option value="Human Rights & Supply Chain">Human Rights & Supply Chain</option>
+                                <option value="Community & Social Impact">Community & Social Impact</option>
+                                <option value="Health & Safety">Health & Safety</option>
+                                <option value="Ethics, Compliance & Anti-Corruption">Ethics, Compliance & Anti-Corruption</option>
+                                <option value="Risk Management & Resilience">Risk Management & Resilience</option>
+                                <option value="Data Privacy & Cybersecurity">Data Privacy & Cybersecurity</option>
+                                <option value="Product Responsibility & Quality">Product Responsibility & Quality</option>
+                                <option value="ESG Strategy, Materiality & Innovation">ESG Strategy, Materiality & Innovation</option>
+                            </select>
+                            <span class="form-error" id="panel-category-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Impact <span style="color: var(--error);">*</span></label>
+                            <select class="form-select" id="panel-impact" name="impact" required>
+                                <option value="">Select impact level</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Foundational">Foundational</option>
+                            </select>
+                            <span class="form-error" id="panel-impact-error"></span>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" id="panel-description" name="description" placeholder="Short description of what this panel covers." rows="3"></textarea>
+                    </div>
+
+                    <!-- ESG Classification + Primary Framework (two columns) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label">ESG Classification <span style="color: var(--error);">*</span></label>
+                            <select class="form-select" id="panel-esg-classification" name="esgClassification" required>
+                                <option value="">Select classification</option>
+                                <option value="Environment">Environment</option>
+                                <option value="Social">Social</option>
+                                <option value="Governance">Governance</option>
+                            </select>
+                            <span class="form-error" id="panel-esg-classification-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Primary Framework <span style="color: var(--error);">*</span></label>
+                            <select class="form-select" id="panel-framework" name="primaryFramework" required>
+                                <option value="">Select framework</option>
+                                <option value="GRI">GRI</option>
+                                <option value="ESRS">ESRS</option>
+                                <option value="SASB">SASB</option>
+                                <option value="SME Hub">SME Hub</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span class="form-error" id="panel-framework-error"></span>
+                        </div>
+                    </div>
+
+                    <!-- Related SDGs -->
+                    <div class="form-group">
+                        <label class="form-label">Related SDGs</label>
+                        <select class="form-select" id="panel-sdgs" name="relatedSdgs" multiple size="7" style="height: auto;">
+                            <option value="SDG 1">SDG 1 – No Poverty</option>
+                            <option value="SDG 2">SDG 2 – Zero Hunger</option>
+                            <option value="SDG 3">SDG 3 – Good Health and Well-Being</option>
+                            <option value="SDG 4">SDG 4 – Quality Education</option>
+                            <option value="SDG 5">SDG 5 – Gender Equality</option>
+                            <option value="SDG 6">SDG 6 – Clean Water and Sanitation</option>
+                            <option value="SDG 7">SDG 7 – Affordable and Clean Energy</option>
+                            <option value="SDG 8">SDG 8 – Decent Work and Economic Growth</option>
+                            <option value="SDG 9">SDG 9 – Industry, Innovation and Infrastructure</option>
+                            <option value="SDG 10">SDG 10 – Reduced Inequalities</option>
+                            <option value="SDG 11">SDG 11 – Sustainable Cities and Communities</option>
+                            <option value="SDG 12">SDG 12 – Responsible Consumption and Production</option>
+                            <option value="SDG 13">SDG 13 – Climate Action</option>
+                            <option value="SDG 14">SDG 14 – Life Below Water</option>
+                            <option value="SDG 15">SDG 15 – Life on Land</option>
+                            <option value="SDG 16">SDG 16 – Peace, Justice and Strong Institutions</option>
+                            <option value="SDG 17">SDG 17 – Partnerships for the Goals</option>
+                        </select>
+                        <p class="form-helper">Hold <strong>Cmd (Mac)</strong> or <strong>Ctrl (Windows)</strong> to select multiple SDGs.</p>
+                    </div>
+
+                    <!-- Purpose -->
+                    <div class="form-group">
+                        <label class="form-label">Purpose</label>
+                        <textarea class="form-textarea" id="panel-purpose" name="purpose" placeholder="Panel purpose or intended use." rows="2"></textarea>
+                    </div>
+
+                    <!-- Unicode + Icon (two columns) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label">Unicode (optional)</label>
+                            <input type="text" class="form-input" id="panel-unicode" name="unicode" placeholder="e.g., U+1F30D">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Icon (Emoji or Unicode)</label>
+                            <input type="text" class="form-input" id="panel-icon" name="icon" placeholder="e.g., 🌍">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-start; gap: var(--space-3);">
+                <button type="button" class="btn btn-primary" id="save-panel-btn">Save Panel</button>
+                <button type="button" class="btn btn-secondary" id="cancel-panel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Compact Footer (Dashboard variant) -->
     <footer class="footer-compact">
         <div class="container">
