@@ -132,6 +132,32 @@ class AdminService {
         return data;
     }
 
+    /**
+     * Permanently delete a panel from the database
+     */
+    async permanentlyDeletePanel(panelId) {
+        const client = window.getSupabase();
+        
+        // First delete all indicators associated with this panel
+        await client
+            .from('indicators')
+            .delete()
+            .eq('panel_id', panelId);
+
+        // Then delete the panel itself
+        const { data, error } = await client
+            .from('panels')
+            .delete()
+            .eq('id', panelId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        
+        await this.logAction('permanent_delete_panel', 'panel', panelId);
+        return data;
+    }
+
     // =====================================================
     // INDICATORS
     // =====================================================

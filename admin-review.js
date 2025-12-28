@@ -518,6 +518,12 @@ class AdminReviewPage {
             deletePanelBtn.addEventListener('click', () => this.deleteCurrentPanel());
         }
 
+        // Toggle Panel Visibility Button
+        const toggleVisibilityBtn = document.getElementById('toggle-panel-visibility-btn');
+        if (toggleVisibilityBtn) {
+            toggleVisibilityBtn.addEventListener('click', () => this.togglePanelVisibility());
+        }
+
         // Clear validation errors on input for edit form
         const editPanelForm = document.getElementById('edit-panel-form');
         if (editPanelForm) {
@@ -949,6 +955,9 @@ class AdminReviewPage {
                 option.selected = relatedSdgs.includes(option.value);
             });
 
+            // Update visibility toggle button state
+            this.updateVisibilityButtonState(panel.is_active !== false);
+
             // Focus first input
             setTimeout(() => document.getElementById('edit-panel-title').focus(), 100);
 
@@ -1137,9 +1146,10 @@ class AdminReviewPage {
         confirmBtn.innerHTML = '<span class="loading-spinner-sm" style="width: 16px; height: 16px; margin-right: var(--space-2);"></span> Deleting...';
 
         try {
-            await window.adminService.deletePanel(this.currentEditingPanel.id);
+            // Permanently delete from database
+            await window.adminService.permanentlyDeletePanel(this.currentEditingPanel.id);
 
-            window.showToast?.('Panel deleted successfully!', 'success');
+            window.showToast?.('Panel permanently deleted from database!', 'success');
             
             // Close both modals
             this.closeDeleteConfirmModal();
@@ -1163,6 +1173,85 @@ class AdminReviewPage {
                 </svg>
                 Delete Panel
             `;
+        }
+    }
+
+    // =====================================================
+    // PANEL VISIBILITY TOGGLE
+    // =====================================================
+
+    updateVisibilityButtonState(isActive) {
+        const btn = document.getElementById('toggle-panel-visibility-btn');
+        const btnText = document.getElementById('visibility-btn-text');
+        const icon = document.getElementById('visibility-icon');
+
+        if (btn && btnText && icon) {
+            if (isActive) {
+                // Panel is active - show "Hide" option
+                btnText.textContent = 'Hide';
+                btn.style.background = 'var(--gray-100)';
+                btn.style.color = 'var(--gray-700)';
+                icon.innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+            } else {
+                // Panel is inactive - show "Show" option
+                btnText.textContent = 'Show';
+                btn.style.background = 'var(--success-bg)';
+                btn.style.color = 'var(--success)';
+                icon.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+            }
+        }
+    }
+
+    async togglePanelVisibility() {
+        if (!this.currentEditingPanel) return;
+
+        const btn = document.getElementById('toggle-panel-visibility-btn');
+        const btnText = document.getElementById('visibility-btn-text');
+        const currentState = this.currentEditingPanel.is_active !== false;
+        const newState = !currentState;
+
+        if (btn) {
+            btn.disabled = true;
+            btnText.textContent = newState ? 'Showing...' : 'Hiding...';
+        }
+
+        try {
+            // Update only the is_active field
+            await window.adminService.updatePanel(this.currentEditingPanel.id, { is_active: newState });
+
+            // Update local state
+            this.currentEditingPanel.is_active = newState;
+
+            // Update the checkbox in the form
+            document.getElementById('edit-panel-active').checked = newState;
+
+            // Update button state
+            this.updateVisibilityButtonState(newState);
+
+            window.showToast?.(
+                newState ? 'Panel is now visible to champions!' : 'Panel is now hidden from champions.',
+                'success'
+            );
+
+            // Refresh panels list
+            if (this.currentTab === 'panels') {
+                await this.loadPanels();
+            }
+
+        } catch (error) {
+            console.error('Error toggling panel visibility:', error);
+            window.showToast?.('Failed to update panel visibility.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                this.updateVisibilityButtonState(this.currentEditingPanel.is_active);
+            }
         }
     }
 
