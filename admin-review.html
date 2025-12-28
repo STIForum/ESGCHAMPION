@@ -146,10 +146,6 @@
                     Panel Reviews
                     <span class="badge badge-warning" id="panel-pending-count" style="margin-left: var(--space-2);">0</span>
                 </button>
-                <button class="admin-tab" data-tab="reviews">
-                    Indicator Reviews
-                    <span class="badge badge-warning" id="pending-count" style="margin-left: var(--space-2);">0</span>
-                </button>
                 <button class="admin-tab" data-tab="panels">Panels</button>
                 <button class="admin-tab" data-tab="indicators">Indicators</button>
                 <button class="admin-tab" data-tab="champions">Champions</button>
@@ -165,13 +161,6 @@
                 <!-- Panel Reviews Tab -->
                 <div id="tab-panel-reviews" class="tab-content">
                     <div id="panel-reviews-queue">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Indicator Reviews Tab -->
-                <div id="tab-reviews" class="tab-content hidden">
-                    <div id="reviews-queue">
                         <!-- Populated by JS -->
                     </div>
                 </div>
@@ -220,22 +209,6 @@
             </div>
         </div>
     </main>
-
-    <!-- Review Modal -->
-    <div class="modal-backdrop" id="review-modal-backdrop">
-        <div class="modal" id="review-modal" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3 class="modal-title" id="review-modal-title">Review Details</h3>
-                <button class="modal-close" id="review-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" id="review-modal-body">
-                <!-- Populated by JS -->
-            </div>
-            <div class="modal-footer" id="review-modal-footer">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-    </div>
 
     <!-- Panel Review Modal -->
     <div class="modal-backdrop" id="panel-review-modal-backdrop">
