@@ -280,6 +280,13 @@ p {
 
 /* =====================================================
    HEADER & NAVIGATION (STIF Brand Guidelines)
+   
+   Navigation Color Strategy:
+   - Background: White (#FFFFFF) for clean appearance
+   - Nav text: STIF Gray (#666666) for default state
+   - Hover state: STIF Blue (#0073E6) accent color
+   - Active state: STIF Green (#009B77) brand primary
+   - Underline accent: STIF Blue (#0073E6) on hover/active
    ===================================================== */
 .header {
     position: sticky; /* STIF: Sticky navigation */
@@ -321,8 +328,17 @@ p {
     color: var(--stif-green);
 }
 
+/* STIF Brand: Primary logo minimum 120px height on digital */
 .logo-img {
-    height: 48px;
+    height: 120px;
+    min-height: 120px; /* STIF Brand Guideline: Never render below 120px */
+    width: auto;
+    flex-shrink: 0;
+}
+
+/* Footer logo: Secondary placement, 60px height (reduced for footer context) */
+.logo-img-footer {
+    height: 60px;
     width: auto;
     flex-shrink: 0;
 }
@@ -354,7 +370,8 @@ p {
     list-style: none;
 }
 
-/* STIF: Nav links Title Case with blue hover */
+/* STIF: Nav links Title Case
+   Color strategy: Blue (#0073E6) for hover/accents, Green (#009B77) for active */
 .nav-link {
     font-weight: 500;
     color: var(--stif-gray);
@@ -371,15 +388,16 @@ p {
     left: 0;
     width: 0;
     height: 2px;
-    background: var(--stif-blue);
+    background: var(--stif-blue); /* STIF Blue accent for underline */
     transition: width var(--transition);
 }
 
-/* STIF: Blue hover state, green active state */
+/* STIF Brand: Blue (#0073E6) for hover accent */
 .nav-link:hover {
     color: var(--stif-blue);
 }
 
+/* STIF Brand: Green (#009B77) for active state */
 .nav-link.active {
     color: var(--stif-green);
 }
@@ -1103,7 +1121,7 @@ p {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    padding-top: 80px;
+    padding-top: 140px; /* Adjusted for larger logo */
     overflow: hidden;
 }
 
@@ -1123,7 +1141,7 @@ p {
     right: -10%;
     width: 80%;
     height: 100%;
-    background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 155, 119, 0.15) 0%, transparent 70%); /* STIF Green */
     border-radius: 50%;
 }
 
@@ -1134,7 +1152,7 @@ p {
     left: -10%;
     width: 60%;
     height: 80%;
-    background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 115, 230, 0.1) 0%, transparent 70%); /* STIF Blue */
     border-radius: 50%;
 }
 
@@ -1143,10 +1161,15 @@ p {
     z-index: 1;
 }
 
+/* STIF Brand: Hero H1 - 36px base, line-height 1.5, bold, UPPERCASE
+   Responsive scaling maintained but never below 36px minimum */
 .hero-title {
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-size: clamp(36px, 6vw, 4.5rem); /* Min 36px per STIF guidelines */
     margin-bottom: var(--space-6);
-    line-height: 1.1;
+    line-height: 1.5; /* STIF: H1 line-height 1.5 */
+    font-weight: 700; /* STIF: Bold */
+    text-transform: uppercase; /* STIF: UPPERCASE */
+    letter-spacing: 0.5px;
 }
 
 .hero-subtitle {
@@ -1225,7 +1248,7 @@ p {
 .dashboard-layout {
     display: flex;
     min-height: 100vh;
-    padding-top: 70px;
+    padding-top: 140px; /* Adjusted for 120px logo + padding */
 }
 
 .sidebar {
@@ -1234,7 +1257,7 @@ p {
     border-right: 1px solid var(--gray-200);
     padding: var(--space-6);
     position: fixed;
-    top: 70px;
+    top: 140px; /* Adjusted for larger header */
     left: 0;
     bottom: 0;
     overflow-y: auto;
@@ -1273,7 +1296,7 @@ p {
     margin-right: max(24px, calc((100vw - 1280px) / 2));
     padding: var(--space-8);
     background: var(--gray-50);
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 140px); /* Adjusted for larger header */
     min-width: 0;
 }
 
