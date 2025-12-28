@@ -1623,6 +1623,76 @@ p {
 }
 
 /* =====================================================
+   COMPACT FOOTER VARIANT (Dashboard pages)
+   Slim, single-row footer for pages with sidebar layout
+   ===================================================== */
+.footer-compact {
+    background: var(--gray-900);
+    color: var(--gray-400);
+    padding: var(--space-4) 0;
+    margin-left: 500px; /* Match main-content margin-left */
+}
+
+.footer-compact .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.footer-compact-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    list-style: none;
+}
+
+.footer-compact-links a {
+    color: var(--gray-400);
+    font-size: var(--text-sm);
+    transition: color var(--transition);
+}
+
+.footer-compact-links a:hover {
+    color: white;
+}
+
+.footer-compact-cta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.footer-compact-cta .btn {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+}
+
+.footer-compact-copyright {
+    font-size: var(--text-xs);
+    color: var(--gray-500);
+}
+
+@media (max-width: 1024px) {
+    .footer-compact {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer-compact .container {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .footer-compact-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+/* =====================================================
    RESPONSIVE DESIGN
    ===================================================== */
 @media (max-width: 1024px) {
