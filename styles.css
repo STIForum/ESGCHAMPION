@@ -328,17 +328,16 @@ p {
     color: var(--stif-green);
 }
 
-/* STIF Brand: Primary logo minimum 120px height on digital */
+/* STIF Brand: Primary logo */
 .logo-img {
-    height: 120px;
-    min-height: 120px; /* STIF Brand Guideline: Never render below 120px */
+    height: 80px;
     width: auto;
     flex-shrink: 0;
 }
 
-/* Footer logo: Secondary placement, 60px height (reduced for footer context) */
+/* Footer logo: Secondary placement, 50px height (reduced for footer context) */
 .logo-img-footer {
-    height: 60px;
+    height: 50px;
     width: auto;
     flex-shrink: 0;
 }
@@ -1121,7 +1120,7 @@ p {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    padding-top: 140px; /* Adjusted for larger logo */
+    padding-top: 100px; /* Adjusted for 80px logo */
     overflow: hidden;
 }
 
@@ -1248,7 +1247,7 @@ p {
 .dashboard-layout {
     display: flex;
     min-height: 100vh;
-    padding-top: 140px; /* Adjusted for 120px logo + padding */
+    padding-top: 100px; /* Adjusted for 80px logo + padding */
 }
 
 .sidebar {
@@ -1257,7 +1256,7 @@ p {
     border-right: 1px solid var(--gray-200);
     padding: var(--space-6);
     position: fixed;
-    top: 140px; /* Adjusted for larger header */
+    top: 100px; /* Adjusted for 80px header */
     left: 0;
     bottom: 0;
     overflow-y: auto;
@@ -1296,7 +1295,7 @@ p {
     margin-right: max(24px, calc((100vw - 1280px) / 2));
     padding: var(--space-8);
     background: var(--gray-50);
-    min-height: calc(100vh - 140px); /* Adjusted for larger header */
+    min-height: calc(100vh - 100px); /* Adjusted for 80px header */
     min-width: 0;
 }
 
