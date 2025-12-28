@@ -28,7 +28,6 @@ class AdminReviewPage {
 
         // Load initial data
         await this.loadPanelReviewQueue();
-        await this.loadReviewQueue();
         
         // Setup event listeners
         this.setupEventListeners();
@@ -424,14 +423,6 @@ class AdminReviewPage {
         // Export button
         document.getElementById('export-btn').addEventListener('click', () => this.exportData());
 
-        // Modal close - Indicator Review
-        document.getElementById('review-modal-close').addEventListener('click', () => this.closeModal());
-        document.getElementById('review-modal-backdrop').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('review-modal-backdrop')) {
-                this.closeModal();
-            }
-        });
-
         // Modal close - Panel Review
         const panelModalClose = document.getElementById('panel-review-modal-close');
         const panelModalBackdrop = document.getElementById('panel-review-modal-backdrop');
@@ -476,7 +467,6 @@ class AdminReviewPage {
         // Escape key to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                this.closeModal();
                 this.closePanelReviewModal();
                 this.closeAddPanelModal();
                 this.closeEditPanelModal();
