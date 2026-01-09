@@ -258,12 +258,18 @@ class SupabaseService {
     /**
      * Get all active panels
      */
-    async getPanels() {
-        const { data, error } = await this.client
+    async getPanels({ includeInactive = false } = {}) {
+        let query = this.client
             .from('panels')
             .select('*')
-            .eq('is_active', true)
             .order('order_index');
+
+        // Treat missing is_active as active so newly inserted rows without the flag still appear
+        if (!includeInactive) {
+            query = query.or('is_active.is.null,is_active.eq.true');
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data;
     }
