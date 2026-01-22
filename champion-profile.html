@@ -101,36 +101,106 @@
                         <!-- Settings Tab -->
                         <div id="tab-settings" class="tab-content">
                             <form id="profile-form">
-                                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-6);">
-                                    <div class="form-group">
-                                        <label class="form-label" for="full_name">Full Name</label>
-                                        <input type="text" id="full_name" class="form-input" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label" for="email">Email</label>
-                                        <input type="email" id="email" class="form-input" disabled>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label" for="company">Company</label>
-                                        <input type="text" id="company" class="form-input">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label" for="job_title">Job Title</label>
-                                        <input type="text" id="job_title" class="form-input">
-                                    </div>
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label class="form-label" for="linkedin_url">LinkedIn Profile URL</label>
-                                        <input type="url" id="linkedin_url" class="form-input" placeholder="https://linkedin.com/in/yourprofile">
-                                    </div>
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label class="form-label" for="bio">Bio</label>
-                                        <textarea id="bio" class="form-textarea" rows="3" placeholder="Tell us about your sustainability expertise..."></textarea>
+                                <div class="section" style="margin-bottom: var(--space-8);">
+                                    <h4 style="margin-bottom: var(--space-3);">1.1 Basic Information</h4>
+                                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+                                        <div class="form-group">
+                                            <label class="form-label" for="first_name">First Name *</label>
+                                            <input type="text" id="first_name" class="form-input" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="last_name">Last Name *</label>
+                                            <input type="text" id="last_name" class="form-input" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="company">Company / Organisation Name *</label>
+                                            <input type="text" id="company" class="form-input" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="job_title">Role / Designation *</label>
+                                            <input type="text" id="job_title" class="form-input" required>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <div class="section" style="margin-bottom: var(--space-8);">
+                                    <h4 style="margin-bottom: var(--space-3);">1.2 Contact Details</h4>
+                                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+                                        <div class="form-group">
+                                            <label class="form-label" for="email">Business Email *</label>
+                                            <input type="email" id="email" class="form-input" disabled>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="mobile_number">Mobile Number *</label>
+                                            <input type="text" id="mobile_number" class="form-input" placeholder="+44 123 456 7890">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="office_phone">Office Phone Number</label>
+                                            <input type="text" id="office_phone" class="form-input" placeholder="+44 123 456 7891">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="linkedin_url">LinkedIn Profile</label>
+                                            <input type="url" id="linkedin_url" class="form-input" placeholder="https://linkedin.com/in/yourprofile">
+                                        </div>
+                                        <div class="form-group" style="grid-column: span 2;">
+                                            <label class="form-label" for="website">Professional Website</label>
+                                            <input type="url" id="website" class="form-input" placeholder="https://yourwebsite.com">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="section" style="margin-bottom: var(--space-8);">
+                                    <h4 style="margin-bottom: var(--space-3);">1.3 ESG Expertise & Achievements</h4>
+                                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+                                        <div class="form-group">
+                                            <label class="form-label" for="competence_esg">Competence in ESG Reporting</label>
+                                            <select id="competence_esg" class="form-select">
+                                                <option value="">Select competence level</option>
+                                                <option value="beginner">Beginner</option>
+                                                <option value="intermediate">Intermediate</option>
+                                                <option value="advanced">Advanced</option>
+                                                <option value="expert">Expert</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="grid-column: span 1;">
+                                            <label class="form-label" for="key_contributions">Key ESG Contributions</label>
+                                            <textarea id="key_contributions" class="form-textarea" rows="2" placeholder="Enter your key ESG achievements"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="section" style="margin-bottom: var(--space-6);">
+                                    <h4 style="margin-bottom: var(--space-3);">1.4 Areas of Interest</h4>
+                                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+                                        <div class="form-group">
+                                            <label class="form-label" for="sectors_focus">Primary Sectors of Focus *</label>
+                                            <select id="sectors_focus" class="form-select">
+                                                <option value="">Select sector</option>
+                                                <option value="energy">Energy</option>
+                                                <option value="manufacturing">Manufacturing</option>
+                                                <option value="finance">Finance</option>
+                                                <option value="technology">Technology</option>
+                                                <option value="healthcare">Healthcare</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="expertise_panels">Area of Expertise (Panels) *</label>
+                                            <select id="expertise_panels" class="form-select">
+                                                <option value="">Select panel</option>
+                                                <option value="environmental">Environmental</option>
+                                                <option value="social">Social</option>
+                                                <option value="governance">Governance</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="flex-between mt-6">
                                     <div></div>
                                     <button type="submit" class="btn btn-primary" id="save-profile-btn">Save Changes</button>
                                 </div>
+                                <input type="hidden" id="full_name" />
                             </form>
                         </div>
 
