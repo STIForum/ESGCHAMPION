@@ -725,6 +725,28 @@ p {
     accent-color: var(--primary-500);
 }
 
+/* Profile form layout refinements */
+.profile-form .section {
+    padding: 0;
+    margin-bottom: var(--space-5);
+}
+
+.profile-form h4 {
+    margin-bottom: var(--space-2);
+}
+
+.profile-form .grid {
+    gap: var(--space-5);
+}
+
+.profile-form .form-group {
+    margin-bottom: var(--space-4);
+}
+
+.profile-form .form-textarea {
+    min-height: 96px;
+}
+
 /* =====================================================
    BADGES & TAGS
    ===================================================== */
