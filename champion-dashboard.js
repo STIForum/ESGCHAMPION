@@ -148,15 +148,14 @@ class ChampionDashboard {
     async loadScoreBreakdown() {
         try {
             const scoreData = await this.db.getSTIFScore();
-            const total = scoreData.totalScore || 1;
-            
-            document.getElementById('breakdown-reviews').textContent = `${scoreData.breakdown.reviews} credits`;
-                const total = scoreData.totalScore || 0;
+            const total = scoreData.totalScore || 0;
 
-                const totalEl = document.getElementById('score-modal-total');
-                if (totalEl) {
-                    totalEl.textContent = total;
-                }
+            const totalEl = document.getElementById('score-modal-total');
+            if (totalEl) {
+                totalEl.textContent = total;
+            }
+        } catch (error) {
+            console.error('Error loading score breakdown:', error);
         }
     }
 
