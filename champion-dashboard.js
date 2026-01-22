@@ -151,16 +151,12 @@ class ChampionDashboard {
             const total = scoreData.totalScore || 1;
             
             document.getElementById('breakdown-reviews').textContent = `${scoreData.breakdown.reviews} credits`;
-            document.getElementById('breakdown-votes').textContent = `${scoreData.breakdown.votes} credits`;
-            document.getElementById('breakdown-participation').textContent = `${scoreData.breakdown.participation} credits`;
-            
-            // Update progress bars
-            document.getElementById('progress-reviews').style.width = `${Math.min((scoreData.breakdown.reviews / total) * 100, 100)}%`;
-            document.getElementById('progress-votes').style.width = `${Math.min((scoreData.breakdown.votes / total) * 100, 100)}%`;
-            document.getElementById('progress-participation').style.width = `${Math.min((scoreData.breakdown.participation / total) * 100, 100)}%`;
-            
-        } catch (error) {
-            console.error('Error loading score breakdown:', error);
+                const total = scoreData.totalScore || 0;
+
+                const totalEl = document.getElementById('score-modal-total');
+                if (totalEl) {
+                    totalEl.textContent = total;
+                }
         }
     }
 

@@ -249,44 +249,104 @@
     <div class="modal-backdrop" id="score-modal-backdrop">
         <div class="modal" id="score-modal">
             <div class="modal-header">
-                <h3 class="modal-title">STIF Score Breakdown</h3>
+                <h3 class="modal-title">How Scoring is Calculated</h3>
                 <button class="modal-close" id="score-modal-close">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="text-secondary mb-4">Your STIF Score is calculated based on your contributions to the platform:</p>
-                
                 <div class="mb-4">
-                    <div class="flex-between mb-2">
-                        <span class="font-semibold">Approved Reviews</span>
-                        <span id="breakdown-reviews">0 credits</span>
+                    <h4 class="widget-title" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #f4b400;">★</span>
+                        Credit Score Summary
+                    </h4>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #f4b400;">★</span>
+                            <span>Indicator Necessity</span>
+                        </div>
+                        <span class="font-semibold">+2</span>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-reviews" style="width: 0%;"></div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: var(--success);">✓</span>
+                            <span>Gap Detection / Missing Requirement</span>
+                        </div>
+                        <span class="font-semibold">+4</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: var(--gray-700);">•</span>
+                            <span>SME Reporting Difficulty (Moderate)</span>
+                        </div>
+                        <span class="font-semibold">+2</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #f59e0b;">🏷️</span>
+                            <span>Materiality Tags (2 selected)</span>
+                        </div>
+                        <span class="font-semibold">+2</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #f4b400;">★</span>
+                            <span>Impact Score on SMEs</span>
+                            <span style="color: #f4b400;">★★★★★</span>
+                        </div>
+                        <span class="font-semibold">+4</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: var(--success);">✓</span>
+                            <span>Version Appropriateness</span>
+                        </div>
+                        <span class="font-semibold">+1</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #fb7185;">✨</span>
+                            <span>Validation Response Quality</span>
+                        </div>
+                        <span class="font-semibold">+5</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: var(--info);">💬</span>
+                            <span>Additional Comments</span>
+                        </div>
+                        <span class="font-semibold">+2</span>
                     </div>
                 </div>
-                
-                <div class="mb-4">
-                    <div class="flex-between mb-2">
-                        <span class="font-semibold">Community Votes</span>
-                        <span id="breakdown-votes">0 credits</span>
+
+                <div class="divider"></div>
+
+                <div class="mt-4" style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--primary-700); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span style="color: #f4b400;">★</span>
+                        TOTAL CREDITS EARNED: <span id="score-modal-total" style="margin-left: 6px;">0</span>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-votes" style="width: 0%; background: var(--social);"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <div class="flex-between mb-2">
-                        <span class="font-semibold">Participation Bonus</span>
-                        <span id="breakdown-participation">0 credits</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-participation" style="width: 0%; background: var(--governance);"></div>
-                    </div>
-                </div>
-                
-                <div class="alert alert-info mt-6">
-                    <strong>Tip:</strong> Submit quality reviews and engage with the community to increase your score!
+                    <div style="font-size: var(--text-xl); font-weight: 700; color: var(--primary-700);">Credits</div>
                 </div>
             </div>
         </div>
