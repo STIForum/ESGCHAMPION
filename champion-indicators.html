@@ -209,6 +209,152 @@
         .review-submitted-badge {
             margin-top: var(--space-3);
         }
+
+        /* New assessment UI */
+        .section-block {
+            background: white;
+            border: 1px solid var(--gray-100);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            margin-bottom: var(--space-4);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--text-lg);
+            margin-bottom: var(--space-3);
+        }
+
+        .field-row {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+        }
+
+        .field-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
+        }
+
+        .info-button {
+            border: 1px solid var(--gray-300);
+            background: var(--gray-50);
+            color: var(--gray-700);
+            border-radius: var(--radius-full);
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all var(--transition);
+        }
+
+        .info-button:hover {
+            background: var(--primary-50);
+            border-color: var(--primary-200);
+            color: var(--primary-700);
+        }
+
+        .info-popover {
+            margin-top: var(--space-2);
+            padding: var(--space-3);
+            background: #fdfcef;
+            border: 1px solid #f5e7a1;
+            border-radius: var(--radius-lg);
+            color: var(--gray-800);
+            font-size: var(--text-sm);
+            display: none;
+        }
+
+        .info-popover.active {
+            display: block;
+        }
+
+        .info-popover strong {
+            display: block;
+            margin-bottom: var(--space-1);
+        }
+
+        .chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+        }
+
+        .chip {
+            border: 1px solid var(--gray-200);
+            background: white;
+            border-radius: var(--radius-full);
+            padding: var(--space-2) var(--space-4);
+            font-size: var(--text-sm);
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .chip.selected {
+            background: var(--primary-50);
+            border-color: var(--primary-400);
+            color: var(--primary-800);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .chip.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .sdg-chip {
+            min-width: 120px;
+            justify-content: flex-start;
+            gap: var(--space-2);
+        }
+
+        .sdg-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-400);
+            display: inline-block;
+        }
+
+        .locked-hint {
+            font-size: var(--text-sm);
+            color: var(--warning);
+            margin-top: var(--space-1);
+        }
+
+        .badge-note {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            background: var(--warning-bg);
+            color: var(--warning);
+            border: 1px solid #f59e0b;
+            border-radius: var(--radius-full);
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-xs);
+        }
+
+        .inline-helper {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+        }
+
+        .pill-muted {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border-radius: var(--radius-full);
+            padding: var(--space-1) var(--space-3);
+            font-size: var(--text-xs);
+        }
         
         /* Review Saved State (not yet submitted) */
         .review-saved-card {

@@ -857,9 +857,22 @@ class SupabaseService {
             const reviewData = {
                 submission_id: submissionId,
                 indicator_id: review.indicatorId,
-                is_necessary: review.isNecessary || 'not_sure',
-                clarity_rating: parseInt(review.clarityRating) || 3,
-                analysis: review.analysis || 'No analysis provided'
+                sme_size_band: review.sme_size_band || null,
+                primary_sector: review.primary_sector || null,
+                primary_framework: review.primary_framework || null,
+                esg_class: review.esg_class || null,
+                sdgs: review.sdgs || [],
+                relevance: review.relevance || null,
+                regulatory_necessity: review.regulatory_necessity || null,
+                operational_feasibility: review.operational_feasibility || null,
+                cost_to_collect: review.cost_to_collect || null,
+                misreporting_risk: review.misreporting_risk || null,
+                suggested_tier: review.suggested_tier || null,
+                rationale: review.rationale || null,
+                optional_tags: review.optional_tags || [],
+                notes: review.notes || null,
+                // Legacy fields for backward compatibility
+                analysis: review.rationale || review.analysis || 'Structured assessment provided'
             };
 
             console.log('Inserting single review:', reviewData);

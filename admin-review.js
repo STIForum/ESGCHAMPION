@@ -13,6 +13,60 @@ class AdminReviewPage {
         this.currentEditingPanel = null;
         this.currentEditingIndicator = null;
         this.panelsList = [];
+
+        this.labelMaps = {
+            sme_size_band: {
+                micro: 'Micro (0–9 / <£1.6m)',
+                small: 'Small (10–49 / £1.6–£8m)',
+                medium: 'Medium (50–249 / £8–£40m)',
+                upper_medium: 'Upper-medium (250–499 / £40–£200m)'
+            },
+            primary_sector: {
+                agriculture_forestry_fishing: 'Agriculture, Forestry and Fishing',
+                mining_quarrying_utilities: 'Mining & Quarrying; Utilities; Waste / Remediation',
+                manufacturing: 'Manufacturing',
+                construction: 'Construction',
+                wholesale_retail_repair: 'Wholesale & Retail; Motor Vehicle Repair',
+                transportation_storage: 'Transportation and Storage',
+                accommodation_food: 'Accommodation and Food Service Activities',
+                information_communication: 'Information and Communication',
+                financial_insurance: 'Financial and Insurance Activities',
+                real_estate: 'Real Estate Activities',
+                professional_scientific_technical: 'Professional, Scientific and Technical Activities',
+                administrative_support: 'Administrative and Support Service Activities',
+                education: 'Education',
+                human_health_social_work: 'Human Health and Social Work Activities',
+                arts_entertainment_recreation: 'Arts, Entertainment and Recreation',
+                other_services: 'Other Service Activities'
+            },
+            primary_framework: {
+                gri: 'GRI',
+                esrs: 'ESRS',
+                ifrs: 'IFRS',
+                sector: 'Sector',
+                other: 'Other'
+            },
+            esg_class: {
+                environment: 'Environment',
+                social: 'Social',
+                governance: 'Governance'
+            },
+            tri_level: {
+                high: 'High',
+                medium: 'Medium',
+                low: 'Low'
+            },
+            regulatory: {
+                mandatory: 'Mandatory',
+                strongly_expected: 'Strongly Expected',
+                optional: 'Optional'
+            },
+            tier: {
+                core: 'Core',
+                recommended: 'Recommended',
+                optional: 'Optional'
+            }
+        };
     }
 
     async init() {
@@ -182,27 +236,87 @@ class AdminReviewPage {
                 <div class="indicators-reviewed-list">
                     ${indicatorReviews.length > 0 ? indicatorReviews.map((review, idx) => {
                         const indicator = review.indicators || {};
+                        const sizeLabel = this.formatLabel('sme_size_band', review.sme_size_band);
+                        const sectorLabel = this.formatLabel('primary_sector', review.primary_sector);
+                        const frameworkLabel = this.formatLabel('primary_framework', review.primary_framework);
+                        const esgLabel = this.formatLabel('esg_class', review.esg_class);
+                        const tierLabel = this.formatLabel('tier', review.suggested_tier);
+                        const relevanceLabel = this.formatLabel('tri_level', review.relevance);
+                        const regulatoryLabel = this.formatLabel('regulatory', review.regulatory_necessity);
+                        const feasibilityLabel = this.formatLabel('tri_level', review.operational_feasibility);
+                        const costLabel = this.formatLabel('tri_level', review.cost_to_collect);
+                        const riskLabel = this.formatLabel('tri_level', review.misreporting_risk);
+                        const sdgList = this.formatSdgs(review.sdgs);
+                        const tags = (review.optional_tags || []).join(', ') || '—';
+                        const notes = review.notes || '—';
+
                         return `
                         <div class="indicator-review-item">
                             <div class="flex-between mb-2">
                                 <span class="badge badge-primary">#${idx + 1}</span>
-                                <div>
-                                    ${this.renderStars(review.clarity_rating || review.clarityRating || 0)}
-                                </div>
+                                <span style="background: var(--gray-100); color: var(--gray-600); border-radius: var(--radius-full); padding: 4px 10px; font-size: var(--text-xs);">${tierLabel !== '—' ? `Tier: ${tierLabel}` : 'Tier not set'}</span>
                             </div>
                             <h5 style="margin-bottom: var(--space-1);">${indicator.name || 'Unknown Indicator'}</h5>
                             <p class="text-secondary" style="font-size: var(--text-sm); margin-bottom: var(--space-3);">${indicator.description || ''}</p>
-                            
-                            <div style="margin-bottom: var(--space-2);">
-                                <span class="text-secondary" style="font-size: var(--text-sm);">Is necessary:</span>
-                                <span class="badge badge-${review.is_necessary === 'yes' ? 'success' : review.is_necessary === 'no' ? 'error' : 'secondary'}" style="margin-left: var(--space-2);">
-                                    ${review.is_necessary || 'Not specified'}
-                                </span>
+                            <div class="methodology-section" style="margin-bottom: var(--space-3);">
+                                <div class="methodology-grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">SME Size</div>
+                                        <div class="metadata-value">${sizeLabel}</div>
+                                    </div>
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">Primary Sector</div>
+                                        <div class="metadata-value">${sectorLabel}</div>
+                                    </div>
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">Primary Framework</div>
+                                        <div class="metadata-value">${frameworkLabel}</div>
+                                    </div>
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">ESG Class</div>
+                                        <div class="metadata-value">${esgLabel}</div>
+                                    </div>
+                                    <div class="methodology-item" style="grid-column: span 2;">
+                                        <div class="metadata-label">Related SDGs</div>
+                                        <div class="metadata-value">${sdgList}</div>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div style="background: white; border-radius: var(--radius-md); padding: var(--space-3); border: 1px solid var(--gray-200);">
-                                <div class="text-secondary" style="font-size: var(--text-xs); margin-bottom: var(--space-1);">Analysis/Comment:</div>
-                                <p style="margin: 0; font-size: var(--text-sm);">${review.analysis || 'No comment provided'}</p>
+
+                            <div class="methodology-section" style="margin-bottom: var(--space-3);">
+                                <div class="methodology-grid" style="grid-template-columns: repeat(2, 1fr); gap: var(--space-3);">
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">Relevance</div>
+                                        <div class="metadata-value">${relevanceLabel}</div>
+                                    </div>
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">Regulatory Necessity</div>
+                                        <div class="metadata-value">${regulatoryLabel}</div>
+                                    </div>
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">Operational Feasibility</div>
+                                        <div class="metadata-value">${feasibilityLabel}</div>
+                                    </div>
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">Cost-to-Collect</div>
+                                        <div class="metadata-value">${costLabel}</div>
+                                    </div>
+                                    <div class="methodology-item">
+                                        <div class="metadata-label">Misreporting Risk</div>
+                                        <div class="metadata-value">${riskLabel}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="methodology-section">
+                                <div class="metadata-label">Suggested Tier</div>
+                                <div class="metadata-value">${tierLabel}</div>
+                                <div class="metadata-label" style="margin-top: var(--space-2);">Rationale</div>
+                                <p style="margin: 0; font-size: var(--text-sm);">${review.rationale || review.analysis || '—'}</p>
+                                <div class="metadata-label" style="margin-top: var(--space-2);">Tags</div>
+                                <div class="metadata-value">${tags}</div>
+                                <div class="metadata-label" style="margin-top: var(--space-2);">Notes</div>
+                                <p style="margin: 0; font-size: var(--text-sm);">${notes}</p>
                             </div>
                         </div>
                     `}).join('') : `
@@ -1999,6 +2113,18 @@ class AdminReviewPage {
         return Array.from({ length: 5 }, (_, i) => 
             `<span style="color: ${i < rating ? 'var(--accent-400)' : 'var(--gray-300)'}; font-size: var(--text-lg);">★</span>`
         ).join('');
+    }
+
+    formatLabel(mapKey, value) {
+        if (!value) return '—';
+        const map = this.labelMaps[mapKey] || {};
+        return map[value] || value;
+    }
+
+    formatSdgs(sdgs) {
+        if (!sdgs || sdgs.length === 0) return '—';
+        const sorted = [...sdgs].sort((a, b) => a - b);
+        return sorted.map(n => `SDG ${n}`).join(', ');
     }
 
     truncate(str, length) {

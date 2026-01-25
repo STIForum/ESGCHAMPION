@@ -14,6 +14,108 @@ class ChampionIndicators {
         this.currentPanelName = null;
         this.reviewsData = {}; // Store reviews for each indicator
         this.currentIndicatorIndex = 0;
+
+        // Option sets for the assessment form
+        this.smeSizeOptions = [
+            { value: 'micro', label: 'Micro (0–9 employees / <£1.6m revenue)' },
+            { value: 'small', label: 'Small (10–49 / £1.6–£8m revenue)' },
+            { value: 'medium', label: 'Medium (50–249 / £8–£40m revenue)' },
+            { value: 'upper_medium', label: 'Upper-medium (250–499 / £40–£200m revenue)' }
+        ];
+
+        this.sectorOptions = [
+            { value: 'agriculture_forestry_fishing', label: 'Agriculture, Forestry and Fishing' },
+            { value: 'mining_quarrying_utilities', label: 'Mining and Quarrying; Electricity, Gas and Air Conditioning Supply; Water Supply; Sewerage, Waste Management and Remediation Activities' },
+            { value: 'manufacturing', label: 'Manufacturing' },
+            { value: 'construction', label: 'Construction' },
+            { value: 'wholesale_retail_repair', label: 'Wholesale and Retail Trade; Repair of Motor Vehicles and Motorcycles' },
+            { value: 'transportation_storage', label: 'Transportation and Storage' },
+            { value: 'accommodation_food', label: 'Accommodation and Food Service Activities' },
+            { value: 'information_communication', label: 'Information and Communication' },
+            { value: 'financial_insurance', label: 'Financial and Insurance Activities' },
+            { value: 'real_estate', label: 'Real Estate Activities' },
+            { value: 'professional_scientific_technical', label: 'Professional, Scientific and Technical Activities' },
+            { value: 'administrative_support', label: 'Administrative and Support Service Activities' },
+            { value: 'education', label: 'Education' },
+            { value: 'human_health_social_work', label: 'Human Health and Social Work Activities' },
+            { value: 'arts_entertainment_recreation', label: 'Arts, Entertainment and Recreation' },
+            { value: 'other_services', label: 'Other Service Activities' }
+        ];
+
+        this.frameworkOptions = [
+            { value: 'gri', label: 'GRI' },
+            { value: 'esrs', label: 'ESRS' },
+            { value: 'ifrs', label: 'IFRS' },
+            { value: 'sector', label: 'Sector' },
+            { value: 'other', label: 'Other' }
+        ];
+
+        this.esgClasses = [
+            { value: 'environment', label: 'Environment' },
+            { value: 'social', label: 'Social' },
+            { value: 'governance', label: 'Governance' }
+        ];
+
+        this.sdgOptions = Array.from({ length: 17 }, (_, idx) => {
+            const n = idx + 1;
+            const names = [
+                'No Poverty',
+                'Zero Hunger',
+                'Good Health and Well-Being',
+                'Quality Education',
+                'Gender Equality',
+                'Clean Water and Sanitation',
+                'Affordable and Clean Energy',
+                'Decent Work and Economic Growth',
+                'Industry, Innovation and Infrastructure',
+                'Reduced Inequalities',
+                'Sustainable Cities and Communities',
+                'Responsible Consumption and Production',
+                'Climate Action',
+                'Life Below Water',
+                'Life on Land',
+                'Peace, Justice and Strong Institutions',
+                'Partnerships for the Goals'
+            ];
+            return { value: n, label: `SDG ${n} – ${names[idx]}` };
+        });
+
+        this.triLevelOptions = [
+            { value: 'high', label: 'High' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'low', label: 'Low' }
+        ];
+
+        this.regulatoryOptions = [
+            { value: 'mandatory', label: 'Mandatory' },
+            { value: 'strongly_expected', label: 'Strongly Expected' },
+            { value: 'optional', label: 'Optional' }
+        ];
+
+        this.tierOptions = [
+            { value: 'core', label: 'Core' },
+            { value: 'recommended', label: 'Recommended' },
+            { value: 'optional', label: 'Optional' }
+        ];
+
+        this.helpText = {
+            smeSize: 'Select the size band of SMEs you have in mind when scoring this indicator. This anchors feasibility, cost, and relevance to a realistic resource level (e.g., micro vs medium firms will differ strongly).',
+            sector: 'Choose the main industry or sector for which you are validating this indicator. STIF uses this to understand sector-specific materiality (e.g., water for food, emissions for manufacturing).',
+            indicatorTitle: 'Human-readable name of the indicator. Helps SMEs and reviewers understand what is measured without the full framework text.',
+            frameworkCodes: 'Official framework references (e.g., GRI, ESRS, IFRS). Allow STIF to cross-link to standards and ensure regulatory alignment.',
+            primaryFramework: 'Select the main standard that defines this indicator. This normalises overlapping indicators across frameworks and determines regulatory weight.',
+            esgClass: 'Classify the indicator as Environment, Social, or Governance to support high-level reporting balance.',
+            sdgs: 'Select the SDGs that this indicator meaningfully contributes to. SDG alignment can slightly uplift indicators without overriding mandatory requirements.',
+            relevance: 'Assess how material this indicator is for SMEs of this size and sector. High = core to impacts/value; Low = peripheral.',
+            regulatory: 'Judge strength of external expectations (law, ESRS/IFRS/GRI, customers). Mandatory indicators stay in Core regardless of other scores.',
+            feasibility: 'Rate how realistic it is for this SME profile to measure the indicator within 6–12 months using typical systems/processes.',
+            cost: 'Estimate proportional effort and cost for this SME profile. High cost means the indicator is heavy relative to typical SME resources.',
+            misreporting: 'Assess how likely SMEs are to mis-measure or mis-communicate this indicator. High risk covers ambiguous definitions or high stakes if wrong.',
+            tier: 'Given your ratings, choose the tier this indicator should have for this SME size and sector.',
+            rationale: 'Add a brief justification focusing on relevance and regulatory necessity versus cost and feasibility. Max 150 characters.',
+            tags: 'If relevant, tag specific sub-sectors (e.g., Meat processing, Software, Apparel) for finer-grained use.',
+            notes: 'Capture any important conditions or exceptions (e.g., only feasible in water-stressed regions).'
+        };
     }
 
     async init() {
@@ -57,6 +159,28 @@ class ChampionIndicators {
 
         // Load selected indicators
         await this.loadIndicators();
+    }
+
+    getEmptyReviewState() {
+        return {
+            indicatorId: null,
+            indicatorName: '',
+            sme_size_band: '',
+            primary_sector: '',
+            primary_framework: '',
+            esg_class: '',
+            sdgs: [],
+            relevance: '',
+            regulatory_necessity: '',
+            operational_feasibility: '',
+            cost_to_collect: '',
+            misreporting_risk: '',
+            suggested_tier: '',
+            rationale: '',
+            optional_tags: [],
+            notes: '',
+            completed: false
+        };
     }
 
     async loadIndicators() {
@@ -223,12 +347,9 @@ class ChampionIndicators {
     async renderIndicatorDetail(indicator) {
         const container = document.getElementById('indicator-detail');
         const isAuthenticated = window.championAuth?.isAuthenticated() || false;
-        
-        // Check if this indicator has a local review saved (not yet submitted)
         const savedReview = this.reviewsData[indicator.id];
         const hasLocalReview = savedReview && savedReview.completed;
 
-        // Get reviews for this indicator
         let reviews = [];
         try {
             const data = await window.championDB.getIndicatorWithReviews(indicator.id);
@@ -237,10 +358,222 @@ class ChampionIndicators {
             console.error('Error loading reviews:', error);
         }
 
-        // Default values for metadata
         const frameworkMapping = indicator.gri_standard || indicator.framework_mapping || 'GRI 305-1 / ISSB S2';
+        const frameworkCodeDisplay = indicator.framework_code || frameworkMapping;
         const source = indicator.source || 'SME Hub';
         const sectorContext = indicator.sector_context || 'All';
+
+        const state = {
+            ...this.getEmptyReviewState(),
+            ...savedReview,
+            indicatorId: indicator.id,
+            indicatorName: indicator.name
+        };
+
+        const scoringLocked = !(state.sme_size_band && state.primary_sector);
+        const tierLocked = !(
+            state.relevance &&
+            state.regulatory_necessity &&
+            state.operational_feasibility &&
+            state.cost_to_collect &&
+            state.misreporting_risk
+        );
+
+        const formHtml = `
+            <form id="review-form" onsubmit="indicatorsPage.saveIndicatorReview(event)">
+                <input type="hidden" id="indicator_id" value="${indicator.id}" />
+
+                <div class="section-block">
+                    <div class="section-title">A. SME Context for This Validation</div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label" for="sme_size_band">SME Size Band <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('smeSize', indicator.id)}
+                        </div>
+                        <select id="sme_size_band" class="form-select" required>
+                            <option value="">Dropdown — one click</option>
+                            ${this.smeSizeOptions.map(opt => `<option value="${opt.value}" ${state.sme_size_band === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label" for="primary_sector">Primary Industry / Sector <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('sector', indicator.id)}
+                        </div>
+                        <select id="primary_sector" class="form-select" required>
+                            <option value="">Dropdown — one click</option>
+                            ${this.sectorOptions.map(opt => `<option value="${opt.value}" ${state.primary_sector === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <div class="section-title">B. Indicator Basics (Mostly Pre-filled)</div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Indicator Title</label>
+                            ${this.renderInfo('indicatorTitle', indicator.id)}
+                        </div>
+                        <input type="text" class="form-input" value="${indicator.name || ''}" readonly>
+                        <span class="pill-muted">Read-only</span>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Framework Code(s)</label>
+                            ${this.renderInfo('frameworkCodes', indicator.id)}
+                        </div>
+                        <input type="text" class="form-input" value="${frameworkCodeDisplay}" readonly>
+                        <span class="pill-muted">Read-only</span>
+                    </div>
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="field-row">
+                            <div class="field-header">
+                                <label class="form-label" for="primary_framework">Primary Framework</label>
+                                ${this.renderInfo('primaryFramework', indicator.id)}
+                            </div>
+                            <select id="primary_framework" class="form-select">
+                                <option value="">Dropdown — one click (no multiselect)</option>
+                                ${this.frameworkOptions.map(opt => `<option value="${opt.value}" ${state.primary_framework === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="field-row">
+                            <div class="field-header">
+                                <label class="form-label" for="esg_class">ESG Class</label>
+                                ${this.renderInfo('esgClass', indicator.id)}
+                            </div>
+                            <select id="esg_class" class="form-select">
+                                <option value="">Dropdown — one click (no multiselect)</option>
+                                ${this.esgClasses.map(opt => `<option value="${opt.value}" ${state.esg_class === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Related SDGs</label>
+                            ${this.renderInfo('sdgs', indicator.id)}
+                        </div>
+                        ${this.renderSdgChips(state.sdgs)}
+                        <span class="inline-helper">Multi-select chips</span>
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <div class="section-title">C. Five-Dimension Scoring (For This SME Size & Industry)</div>
+                    <p class="inline-helper" style="margin-bottom: var(--space-3);">Use 3-level chips per row; one click each.</p>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Relevance for This SME Profile <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('relevance', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('relevance', this.triLevelOptions, state.relevance, scoringLocked)}
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Regulatory Necessity <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('regulatory', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('regulatory_necessity', this.regulatoryOptions, state.regulatory_necessity, scoringLocked)}
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Operational Feasibility (For This SME Profile) <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('feasibility', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('operational_feasibility', this.triLevelOptions, state.operational_feasibility, scoringLocked)}
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Cost-to-Collect (Relative for This SME Size) <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('cost', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('cost_to_collect', this.triLevelOptions, state.cost_to_collect, scoringLocked)}
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Misreporting Risk <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('misreporting', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('misreporting_risk', this.triLevelOptions, state.misreporting_risk, scoringLocked)}
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <div class="section-title">D. Overall Tier and Short Rationale</div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label" for="suggested_tier">Suggested STIF Tier</label>
+                            ${this.renderInfo('tier', indicator.id)}
+                        </div>
+                        <select id="suggested_tier" class="form-select" ${tierLocked ? 'disabled' : ''}>
+                            <option value="">Dropdown — one click</option>
+                            ${this.tierOptions.map(opt => `<option value="${opt.value}" ${state.suggested_tier === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                        </select>
+                        <div id="tier-lock-hint" class="locked-hint" style="${tierLocked ? '' : 'display:none;'}">Score all five dimensions to unlock tier selection.</div>
+                        <div id="mandatory-note" class="badge-note" style="${state.regulatory_necessity === 'mandatory' ? '' : 'display:none;'}">Regulatory Necessity = Mandatory — Core is expected (not auto-enforced).</div>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label" for="rationale">One-Line Rationale <span style="color: var(--error);">*</span></label>
+                            ${this.renderInfo('rationale', indicator.id)}
+                        </div>
+                        <input type="text" id="rationale" class="form-input" maxlength="150" placeholder="e.g., Mandatory under ESRS, high relevance in food manufacturing, low data effort." value="${state.rationale || ''}" required>
+                        <div class="inline-helper">Short text, max 150 characters</div>
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <details id="optional-section">
+                        <summary class="section-title" style="cursor: pointer;">E. Optional Extra Tags (Collapsed)</summary>
+                        <div class="field-row">
+                            <div class="field-header">
+                                <label class="form-label" for="optional_tags_input">More Specific Sector / NACE Tags</label>
+                                ${this.renderInfo('tags', indicator.id)}
+                            </div>
+                            <div class="chip-group" id="optional-tags-chips"></div>
+                            <input type="text" id="optional_tags_input" class="form-input" placeholder="Optional chips — type a tag and press Enter" />
+                        </div>
+                        <div class="field-row">
+                            <div class="field-header">
+                                <label class="form-label" for="notes">Notes / Caveats</label>
+                                ${this.renderInfo('notes', indicator.id)}
+                            </div>
+                            <textarea id="notes" class="form-textarea" rows="3" placeholder="Optional short text">${state.notes || ''}</textarea>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="flex-between" style="margin-top: var(--space-4); gap: var(--space-3);">
+                    <div class="pill-muted">Save takes ~1–2 minutes per indicator</div>
+                    <button type="submit" class="btn btn-primary" id="save-review-btn">Save Indicator Assessment</button>
+                </div>
+            </form>
+        `;
+
+        const savedSummaryHtml = `
+            <div class="review-saved-card">
+                <div class="review-saved-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <h4 class="review-saved-title">Assessment Saved</h4>
+                <p class="review-saved-text">Your assessment is saved locally. Complete all indicators then submit the panel review.</p>
+                <div class="review-saved-summary">
+                    <div><strong>SME Size:</strong> ${this.smeSizeOptions.find(o => o.value === state.sme_size_band)?.label || '-'}</div>
+                    <div><strong>Sector:</strong> ${this.sectorOptions.find(o => o.value === state.primary_sector)?.label || '-'}</div>
+                    <div><strong>Tier:</strong> ${this.tierOptions.find(o => o.value === state.suggested_tier)?.label || '—'}</div>
+                    <div style="margin-top: var(--space-2);"><strong>Rationale:</strong> ${this.truncate(state.rationale || '', 120)}</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" style="margin-top: var(--space-3);" onclick="indicatorsPage.editReview('${indicator.id}')">Edit Assessment</button>
+            </div>
+        `;
 
         container.innerHTML = `
             <div class="indicator-header">
@@ -248,7 +581,6 @@ class ChampionIndicators {
                 <p class="text-secondary">${indicator.description || 'No description available'}</p>
             </div>
             <div class="indicator-body">
-                <!-- Metadata Section -->
                 <div class="indicator-metadata-card">
                     <div class="metadata-grid">
                         <div class="metadata-item">
@@ -266,79 +598,11 @@ class ChampionIndicators {
                     </div>
                 </div>
 
-                ${isAuthenticated && !this.hasUserReviewed(indicator.id) && !hasLocalReview ? `
-                    <!-- Assessment Questions -->
-                    <div class="assessment-section">
-                        <div class="form-group">
-                            <label class="form-label" style="color: var(--gray-700); font-weight: 500;">Is this indicator necessary?</label>
-                            <div class="radio-group">
-                                <label class="radio-option">
-                                    <input type="radio" name="is_necessary" value="yes">
-                                    <span>Yes</span>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="is_necessary" value="no">
-                                    <span>No</span>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="is_necessary" value="not_sure">
-                                    <span>Not sure</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" style="color: var(--gray-700); font-weight: 500;">Rate the clarity and relevance</label>
-                            <div class="clarity-rating" id="clarity-rating">
-                                ${[1, 2, 3, 4, 5].map(n => `
-                                    <button type="button" class="clarity-star" data-value="${n}" onclick="indicatorsPage.setClarityRating(${n})">
-                                        <span class="star-icon">☆</span>
-                                    </button>
-                                `).join('')}
-                            </div>
-                        </div>
-
+                ${!isAuthenticated ? `
+                    <div class="alert alert-info">
+                        <a href="/champion-login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}">Sign in</a> to submit an assessment for this indicator.
                     </div>
-
-                    <div class="review-form">
-                        <form id="review-form" onsubmit="indicatorsPage.saveIndicatorReview(event)">
-                            <div class="form-group">
-                                <label class="form-label" for="review-content">Comment</label>
-                                <textarea 
-                                    id="review-content" 
-                                    class="form-textarea" 
-                                    placeholder="Share your expert analysis of this indicator. Consider its relevance, methodology, data quality, and practical application..."
-                                    rows="5"
-                                    required
-                                ></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary" id="save-review-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-2); vertical-align: middle;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Save & Continue
-                            </button>
-                        </form>
-                    </div>
-                ` : isAuthenticated && hasLocalReview ? `
-                    <!-- Review Saved State (not yet submitted) -->
-                    <div class="review-saved-card">
-                        <div class="review-saved-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                        </div>
-                        <h4 class="review-saved-title">Review Saved</h4>
-                        <p class="review-saved-text">Your review for this indicator has been saved. Complete reviewing other indicators and click "Submit All Reviews" to submit.</p>
-                        <div class="review-saved-summary">
-                            <div><strong>Your Rating:</strong> ${'★'.repeat(savedReview.rating)}${'☆'.repeat(5 - savedReview.rating)}</div>
-                            <div style="margin-top: var(--space-2);"><strong>Your Comment:</strong> ${this.truncate(savedReview.content, 100)}</div>
-                        </div>
-                        <button class="btn btn-ghost btn-sm" style="margin-top: var(--space-3);" onclick="indicatorsPage.editReview('${indicator.id}')">Edit Review</button>
-                    </div>
-                ` : isAuthenticated && this.hasUserReviewed(indicator.id) ? `
-                    <!-- Review Submitted State -->
+                ` : this.hasUserReviewed(indicator.id) ? `
                     <div class="review-submitted-card">
                         <div class="review-submitted-icon">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -346,19 +610,14 @@ class ChampionIndicators {
                                 <polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
                         </div>
-                        <h4 class="review-submitted-title">Review Awaiting Approval</h4>
-                        <p class="review-submitted-text">Thank you for your review! Your submission is being reviewed by our team and will be published once approved.</p>
+                        <h4 class="review-submitted-title">Assessment Submitted</h4>
+                        <p class="review-submitted-text">Thank you! This assessment is awaiting admin approval.</p>
                         <div class="review-submitted-badge">
                             <span class="badge badge-warning">Pending Review</span>
                         </div>
                     </div>
-                ` : `
-                    <div class="alert alert-info">
-                        <a href="/champion-login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}">Sign in</a> to submit a review for this indicator.
-                    </div>
-                `}
+                ` : hasLocalReview ? savedSummaryHtml : formHtml}
 
-                <!-- Existing Reviews -->
                 <div class="mt-8">
                     <h4 style="margin-bottom: var(--space-4);">Community Reviews (${reviews.length})</h4>
                     ${reviews.length > 0 ? `
@@ -371,6 +630,11 @@ class ChampionIndicators {
                 </div>
             </div>
         `;
+
+        // Bind interactions for the freshly rendered form
+        if (isAuthenticated && !hasLocalReview && !this.hasUserReviewed(indicator.id)) {
+            this.bindAssessmentForm(state);
+        }
     }
 
     renderReview(review) {
@@ -455,56 +719,35 @@ class ChampionIndicators {
 
     async saveIndicatorReview(event) {
         event.preventDefault();
-        
         if (!window.championAuth.isAuthenticated()) {
-            window.showToast('Please sign in to submit a review', 'error');
+            window.showToast('Please sign in to submit an assessment', 'error');
             return;
         }
 
-        const content = document.getElementById('review-content').value.trim();
-        
-        if (!content) {
-            window.showToast('Please enter your review', 'error');
+        const state = this.buildStateFromForm();
+        state.indicatorId = this.selectedIndicator?.id;
+        state.indicatorName = this.selectedIndicator?.name;
+
+        const validation = this.validateState(state);
+        if (!validation.valid) {
             return;
         }
 
-        if (this.clarityRating === 0) {
-            window.showToast('Please rate the clarity and relevance', 'error');
-            return;
-        }
+        state.completed = true;
+        this.reviewsData[state.indicatorId] = state;
 
-        // Get additional form data
-        const isNecessary = document.querySelector('input[name="is_necessary"]:checked')?.value || null;
+        window.showToast('Assessment saved! Continue to the next indicator.', 'success');
 
-        // Save review data locally (not submit yet)
-        this.reviewsData[this.selectedIndicator.id] = {
-            indicatorId: this.selectedIndicator.id,
-            indicatorName: this.selectedIndicator.name,
-            content: content,
-            rating: this.clarityRating,
-            clarityRating: this.clarityRating,
-            isNecessary: isNecessary,
-            analysis: content,
-            completed: true
-        };
-
-        window.showToast('Review saved! Continue to the next indicator.', 'success');
-        
-        // Update the indicators list to show this one as reviewed
+        // Update UI/progress
         this.renderIndicatorsList();
-        
-        // Move to next indicator if available
+
         const currentIndex = this.indicators.findIndex(i => i.id === this.selectedIndicator.id);
         const nextIndicator = this.indicators[currentIndex + 1];
-        
+
         if (nextIndicator && !this.reviewsData[nextIndicator.id]?.completed) {
-            // Auto-select next unreviewed indicator
-            setTimeout(() => this.selectIndicator(nextIndicator.id), 500);
+            setTimeout(() => this.selectIndicator(nextIndicator.id), 400);
         } else {
-            // Show the reviewed state for current indicator
             await this.renderIndicatorDetail(this.selectedIndicator);
-            
-            // Check if all are complete
             const allComplete = Object.values(this.reviewsData).filter(r => r.completed).length === this.indicators.length;
             if (allComplete) {
                 window.showToast('All indicators reviewed! Click "Submit Panel Review" to submit.', 'success');
@@ -535,9 +778,20 @@ class ChampionIndicators {
             // Create panel review submission with all indicator reviews
             const indicatorReviews = reviewsToSubmit.map(review => ({
                 indicatorId: review.indicatorId,
-                isNecessary: review.isNecessary,
-                clarityRating: review.clarityRating || review.rating,
-                analysis: review.analysis || review.content
+                sme_size_band: review.sme_size_band,
+                primary_sector: review.primary_sector,
+                primary_framework: review.primary_framework,
+                esg_class: review.esg_class,
+                sdgs: review.sdgs || [],
+                relevance: review.relevance,
+                regulatory_necessity: review.regulatory_necessity,
+                operational_feasibility: review.operational_feasibility,
+                cost_to_collect: review.cost_to_collect,
+                misreporting_risk: review.misreporting_risk,
+                suggested_tier: review.suggested_tier,
+                rationale: review.rationale,
+                optional_tags: review.optional_tags || [],
+                notes: review.notes || null
             }));
 
             console.log('Submitting panel review with indicator reviews:', indicatorReviews);
@@ -637,8 +891,10 @@ class ChampionIndicators {
     }
 
     editReview(indicatorId) {
-        // Remove the saved review to allow editing
-        delete this.reviewsData[indicatorId];
+        const existing = this.reviewsData[indicatorId];
+        if (existing) {
+            this.reviewsData[indicatorId] = { ...existing, completed: false };
+        }
         this.renderIndicatorsList();
         this.selectIndicator(indicatorId);
     }
@@ -724,6 +980,323 @@ class ChampionIndicators {
     truncate(str, length) {
         if (!str) return '';
         return str.length > length ? str.substring(0, length) + '...' : str;
+    }
+
+    isScoringUnlocked(state) {
+        return Boolean(state.sme_size_band && state.primary_sector);
+    }
+
+    areDimensionsComplete(state) {
+        return (
+            state.relevance &&
+            state.regulatory_necessity &&
+            state.operational_feasibility &&
+            state.cost_to_collect &&
+            state.misreporting_risk
+        );
+    }
+
+    bindAssessmentForm(state) {
+        this.currentFormState = state;
+
+        // Toggle popovers
+        document.querySelectorAll('.info-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-info-target');
+                const popover = document.getElementById(targetId);
+                if (popover) {
+                    popover.classList.toggle('active');
+                }
+            });
+        });
+
+        // Chip interactions (single-select + SDGs)
+        document.querySelectorAll('.chip-group').forEach(group => {
+            group.addEventListener('click', (event) => {
+                const target = event.target.closest('.chip');
+                if (!target) return;
+                const field = target.getAttribute('data-field');
+                const value = target.getAttribute('data-value');
+                const isLocked = group.getAttribute('data-locked') === 'true';
+
+                if (isLocked && field !== 'sdgs') {
+                    window.showToast?.('Complete SME Size Band and Primary Industry first.', 'warning');
+                    return;
+                }
+
+                if (field === 'sdgs') {
+                    const numericValue = parseInt(value, 10);
+                    const set = new Set(this.currentFormState.sdgs || []);
+                    if (set.has(numericValue)) {
+                        set.delete(numericValue);
+                        target.classList.remove('selected');
+                    } else {
+                        set.add(numericValue);
+                        target.classList.add('selected');
+                    }
+                    this.currentFormState.sdgs = Array.from(set).sort((a, b) => a - b);
+                } else {
+                    // Single select
+                    group.querySelectorAll('.chip').forEach(chip => chip.classList.remove('selected'));
+                    target.classList.add('selected');
+                    this.currentFormState[field] = value;
+                }
+
+                this.refreshFormUI(this.currentFormState);
+            });
+        });
+
+        const smeSize = document.getElementById('sme_size_band');
+        const primarySector = document.getElementById('primary_sector');
+        const primaryFramework = document.getElementById('primary_framework');
+        const esgClass = document.getElementById('esg_class');
+        const suggestedTier = document.getElementById('suggested_tier');
+        const rationaleInput = document.getElementById('rationale');
+        const notesInput = document.getElementById('notes');
+
+        const handleSelectChange = (field, el) => {
+            el.addEventListener('change', () => {
+                this.currentFormState[field] = el.value;
+                this.refreshFormUI(this.currentFormState);
+            });
+        };
+
+        if (smeSize) handleSelectChange('sme_size_band', smeSize);
+        if (primarySector) handleSelectChange('primary_sector', primarySector);
+        if (primaryFramework) handleSelectChange('primary_framework', primaryFramework);
+        if (esgClass) handleSelectChange('esg_class', esgClass);
+        if (suggestedTier) handleSelectChange('suggested_tier', suggestedTier);
+
+        if (rationaleInput) {
+            rationaleInput.addEventListener('input', () => {
+                this.currentFormState.rationale = rationaleInput.value.trim();
+                this.refreshFormUI(this.currentFormState);
+            });
+        }
+
+        if (notesInput) {
+            notesInput.addEventListener('input', () => {
+                this.currentFormState.notes = notesInput.value.trim();
+            });
+        }
+
+        // Optional tags
+        this.syncOptionalTags(this.currentFormState.optional_tags || []);
+        const tagsInput = document.getElementById('optional_tags_input');
+        if (tagsInput) {
+            tagsInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = tagsInput.value.trim();
+                    if (value) {
+                        this.addOptionalTag(value);
+                        tagsInput.value = '';
+                    }
+                }
+            });
+        }
+
+        const tagChipContainer = document.getElementById('optional-tags-chips');
+        if (tagChipContainer) {
+            tagChipContainer.addEventListener('click', (e) => {
+                const chip = e.target.closest('[data-tag-index]');
+                if (!chip) return;
+                const idx = parseInt(chip.getAttribute('data-tag-index'), 10);
+                this.removeOptionalTag(idx);
+            });
+        }
+
+        this.refreshFormUI(this.currentFormState);
+    }
+
+    refreshFormUI(state) {
+        const scoringUnlocked = this.isScoringUnlocked(state);
+
+        document.querySelectorAll('.chip-group').forEach(group => {
+            const field = group.getAttribute('data-field');
+            if (field === 'sdgs') return;
+            if (['relevance', 'regulatory_necessity', 'operational_feasibility', 'cost_to_collect', 'misreporting_risk'].includes(field)) {
+                if (scoringUnlocked) {
+                    group.setAttribute('data-locked', 'false');
+                    group.querySelectorAll('.chip').forEach(chip => chip.classList.remove('disabled'));
+                } else {
+                    group.setAttribute('data-locked', 'true');
+                    group.querySelectorAll('.chip').forEach(chip => chip.classList.add('disabled'));
+                }
+            }
+        });
+
+        const tierSelect = document.getElementById('suggested_tier');
+        const tierHint = document.getElementById('tier-lock-hint');
+        const tierUnlocked = this.areDimensionsComplete(state);
+        if (tierSelect) tierSelect.disabled = !tierUnlocked;
+        if (tierHint) tierHint.style.display = tierUnlocked ? 'none' : '';
+
+        // Regulatory necessity note
+        let mandatoryNote = document.getElementById('mandatory-note');
+        if (!mandatoryNote && tierSelect) {
+            mandatoryNote = document.createElement('div');
+            mandatoryNote.id = 'mandatory-note';
+            mandatoryNote.className = 'badge-note';
+            mandatoryNote.style.display = 'none';
+            mandatoryNote.textContent = 'Regulatory Necessity = Mandatory — Core is expected (not auto-enforced).';
+            tierSelect.insertAdjacentElement('afterend', mandatoryNote);
+        }
+        if (mandatoryNote) {
+            mandatoryNote.style.display = state.regulatory_necessity === 'mandatory' ? 'inline-flex' : 'none';
+        }
+
+        this.updateSaveButtonState(state);
+    }
+
+    updateSaveButtonState(state) {
+        const saveBtn = document.getElementById('save-review-btn');
+        if (!saveBtn) return;
+        const validation = this.validateState(state, { silent: true });
+        saveBtn.disabled = !validation.valid;
+    }
+
+    syncOptionalTags(tags) {
+        const container = document.getElementById('optional-tags-chips');
+        if (!container) return;
+
+        if (!tags || tags.length === 0) {
+            container.innerHTML = '<span class="inline-helper">No tags added</span>';
+            return;
+        }
+
+        container.innerHTML = tags.map((tag, idx) => `
+            <span class="chip selected" data-tag-index="${idx}" title="Click to remove">${tag} ✕</span>
+        `).join('');
+    }
+
+    addOptionalTag(tag) {
+        const trimmed = tag.trim();
+        if (!trimmed) return;
+        const tags = this.currentFormState.optional_tags || [];
+        if (!tags.includes(trimmed)) {
+            tags.push(trimmed);
+            this.currentFormState.optional_tags = tags;
+            this.syncOptionalTags(tags);
+        }
+    }
+
+    removeOptionalTag(index) {
+        const tags = this.currentFormState.optional_tags || [];
+        if (index >= 0 && index < tags.length) {
+            tags.splice(index, 1);
+            this.currentFormState.optional_tags = tags;
+            this.syncOptionalTags(tags);
+        }
+    }
+
+    buildStateFromForm() {
+        const state = {
+            ...(this.currentFormState || this.getEmptyReviewState())
+        };
+
+        state.sme_size_band = document.getElementById('sme_size_band')?.value || '';
+        state.primary_sector = document.getElementById('primary_sector')?.value || '';
+        state.primary_framework = document.getElementById('primary_framework')?.value || '';
+        state.esg_class = document.getElementById('esg_class')?.value || '';
+        state.suggested_tier = document.getElementById('suggested_tier')?.value || '';
+        state.rationale = document.getElementById('rationale')?.value?.trim() || '';
+        state.notes = document.getElementById('notes')?.value?.trim() || '';
+
+        // Chips
+        const sdgButtons = document.querySelectorAll('.chip[data-field="sdgs"].selected');
+        state.sdgs = Array.from(sdgButtons).map(btn => parseInt(btn.getAttribute('data-value'), 10)).filter(Boolean);
+
+        // Dimension chips single select
+        const singleFields = ['relevance', 'regulatory_necessity', 'operational_feasibility', 'cost_to_collect', 'misreporting_risk'];
+        singleFields.forEach(field => {
+            const selected = document.querySelector(`.chip[data-field="${field}"].selected`);
+            state[field] = selected ? selected.getAttribute('data-value') : '';
+        });
+
+        return state;
+    }
+
+    validateState(state, options = {}) {
+        const { silent = false } = options;
+        const requiredFields = [
+            ['sme_size_band', 'SME Size Band'],
+            ['primary_sector', 'Primary Industry / Sector'],
+            ['relevance', 'Relevance'],
+            ['regulatory_necessity', 'Regulatory Necessity'],
+            ['operational_feasibility', 'Operational Feasibility'],
+            ['cost_to_collect', 'Cost-to-Collect'],
+            ['misreporting_risk', 'Misreporting Risk'],
+            ['suggested_tier', 'Suggested Tier'],
+            ['rationale', 'One-Line Rationale']
+        ];
+
+        for (const [key, label] of requiredFields) {
+            if (!state[key]) {
+                const message = `${label} is required.`;
+                if (!silent) window.showToast?.(message, 'error');
+                return { valid: false, message };
+            }
+        }
+
+        if (!this.isScoringUnlocked(state)) {
+            const message = 'Complete SME Context before scoring.';
+            if (!silent) window.showToast?.(message, 'error');
+            return { valid: false, message };
+        }
+
+        if (!this.areDimensionsComplete(state)) {
+            const message = 'Score all five dimensions.';
+            if (!silent) window.showToast?.(message, 'error');
+            return { valid: false, message };
+        }
+
+        if (state.rationale && state.rationale.length > 150) {
+            const message = 'Rationale must be 150 characters or fewer.';
+            if (!silent) window.showToast?.(message, 'error');
+            return { valid: false, message };
+        }
+
+        return { valid: true };
+    }
+
+    renderInfo(fieldKey, suffix = '') {
+        const id = `${fieldKey}${suffix ? '-' + suffix : ''}-info`;
+        const text = this.helpText[fieldKey] || '';
+        return `
+            <button type="button" class="info-button" data-info-target="${id}" aria-label="More info">ⓘ</button>
+            <div class="info-popover" id="${id}">
+                <strong>Help Text</strong>
+                <div>${text}</div>
+            </div>
+        `;
+    }
+
+    renderSingleChips(field, options, selected, locked = false) {
+        return `
+            <div class="chip-group" data-field="${field}" ${locked ? 'data-locked="true"' : ''}>
+                ${options.map(opt => `
+                    <button type="button" class="chip ${selected === opt.value ? 'selected' : ''} ${locked ? 'disabled' : ''}" data-value="${opt.value}" data-field="${field}">
+                        ${opt.label}
+                    </button>
+                `).join('')}
+            </div>
+            ${locked ? '<div class="locked-hint">Complete SME Size Band and Primary Industry first.</div>' : ''}
+        `;
+    }
+
+    renderSdgChips(selectedValues = []) {
+        const selectedSet = new Set(selectedValues || []);
+        return `
+            <div class="chip-group" data-field="sdgs" data-multi="true">
+                ${this.sdgOptions.map(opt => `
+                    <button type="button" class="chip sdg-chip ${selectedSet.has(opt.value) ? 'selected' : ''}" data-value="${opt.value}" data-field="sdgs">
+                        <span class="sdg-dot"></span>
+                        <span>${opt.label}</span>
+                    </button>
+                `).join('')}
+            </div>
+        `;
     }
 
     getInitials(name) {
