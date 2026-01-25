@@ -2,7 +2,9 @@
 -- Run this in Supabase SQL Editor
 
 -- Drop existing restrictive policy
+-- Drop any prior insert policies to avoid duplicate-name errors
 DROP POLICY IF EXISTS "Users can insert own indicator reviews" ON panel_review_indicator_reviews;
+DROP POLICY IF EXISTS "Users can insert indicator reviews" ON panel_review_indicator_reviews;
 
 -- Create a more permissive INSERT policy
 -- Allow authenticated users to insert indicator reviews

@@ -7,10 +7,10 @@
  */
 
 // Supabase Project URL
-const SUPABASE_URL = 'https://euyfomkdridmyfmrtzzi.supabase.co';
+const SUPABASE_URL = 'https://sqxezltdeebvhgxsgxfj.supabase.co';
 
 // Supabase Anonymous Public Key (safe to expose in client-side code)
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eWZvbWtkcmlkbXlmbXJ0enppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNDAyMTAsImV4cCI6MjA4MTcxNjIxMH0.8JFafntZ2tm6bwmCxbUbovy37BheRSe5zhUDzgH-lmU';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxeGV6bHRkZWVidmhneHNneGZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTEzMjksImV4cCI6MjA4NDYyNzMyOX0.e0umAA6TsX2KPpz2evkizsYsqZWpbsWwqBus7RoUbFE';
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
