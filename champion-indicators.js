@@ -391,7 +391,7 @@ class ChampionIndicators {
                             ${this.renderInfo('smeSize', indicator.id)}
                         </div>
                         <select id="sme_size_band" class="form-select" required>
-                            <option value="">Dropdown — one click</option>
+                            <option value="" disabled selected>Select...</option>
                             ${this.smeSizeOptions.map(opt => `<option value="${opt.value}" ${state.sme_size_band === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
                         </select>
                     </div>
@@ -401,7 +401,7 @@ class ChampionIndicators {
                             ${this.renderInfo('sector', indicator.id)}
                         </div>
                         <select id="primary_sector" class="form-select" required>
-                            <option value="">Dropdown — one click</option>
+                            <option value="" disabled selected>Select...</option>
                             ${this.sectorOptions.map(opt => `<option value="${opt.value}" ${state.primary_sector === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
                         </select>
                     </div>
@@ -432,7 +432,7 @@ class ChampionIndicators {
                                 ${this.renderInfo('primaryFramework', indicator.id)}
                             </div>
                             <select id="primary_framework" class="form-select">
-                                <option value="">Dropdown — one click (no multiselect)</option>
+                                <option value="" disabled selected>Select...</option>
                                 ${this.frameworkOptions.map(opt => `<option value="${opt.value}" ${state.primary_framework === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
                             </select>
                         </div>
@@ -442,7 +442,7 @@ class ChampionIndicators {
                                 ${this.renderInfo('esgClass', indicator.id)}
                             </div>
                             <select id="esg_class" class="form-select">
-                                <option value="">Dropdown — one click (no multiselect)</option>
+                                <option value="" disabled selected>Select...</option>
                                 ${this.esgClasses.map(opt => `<option value="${opt.value}" ${state.esg_class === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
                             </select>
                         </div>
@@ -510,7 +510,7 @@ class ChampionIndicators {
                             ${this.renderInfo('tier', indicator.id)}
                         </div>
                         <select id="suggested_tier" class="form-select" ${tierLocked ? 'disabled' : ''}>
-                            <option value="">Dropdown — one click</option>
+                            <option value="" disabled selected>Select...</option>
                             ${this.tierOptions.map(opt => `<option value="${opt.value}" ${state.suggested_tier === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
                         </select>
                         <div id="tier-lock-hint" class="locked-hint" style="${tierLocked ? '' : 'display:none;'}">Score all five dimensions to unlock tier selection.</div>
