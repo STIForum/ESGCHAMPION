@@ -828,7 +828,7 @@ class SupabaseService {
             .from('panel_review_submissions')
             .insert({
                 panel_id: panelId,
-                reviewer_user_id: reviewerUserId,
+                champion_id: reviewerUserId,
                 status: 'pending'
             })
             .select('*, panels(name, category)')
@@ -921,7 +921,7 @@ class SupabaseService {
         
         // Fetch champion details separately for each submission
         if (data && data.length > 0) {
-            const userIds = [...new Set(data.map(s => s.reviewer_user_id))];
+            const userIds = [...new Set(data.map(s => s.champion_id))];
             const { data: champions } = await this.client
                 .from('champions')
                 .select('id, full_name, email')
@@ -934,7 +934,7 @@ class SupabaseService {
             
             // Attach champion data to submissions
             data.forEach(submission => {
-                submission.champions = championsMap[submission.reviewer_user_id] || null;
+                submission.champions = championsMap[submission.champion_id] || null;
             });
         }
         
@@ -954,11 +954,11 @@ class SupabaseService {
         if (subError) throw subError;
 
         // Get champion details separately
-        if (submission && submission.reviewer_user_id) {
+        if (submission && submission.champion_id) {
             const { data: champion } = await this.client
                 .from('champions')
                 .select('id, full_name, email')
-                .eq('id', submission.reviewer_user_id)
+                .eq('id', submission.champion_id)
                 .single();
             submission.champions = champion || null;
         }
@@ -997,7 +997,7 @@ class SupabaseService {
         const { data, error } = await this.client
             .from('panel_review_submissions')
             .select('*, panels(name, category)')
-            .eq('reviewer_user_id', userId)
+            .eq('champion_id', userId)
             .order('created_at', { ascending: false });
         if (error) throw error;
         return data || [];
