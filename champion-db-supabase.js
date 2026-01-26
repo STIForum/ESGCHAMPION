@@ -531,7 +531,8 @@ class ChampionDB {
             // Add indicator reviews
             const reviews = await this.service.addIndicatorReviewsToSubmission(
                 submission.id,
-                indicatorReviews
+                indicatorReviews,
+                userId
             );
             
             console.log('Indicator reviews inserted:', reviews);

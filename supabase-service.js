@@ -840,7 +840,7 @@ class SupabaseService {
     /**
      * Add indicator reviews to a submission
      */
-    async addIndicatorReviewsToSubmission(submissionId, indicatorReviews) {
+    async addIndicatorReviewsToSubmission(submissionId, indicatorReviews, championId) {
         if (!indicatorReviews || indicatorReviews.length === 0) {
             console.warn('No indicator reviews to insert');
             return [];
@@ -848,6 +848,7 @@ class SupabaseService {
 
         console.log('=== ADDING INDICATOR REVIEWS ===');
         console.log('Submission ID:', submissionId);
+        console.log('Champion ID:', championId);
         console.log('Raw indicator reviews:', JSON.stringify(indicatorReviews, null, 2));
 
         // Insert one by one for better error tracking
@@ -857,6 +858,7 @@ class SupabaseService {
             const reviewData = {
                 submission_id: submissionId,
                 indicator_id: review.indicatorId,
+                champion_id: championId,
                 sme_size_band: review.sme_size_band || null,
                 primary_sector: review.primary_sector || null,
                 primary_framework: review.primary_framework || null,
