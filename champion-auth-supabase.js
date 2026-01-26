@@ -109,22 +109,33 @@ class ChampionAuth {
         try {
             const data = await this.service.signUp(email, password, metadata);
             
+            // Note: Champion profile is created automatically by database trigger
+            // when user is inserted into auth.users. We don't need to manually insert here
+            // because the user isn't fully authenticated until email confirmation.
+            
             if (data.user) {
-                // Create champion profile in database
-                const profileData = {
-                    id: data.user.id,
-                    email: email,
-                    full_name: metadata.full_name || '',
-                    company: metadata.company || '',
-                    job_title: metadata.job_title || '',
-                    linkedin_url: metadata.linkedin_url || '',
-                    cla_accepted: metadata.cla_accepted || false,
-                    nda_accepted: metadata.nda_accepted || false,
-                    cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
-                    nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null
-                };
-
-                await this.service.upsertChampion(profileData);
+                // Try to update champion profile with additional metadata
+                // This may fail if email confirmation is required (RLS blocks it)
+                // That's okay - the trigger created the basic profile already
+                try {
+                    const profileData = {
+                        id: data.user.id,
+                        email: email,
+                        full_name: metadata.full_name || '',
+                        company: metadata.company || '',
+                        job_title: metadata.job_title || '',
+                        linkedin_url: metadata.linkedin_url || '',
+                        cla_accepted: metadata.cla_accepted || false,
+                        nda_accepted: metadata.nda_accepted || false,
+                        cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
+                        nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null
+                    };
+                    await this.service.upsertChampion(profileData);
+                } catch (profileError) {
+                    // This is expected if email confirmation is required
+                    // The database trigger already created the basic profile
+                    console.log('Profile will be updated after email confirmation:', profileError.message);
+                }
             }
 
             return {
