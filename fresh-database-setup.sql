@@ -212,8 +212,8 @@ CREATE TABLE invitations (
 -- =====================================================
 CREATE TABLE panel_review_submissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    champion_id UUID NOT NULL REFERENCES champions(id) ON DELETE CASCADE,
     panel_id UUID NOT NULL REFERENCES panels(id) ON DELETE CASCADE,
+    reviewer_user_id UUID NOT NULL REFERENCES champions(id) ON DELETE CASCADE,
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'partial')),
     submitted_at TIMESTAMPTZ DEFAULT NOW(),
     reviewed_by UUID REFERENCES champions(id),
@@ -230,7 +230,12 @@ CREATE TABLE panel_review_indicator_reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     submission_id UUID NOT NULL REFERENCES panel_review_submissions(id) ON DELETE CASCADE,
     indicator_id UUID NOT NULL REFERENCES indicators(id) ON DELETE CASCADE,
-    champion_id UUID NOT NULL REFERENCES champions(id) ON DELETE CASCADE,
+    reviewer_user_id UUID NOT NULL REFERENCES champions(id) ON DELETE CASCADE,
+    
+    -- Legacy fields
+    is_necessary TEXT CHECK (is_necessary IN ('yes', 'no', 'not_sure')),
+    clarity_rating INTEGER CHECK (clarity_rating >= 1 AND clarity_rating <= 5),
+    analysis TEXT,
     
     -- Assessment fields
     sme_context TEXT,
@@ -267,7 +272,7 @@ CREATE INDEX idx_indicators_panel_id ON indicators(panel_id);
 CREATE INDEX idx_votes_review_id ON votes(review_id);
 CREATE INDEX idx_comments_review_id ON comments(review_id);
 CREATE INDEX idx_accepted_reviews_champion_id ON accepted_reviews(champion_id);
-CREATE INDEX idx_panel_review_submissions_champion ON panel_review_submissions(champion_id);
+CREATE INDEX idx_panel_review_submissions_reviewer ON panel_review_submissions(reviewer_user_id);
 CREATE INDEX idx_panel_review_submissions_panel ON panel_review_submissions(panel_id);
 CREATE INDEX idx_panel_review_indicator_reviews_submission ON panel_review_indicator_reviews(submission_id);
 
@@ -411,25 +416,25 @@ CREATE POLICY "Admins can manage invitations" ON invitations
 -- PANEL REVIEW SUBMISSIONS POLICIES
 -- =====================================================
 CREATE POLICY "Users can view own submissions" ON panel_review_submissions
-    FOR SELECT USING (auth.uid() = champion_id OR public.is_admin(auth.uid()));
+    FOR SELECT USING (auth.uid() = reviewer_user_id OR public.is_admin(auth.uid()));
 
 CREATE POLICY "Users can create submissions" ON panel_review_submissions
-    FOR INSERT WITH CHECK (auth.uid() = champion_id);
+    FOR INSERT WITH CHECK (auth.uid() = reviewer_user_id);
 
 CREATE POLICY "Users and admins can update submissions" ON panel_review_submissions
-    FOR UPDATE USING (auth.uid() = champion_id OR public.is_admin(auth.uid()));
+    FOR UPDATE USING (auth.uid() = reviewer_user_id OR public.is_admin(auth.uid()));
 
 -- =====================================================
 -- PANEL REVIEW INDICATOR REVIEWS POLICIES
 -- =====================================================
 CREATE POLICY "Users can view own indicator reviews" ON panel_review_indicator_reviews
-    FOR SELECT USING (auth.uid() = champion_id OR public.is_admin(auth.uid()));
+    FOR SELECT USING (auth.uid() = reviewer_user_id OR public.is_admin(auth.uid()));
 
 CREATE POLICY "Users can create indicator reviews" ON panel_review_indicator_reviews
-    FOR INSERT WITH CHECK (auth.uid() = champion_id);
+    FOR INSERT WITH CHECK (auth.uid() = reviewer_user_id);
 
 CREATE POLICY "Users and admins can update indicator reviews" ON panel_review_indicator_reviews
-    FOR UPDATE USING (auth.uid() = champion_id OR public.is_admin(auth.uid()));
+    FOR UPDATE USING (auth.uid() = reviewer_user_id OR public.is_admin(auth.uid()));
 
 -- =====================================================
 -- TRIGGER: Auto-create champion profile on user signup
