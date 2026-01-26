@@ -999,16 +999,7 @@ class ChampionIndicators {
     bindAssessmentForm(state) {
         this.currentFormState = state;
 
-        // Toggle popovers
-        document.querySelectorAll('.info-button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetId = btn.getAttribute('data-info-target');
-                const popover = document.getElementById(targetId);
-                if (popover) {
-                    popover.classList.toggle('active');
-                }
-            });
-        });
+        // Info popovers now work via CSS hover - no JS needed
 
         // Chip interactions (single-select + SDGs)
         document.querySelectorAll('.chip-group').forEach(group => {
@@ -1264,11 +1255,13 @@ class ChampionIndicators {
         const id = `${fieldKey}${suffix ? '-' + suffix : ''}-info`;
         const text = this.helpText[fieldKey] || '';
         return `
-            <button type="button" class="info-button" data-info-target="${id}" aria-label="More info">ⓘ</button>
-            <div class="info-popover" id="${id}">
-                <strong>Help Text</strong>
-                <div>${text}</div>
-            </div>
+            <span class="info-wrapper">
+                <button type="button" class="info-button" aria-label="More info">ⓘ</button>
+                <div class="info-popover" id="${id}">
+                    <strong>Help Text</strong>
+                    <div>${text}</div>
+                </div>
+            </span>
         `;
     }
 

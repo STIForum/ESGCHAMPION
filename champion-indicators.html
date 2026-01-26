@@ -254,12 +254,24 @@
             font-weight: 700;
             font-size: 14px;
             transition: all var(--transition);
+            position: relative;
+            cursor: help;
         }
 
         .info-button:hover {
             background: var(--primary-50);
             border-color: var(--primary-200);
             color: var(--primary-700);
+        }
+
+        /* Info button wrapper for hover functionality */
+        .info-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .info-wrapper:hover .info-popover {
+            display: block;
         }
 
         .info-popover {
@@ -271,6 +283,13 @@
             color: var(--gray-800);
             font-size: var(--text-sm);
             display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 100;
+            min-width: 250px;
+            max-width: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .info-popover.active {
