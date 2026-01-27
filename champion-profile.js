@@ -70,8 +70,8 @@ class ChampionProfile {
             // Populate form
             this.populateForm();
             
-            // Show content using centralized utility
-            hideLoading('loading-state');
+            // Show content using fallback utility
+            _hideLoading('loading-state');
             document.getElementById('profile-content').classList.remove('hidden');
             
         } catch (error) {
