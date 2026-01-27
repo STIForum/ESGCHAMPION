@@ -3,9 +3,31 @@
  * ESG Champions Platform
  */
 
-// Use centralized utilities
-const { formatDate, formatRelativeTime } = window;
-const { hideLoading, showErrorState } = window;
+// Utility functions with fallbacks
+function _formatDate(dateString) {
+    if (window.formatDate) return window.formatDate(dateString);
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function _hideLoading(elementId) {
+    if (window.hideLoading) return window.hideLoading(elementId);
+    const el = document.getElementById(elementId);
+    if (el) el.classList.add('hidden');
+}
+
+function _showErrorState(elementId, message, onRetry) {
+    if (window.showErrorState) return window.showErrorState(elementId, message, onRetry);
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.innerHTML = `
+            <div class="text-center">
+                <div class="alert alert-error">${message}</div>
+                <a href="/champion-panels.html" class="btn btn-primary mt-4">Back to Panels</a>
+            </div>
+        `;
+    }
+}
 
 class ChampionIndicators {
     constructor() {
@@ -202,7 +224,7 @@ class ChampionIndicators {
             this.renderIndicatorsList();
             
             // Show content using centralized utility
-            hideLoading('loading-state');
+            _hideLoading('loading-state');
             document.getElementById('indicators-content').classList.remove('hidden');
             
             // Select first indicator by default
@@ -663,7 +685,7 @@ class ChampionIndicators {
                                 </span>
                             </div>
                             <div class="text-muted" style="font-size: var(--text-sm);">
-                                ${formatDate(review.created_at)}
+                                ${_formatDate(review.created_at)}
                             </div>
                         </div>
                         <div class="mb-2">
@@ -1306,8 +1328,7 @@ class ChampionIndicators {
     }
 
     showError(message) {
-        // Use centralized error state display
-        showErrorState('loading-state', message, () => window.location.href = '/champion-panels.html');
+        _showErrorState('loading-state', message, () => window.location.href = '/champion-panels.html');
     }
 }
 

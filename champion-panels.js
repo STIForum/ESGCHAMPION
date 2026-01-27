@@ -3,8 +3,25 @@
  * ESG Champions Platform
  */
 
-// Use centralized utilities
-const { hideLoading, showErrorState } = window;
+// Utility functions with fallbacks
+function _hideLoading(elementId) {
+    if (window.hideLoading) return window.hideLoading(elementId);
+    const el = document.getElementById(elementId);
+    if (el) el.classList.add('hidden');
+}
+
+function _showErrorState(elementId, message, onRetry) {
+    if (window.showErrorState) return window.showErrorState(elementId, message, onRetry);
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.innerHTML = `
+            <div class="text-center">
+                <div class="alert alert-error">${message}</div>
+                <button class="btn btn-primary mt-4" onclick="location.reload()">Retry</button>
+            </div>
+        `;
+    }
+}
 
 class ChampionPanels {
     constructor() {
@@ -53,7 +70,7 @@ class ChampionPanels {
             this.renderPanelCategory('governance-panels', governance);
             
             // Show content using centralized utility
-            hideLoading('loading-state');
+            _hideLoading('loading-state');
             document.getElementById('panels-grid').classList.remove('hidden');
             
         } catch (error) {
@@ -472,8 +489,7 @@ class ChampionPanels {
     }
 
     showError(message) {
-        // Use centralized error state display
-        showErrorState('loading-state', message, () => location.reload());
+        _showErrorState('loading-state', message, () => location.reload());
     }
 }
 

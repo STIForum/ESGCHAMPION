@@ -3,10 +3,31 @@
  * ESG Champions Platform
  */
 
-// Use centralized utilities
-const { formatDate } = window;
-const { hideLoading, showErrorState } = window;
-const { requireAdmin } = window;
+// Utility functions with fallbacks
+function _formatDate(dateString) {
+    if (window.formatDate) return window.formatDate(dateString);
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function _hideLoading(elementId) {
+    if (window.hideLoading) return window.hideLoading(elementId);
+    const el = document.getElementById(elementId);
+    if (el) el.classList.add('hidden');
+}
+
+function _showErrorState(elementId, message, onRetry) {
+    if (window.showErrorState) return window.showErrorState(elementId, message, onRetry);
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.innerHTML = `
+            <div class="text-center">
+                <div class="alert alert-error">${message}</div>
+                <button class="btn btn-primary mt-4" onclick="location.reload()">Retry</button>
+            </div>
+        `;
+    }
+}
 
 class AdminReviewPage {
     constructor() {
@@ -92,7 +113,7 @@ class AdminReviewPage {
         this.setupEventListeners();
         
         // Show content using centralized utility
-        hideLoading('loading-state');
+        _hideLoading('loading-state');
         document.getElementById('admin-content').classList.remove('hidden');
     }
 
@@ -159,7 +180,7 @@ class AdminReviewPage {
                     <div class="text-right">
                         <span class="badge badge-warning">Pending Review</span>
                         <div class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">
-                            ${formatDate(submittedAt)}
+                            ${_formatDate(submittedAt)}
                         </div>
                     </div>
                 </div>
@@ -229,7 +250,7 @@ class AdminReviewPage {
                     </div>
                     <div class="flex-between mb-3">
                         <span class="text-secondary">Submitted at:</span>
-                        <strong>${formatDate(submittedAt)}</strong>
+                        <strong>${_formatDate(submittedAt)}</strong>
                     </div>
                     <div class="flex-between">
                         <span class="text-secondary">Indicators reviewed:</span>
@@ -496,7 +517,7 @@ class AdminReviewPage {
                     <div class="text-right">
                         <span class="badge badge-${review.panels?.category || 'primary'}">${review.panels?.name || 'Unknown'}</span>
                         <div class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">
-                            ${formatDate(review.created_at)}
+                            ${_formatDate(review.created_at)}
                         </div>
                     </div>
                 </div>
@@ -2147,8 +2168,7 @@ class AdminReviewPage {
     }
 
     showError(message) {
-        // Use centralized error state display
-        showErrorState('loading-state', message, () => location.reload());
+        _showErrorState('loading-state', message, () => location.reload());
     }
 }
 

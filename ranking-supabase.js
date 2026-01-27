@@ -3,8 +3,28 @@
  * ESG Champions Platform
  */
 
-// Use centralized utilities
-const { hideLoading, showErrorState } = window;
+// Fallback utility functions (in case centralized utilities don't load)
+function _hideLoading(elementId) {
+    if (window.hideLoading) return window.hideLoading(elementId);
+    const el = document.getElementById(elementId);
+    if (el) el.classList.add('hidden');
+}
+
+function _showErrorState(elementId, message, retryCallback) {
+    if (window.showErrorState) return window.showErrorState(elementId, message, retryCallback);
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚠️</div>
+                <h3 class="empty-state-title">Error</h3>
+                <p class="empty-state-description">${message}</p>
+                ${retryCallback ? '<button class="btn btn-primary" onclick="location.reload()">Try Again</button>' : ''}
+            </div>
+        `;
+        el.classList.remove('hidden');
+    }
+}
 
 class RankingPage {
     constructor() {
@@ -42,8 +62,8 @@ class RankingPage {
             // Render rest of leaderboard
             this.renderLeaderboard(champions.slice(3));
             
-            // Hide loading, show content using centralized utility
-            hideLoading('loading-state');
+            // Hide loading, show content using fallback utility
+            _hideLoading('loading-state');
             document.getElementById('leaderboard-widget').classList.remove('hidden');
             
         } catch (error) {
@@ -167,8 +187,8 @@ class RankingPage {
     }
 
     showError(message) {
-        // Use centralized error state display
-        showErrorState('loading-state', message, () => location.reload());
+        // Use fallback error state display
+        _showErrorState('loading-state', message, () => location.reload());
     }
 }
 
