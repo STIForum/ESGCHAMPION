@@ -381,6 +381,81 @@ class ChampionAuth {
 
         return true;
     }
+
+    /**
+     * Check if profile is complete
+     * Returns an object with isComplete flag and list of missing fields
+     */
+    getProfileCompletionStatus() {
+        if (!this.currentChampion) {
+            return { isComplete: false, missingFields: ['profile'], message: 'Profile not loaded' };
+        }
+
+        const requiredFields = [
+            { key: 'full_name', label: 'Full Name' },
+            { key: 'company', label: 'Company/Organization' },
+            { key: 'job_title', label: 'Job Title' }
+        ];
+
+        const missingFields = [];
+
+        for (const field of requiredFields) {
+            const value = this.currentChampion[field.key];
+            if (!value || value.trim() === '') {
+                missingFields.push(field.label);
+            }
+        }
+
+        const isComplete = missingFields.length === 0;
+
+        return {
+            isComplete,
+            missingFields,
+            message: isComplete 
+                ? 'Profile is complete' 
+                : `Please complete your profile: ${missingFields.join(', ')}`
+        };
+    }
+
+    /**
+     * Check profile completion and redirect to profile page if incomplete
+     * @param {boolean} showAlert - Whether to show an alert message
+     * @returns {boolean} - Returns true if profile is complete, false if redirecting
+     */
+    requireCompleteProfile(showAlert = true) {
+        const status = this.getProfileCompletionStatus();
+
+        if (!status.isComplete) {
+            // Store the intended destination for after profile completion
+            const currentPath = window.location.pathname + window.location.search;
+            sessionStorage.setItem('profileRedirectAfter', currentPath);
+
+            if (showAlert) {
+                // Show a friendly message before redirecting
+                alert(`Welcome to ESG Champions! Please complete your profile to continue.\n\nMissing: ${status.missingFields.join(', ')}`);
+            }
+
+            // Redirect to profile page
+            window.location.href = '/champion-profile.html?complete=true';
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if user just completed their profile and should be redirected back
+     * Call this on the profile page after successful save
+     */
+    handleProfileCompletionRedirect() {
+        const redirectTo = sessionStorage.getItem('profileRedirectAfter');
+        if (redirectTo) {
+            sessionStorage.removeItem('profileRedirectAfter');
+            window.location.href = redirectTo;
+            return true;
+        }
+        return false;
+    }
 }
 
 // Create and export singleton instance

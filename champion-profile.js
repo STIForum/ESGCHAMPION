@@ -49,6 +49,68 @@ class ChampionProfile {
         
         // Setup event listeners
         this.setupEventListeners();
+        
+        // Check if user was redirected here to complete profile
+        this.showProfileCompletionBanner();
+    }
+
+    /**
+     * Show a banner if user was redirected to complete their profile
+     */
+    showProfileCompletionBanner() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isCompletionMode = urlParams.get('complete') === 'true';
+        
+        if (isCompletionMode || sessionStorage.getItem('profileRedirectAfter')) {
+            const status = window.championAuth?.getProfileCompletionStatus?.();
+            
+            if (status && !status.isComplete) {
+                // Create and show completion banner
+                const banner = document.createElement('div');
+                banner.id = 'profile-completion-banner';
+                banner.className = 'alert alert-warning mb-4';
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span style="font-size: 1.5rem;">👋</span>
+                        <div>
+                            <strong>Welcome to ESG Champions!</strong>
+                            <p class="mb-0">Please complete your profile to continue. Missing fields: <strong>${status.missingFields.join(', ')}</strong></p>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert at the top of profile content
+                const profileContent = document.getElementById('profile-content');
+                if (profileContent) {
+                    profileContent.insertBefore(banner, profileContent.firstChild);
+                }
+                
+                // Highlight required fields
+                this.highlightRequiredFields(status.missingFields);
+            }
+        }
+    }
+
+    /**
+     * Highlight empty required fields
+     */
+    highlightRequiredFields(missingFields) {
+        const fieldMap = {
+            'Full Name': ['first_name', 'last_name'],
+            'Company/Organization': ['company'],
+            'Job Title': ['job_title']
+        };
+        
+        missingFields.forEach(field => {
+            const inputIds = fieldMap[field] || [];
+            inputIds.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.style.borderColor = '#e74c3c';
+                    input.style.boxShadow = '0 0 0 2px rgba(231, 76, 60, 0.2)';
+                }
+            });
+        });
     }
 
     async loadProfile() {
@@ -276,6 +338,12 @@ class ChampionProfile {
                 this.champion = result.data;
                 this.updateProfileHeader();
                 window.showToast('Profile updated successfully!', 'success');
+                
+                // Check if user was redirected here to complete their profile
+                // If so, redirect them back to their original destination
+                if (window.championAuth?.handleProfileCompletionRedirect?.()) {
+                    return; // Will redirect to original page
+                }
             } else {
                 throw new Error(result.error);
             }

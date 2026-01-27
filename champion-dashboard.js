@@ -63,6 +63,11 @@ class ChampionDashboard {
             return;
         }
 
+        // Check if profile is complete (especially important for LinkedIn users)
+        if (!this.auth.requireCompleteProfile(true)) {
+            return; // Will redirect to profile page
+        }
+
         // Load dashboard data
         await this.loadDashboard();
         

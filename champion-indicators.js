@@ -148,6 +148,12 @@ class ChampionIndicators {
         // Wait for services to be ready
         await new Promise(resolve => setTimeout(resolve, 300));
         
+        // Check if profile is complete (especially important for LinkedIn users)
+        if (window.championAuth?.isAuthenticated?.() && 
+            !window.championAuth.requireCompleteProfile(true)) {
+            return; // Will redirect to profile page
+        }
+        
         // Get selected indicator IDs from URL
         const params = new URLSearchParams(window.location.search);
         const selectedParam = params.get('selected');
