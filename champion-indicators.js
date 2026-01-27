@@ -3,6 +3,10 @@
  * ESG Champions Platform
  */
 
+// Use centralized utilities
+const { formatDate, formatRelativeTime } = window;
+const { hideLoading, showErrorState } = window;
+
 class ChampionIndicators {
     constructor() {
         this.indicators = [];
@@ -197,8 +201,8 @@ class ChampionIndicators {
             this.renderHeader();
             this.renderIndicatorsList();
             
-            // Show content
-            document.getElementById('loading-state').classList.add('hidden');
+            // Show content using centralized utility
+            hideLoading('loading-state');
             document.getElementById('indicators-content').classList.remove('hidden');
             
             // Select first indicator by default
@@ -659,7 +663,7 @@ class ChampionIndicators {
                                 </span>
                             </div>
                             <div class="text-muted" style="font-size: var(--text-sm);">
-                                ${this.formatDate(review.created_at)}
+                                ${formatDate(review.created_at)}
                             </div>
                         </div>
                         <div class="mb-2">
@@ -1301,19 +1305,9 @@ class ChampionIndicators {
         return name.slice(0, 2).toUpperCase();
     }
 
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
     showError(message) {
-        const loadingState = document.getElementById('loading-state');
-        loadingState.innerHTML = `
-            <div class="text-center">
-                <div class="alert alert-error">${message}</div>
-                <a href="/champion-panels.html" class="btn btn-primary mt-4">Back to Panels</a>
-            </div>
-        `;
+        // Use centralized error state display
+        showErrorState('loading-state', message, () => window.location.href = '/champion-panels.html');
     }
 }
 

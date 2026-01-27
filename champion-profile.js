@@ -3,6 +3,11 @@
  * ESG Champions Platform
  */
 
+// Use centralized utilities
+const { formatDate } = window;
+const { hideLoading, showErrorState } = window;
+const { requireAuth } = window;
+
 class ChampionProfile {
     constructor() {
         this.champion = null;
@@ -44,8 +49,8 @@ class ChampionProfile {
             // Populate form
             this.populateForm();
             
-            // Show content
-            document.getElementById('loading-state').classList.add('hidden');
+            // Show content using centralized utility
+            hideLoading('loading-state');
             document.getElementById('profile-content').classList.remove('hidden');
             
         } catch (error) {
@@ -68,7 +73,7 @@ class ChampionProfile {
         document.getElementById('profile-title').textContent = this.champion.job_title || 'ESG Champion';
         document.getElementById('profile-company').textContent = this.champion.company || 'Independent';
         document.getElementById('profile-email').textContent = this.champion.email;
-        document.getElementById('profile-joined').textContent = `Joined ${this.formatDate(this.champion.created_at)}`;
+        document.getElementById('profile-joined').textContent = `Joined ${formatDate(this.champion.created_at)}`;
     }
 
     async updateStats() {
@@ -191,7 +196,7 @@ class ChampionProfile {
                                         </span>
                                     </td>
                                     <td>${this.renderStars(review.rating)}</td>
-                                    <td>${this.formatDate(review.created_at)}</td>
+                                    <td>${formatDate(review.created_at)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -336,19 +341,9 @@ class ChampionProfile {
         return name.slice(0, 2).toUpperCase();
     }
 
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
     showError(message) {
-        const loadingState = document.getElementById('loading-state');
-        loadingState.innerHTML = `
-            <div class="text-center">
-                <div class="alert alert-error">${message}</div>
-                <button class="btn btn-primary mt-4" onclick="location.reload()">Retry</button>
-            </div>
-        `;
+        // Use centralized error state display
+        showErrorState('loading-state', message, () => location.reload());
     }
 }
 

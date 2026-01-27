@@ -3,6 +3,11 @@
  * ESG Champions Platform
  */
 
+// Use centralized utilities
+const { formatRelativeTime } = window;
+const { hideLoading, showErrorState } = window;
+const { requireAuth } = window;
+
 class ChampionDashboard {
     constructor() {
         this.auth = null;
@@ -16,9 +21,8 @@ class ChampionDashboard {
         this.auth = window.championAuth;
         this.db = window.championDB;
 
-        // Check authentication
-        if (!this.auth.isAuthenticated()) {
-            window.location.href = '/champion-login.html?redirect=/champion-dashboard.html';
+        // Check authentication using centralized utility
+        if (!requireAuth()) {
             return;
         }
 
@@ -60,8 +64,8 @@ class ChampionDashboard {
             // Load STIF score breakdown
             await this.loadScoreBreakdown();
             
-            // Show dashboard
-            document.getElementById('loading-state').classList.add('hidden');
+            // Show dashboard using centralized utility
+            hideLoading('loading-state');
             document.getElementById('dashboard-content').classList.remove('hidden');
             
         } catch (error) {
@@ -124,7 +128,7 @@ class ChampionDashboard {
                                 <span class="badge badge-${review.panels?.category || 'primary'}" style="font-size: 10px;">
                                     ${review.panels?.name || 'Unknown Panel'}
                                 </span>
-                                <span style="margin-left: 8px;">${this.formatDate(review.created_at)}</span>
+                                <span style="margin-left: 8px;">${formatRelativeTime(review.created_at)}</span>
                             </div>
                         </div>
                         <span class="badge badge-${statusColors[review.status] || 'primary'}">
@@ -184,36 +188,9 @@ class ChampionDashboard {
         });
     }
 
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) {
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            if (diffHours === 0) {
-                const diffMins = Math.floor(diffMs / (1000 * 60));
-                return diffMins <= 1 ? 'Just now' : `${diffMins} minutes ago`;
-            }
-            return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
-        } else if (diffDays === 1) {
-            return 'Yesterday';
-        } else if (diffDays < 7) {
-            return `${diffDays} days ago`;
-        } else {
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-    }
-
     showError(message) {
-        const loadingState = document.getElementById('loading-state');
-        loadingState.innerHTML = `
-            <div class="text-center">
-                <div class="alert alert-error">${message}</div>
-                <button class="btn btn-primary mt-4" onclick="location.reload()">Retry</button>
-            </div>
-        `;
+        // Use centralized error state display
+        showErrorState('loading-state', message, () => location.reload());
     }
 }
 

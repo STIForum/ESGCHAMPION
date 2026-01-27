@@ -3,6 +3,11 @@
  * ESG Champions Platform
  */
 
+// Use centralized utilities
+const { formatDate } = window;
+const { hideLoading, showErrorState } = window;
+const { requireAdmin } = window;
+
 class AdminReviewPage {
     constructor() {
         this.pendingReviews = [];
@@ -86,8 +91,8 @@ class AdminReviewPage {
         // Setup event listeners
         this.setupEventListeners();
         
-        // Show content
-        document.getElementById('loading-state').classList.add('hidden');
+        // Show content using centralized utility
+        hideLoading('loading-state');
         document.getElementById('admin-content').classList.remove('hidden');
     }
 
@@ -154,7 +159,7 @@ class AdminReviewPage {
                     <div class="text-right">
                         <span class="badge badge-warning">Pending Review</span>
                         <div class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">
-                            ${this.formatDate(submittedAt)}
+                            ${formatDate(submittedAt)}
                         </div>
                     </div>
                 </div>
@@ -224,7 +229,7 @@ class AdminReviewPage {
                     </div>
                     <div class="flex-between mb-3">
                         <span class="text-secondary">Submitted at:</span>
-                        <strong>${this.formatDate(submittedAt)}</strong>
+                        <strong>${formatDate(submittedAt)}</strong>
                     </div>
                     <div class="flex-between">
                         <span class="text-secondary">Indicators reviewed:</span>
@@ -491,7 +496,7 @@ class AdminReviewPage {
                     <div class="text-right">
                         <span class="badge badge-${review.panels?.category || 'primary'}">${review.panels?.name || 'Unknown'}</span>
                         <div class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">
-                            ${this.formatDate(review.created_at)}
+                            ${formatDate(review.created_at)}
                         </div>
                     </div>
                 </div>
@@ -2141,18 +2146,9 @@ class AdminReviewPage {
         return name.slice(0, 2).toUpperCase();
     }
 
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
     showError(message) {
-        document.getElementById('loading-state').innerHTML = `
-            <div class="text-center">
-                <div class="alert alert-error">${message}</div>
-                <button class="btn btn-primary mt-4" onclick="location.reload()">Retry</button>
-            </div>
-        `;
+        // Use centralized error state display
+        showErrorState('loading-state', message, () => location.reload());
     }
 }
 

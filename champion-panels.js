@@ -3,6 +3,9 @@
  * ESG Champions Platform
  */
 
+// Use centralized utilities
+const { hideLoading, showErrorState } = window;
+
 class ChampionPanels {
     constructor() {
         this.panels = [];
@@ -49,8 +52,8 @@ class ChampionPanels {
             this.renderPanelCategory('social-panels', social);
             this.renderPanelCategory('governance-panels', governance);
             
-            // Show content
-            document.getElementById('loading-state').classList.add('hidden');
+            // Show content using centralized utility
+            hideLoading('loading-state');
             document.getElementById('panels-grid').classList.remove('hidden');
             
         } catch (error) {
@@ -469,13 +472,8 @@ class ChampionPanels {
     }
 
     showError(message) {
-        const loadingState = document.getElementById('loading-state');
-        loadingState.innerHTML = `
-            <div class="text-center">
-                <div class="alert alert-error">${message}</div>
-                <button class="btn btn-primary mt-4" onclick="location.reload()">Retry</button>
-            </div>
-        `;
+        // Use centralized error state display
+        showErrorState('loading-state', message, () => location.reload());
     }
 }
 

@@ -3,22 +3,35 @@
  * ESG Champions Platform
  * 
  * Core service wrapper for Supabase client interactions
+ * 
+ * NOTE: This file now uses the centralized client from src/lib/supabase/client.js
+ * The client is created there with proper schema configuration.
  */
 
-// Initialize Supabase client
+// Get Supabase client from centralized module (if available) or initialize here
 let supabaseClient = null;
 
 /**
  * Initialize the Supabase client
+ * Uses centralized client from src/lib/supabase/client.js if available
  */
 function initSupabase() {
+    // Try to use centralized client first
+    if (typeof window.getSupabaseClient === 'function') {
+        supabaseClient = window.getSupabaseClient();
+        if (supabaseClient) return supabaseClient;
+    }
+    
+    // Fallback to direct initialization (backward compatibility)
     if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') {
         console.error('Supabase configuration not found. Please check supabase-config.js');
         return null;
     }
 
     if (!supabaseClient) {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            db: { schema: 'public' }
+        });
     }
     return supabaseClient;
 }
