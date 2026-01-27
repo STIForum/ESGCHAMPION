@@ -1,5 +1,0 @@
-export { AuthProvider, useAuth, type User, type AuthContextValue } from './AuthContext'
-export { default as ProtectedRoute } from './ProtectedRoute'
-export { authService } from './service'
-export { authRepository } from './repo.supabase'
-export * from './types'
