@@ -447,74 +447,90 @@ class ChampionAuth {
      * Show a styled modal prompting user to complete their profile
      */
     showProfileCompletionModal(missingFields) {
-        // Remove existing modal if any
-        const existing = document.getElementById('profile-complete-modal-backdrop');
-        if (existing) existing.remove();
+        // Wait for DOM to be ready before inserting modal
+        const insertModal = () => {
+            // Hide any loading spinners first
+            const loadingState = document.getElementById('loading-state');
+            if (loadingState) loadingState.classList.add('hidden');
 
-        const missingList = missingFields.map(field => `
-            <div class="flex" style="gap: var(--space-3); margin-bottom: var(--space-2);">
-                <div style="width: 20px; height: 20px; background: var(--warning-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="3">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                </div>
-                <span>${field}</span>
-            </div>
-        `).join('');
+            // Remove existing modal if any
+            const existing = document.getElementById('profile-complete-modal-backdrop');
+            if (existing) existing.remove();
 
-        const modalHTML = `
-            <div class="modal-backdrop active" id="profile-complete-modal-backdrop">
-                <div class="modal" id="profile-complete-modal" style="max-width: 480px;">
-                    <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-                        <div></div>
-                        <button class="modal-close" id="profile-complete-modal-close">&times;</button>
+            const missingList = missingFields.map(field => `
+                <div class="flex" style="gap: var(--space-3); margin-bottom: var(--space-2);">
+                    <div style="width: 20px; height: 20px; background: var(--warning-bg, #fef3c7); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--warning, #f59e0b)" stroke-width="3">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
                     </div>
-                    <div class="modal-body text-center">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-100), var(--primary-200)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-5);">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
+                    <span>${field}</span>
+                </div>
+            `).join('');
+
+            const modalHTML = `
+                <div class="modal-backdrop active" id="profile-complete-modal-backdrop" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                    <div class="modal" id="profile-complete-modal" style="max-width: 480px; background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 20px;">
+                        <div class="modal-header" style="border-bottom: none; padding: 20px 20px 0; display: flex; justify-content: flex-end;">
+                            <button class="modal-close" id="profile-complete-modal-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
                         </div>
-                        
-                        <h2 style="margin-bottom: var(--space-3); color: var(--gray-900);">Welcome to ESG Champions!</h2>
-                        <p class="text-secondary" style="margin-bottom: var(--space-5);">
-                            Please complete your profile to get started. This helps us personalize your experience.
-                        </p>
-                        
-                        <div style="text-align: left; background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-5);">
-                            <p style="font-weight: 600; margin-bottom: var(--space-3); color: var(--gray-700);">Missing information:</p>
-                            ${missingList}
+                        <div class="modal-body text-center" style="padding: 0 30px 30px;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            
+                            <h2 style="margin-bottom: 12px; color: #111827; font-size: 24px;">Welcome to ESG Champions!</h2>
+                            <p style="color: #6b7280; margin-bottom: 20px;">
+                                Please complete your profile to get started. This helps us personalize your experience.
+                            </p>
+                            
+                            <div style="text-align: left; background: #f9fafb; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                                <p style="font-weight: 600; margin-bottom: 12px; color: #374151;">Missing information:</p>
+                                ${missingList}
+                            </div>
+                            
+                            <button class="btn btn-primary btn-lg" id="profile-complete-modal-btn" style="width: 100%; padding: 14px 24px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                                Complete My Profile
+                            </button>
                         </div>
-                        
-                        <button class="btn btn-primary btn-lg" id="profile-complete-modal-btn" style="width: 100%;">
-                            Complete My Profile
-                        </button>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-        // Add event listeners
-        const backdrop = document.getElementById('profile-complete-modal-backdrop');
-        const closeBtn = document.getElementById('profile-complete-modal-close');
-        const completeBtn = document.getElementById('profile-complete-modal-btn');
+            // Add event listeners
+            const backdrop = document.getElementById('profile-complete-modal-backdrop');
+            const closeBtn = document.getElementById('profile-complete-modal-close');
+            const completeBtn = document.getElementById('profile-complete-modal-btn');
 
-        const redirectToProfile = () => {
-            window.location.href = '/champion-profile.html?complete=true';
+            const redirectToProfile = () => {
+                window.location.href = '/champion-profile.html?complete=true';
+            };
+
+            if (completeBtn) completeBtn.addEventListener('click', redirectToProfile);
+            if (closeBtn) closeBtn.addEventListener('click', redirectToProfile);
+            if (backdrop) {
+                backdrop.addEventListener('click', (e) => {
+                    if (e.target === backdrop) {
+                        redirectToProfile();
+                    }
+                });
+            }
         };
 
-        completeBtn.addEventListener('click', redirectToProfile);
-        closeBtn.addEventListener('click', redirectToProfile);
-        backdrop.addEventListener('click', (e) => {
-            if (e.target === backdrop) {
-                redirectToProfile();
-            }
-        });
+        // Ensure DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', insertModal);
+        } else {
+            // Small delay to ensure body is available
+            setTimeout(insertModal, 100);
+        }
     }
 
     /**
