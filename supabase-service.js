@@ -8,6 +8,69 @@
  * The client is created there with proper schema configuration.
  */
 
+// =====================================================
+// ALLOWED FIELDS (Safe Payload Whitelisting)
+// =====================================================
+// These constants define which fields are allowed in insert/update operations
+// to prevent injection of unexpected fields into the database.
+
+const CHAMPION_FIELDS = [
+    'id', 'full_name', 'email', 'avatar_url', 'job_title', 'company',
+    'location', 'bio', 'linkedin_url', 'twitter_url', 'website_url',
+    'credits', 'is_admin', 'is_active', 'last_login_at', 'email_notifications',
+    'marketing_emails', 'review_reminders'
+];
+
+const PANEL_FIELDS = [
+    'id', 'name', 'description', 'category', 'icon', 'color',
+    'order_index', 'is_active', 'impact_level', 'estimated_time',
+    'difficulty_level', 'prerequisites'
+];
+
+const INDICATOR_FIELDS = [
+    'id', 'panel_id', 'name', 'description', 'methodology', 'data_source',
+    'category', 'order_index', 'is_active', 'difficulty_level', 'weight',
+    'source_url', 'example_data'
+];
+
+const REVIEW_FIELDS = [
+    'id', 'champion_id', 'indicator_id', 'rating', 'clarity_rating',
+    'content', 'status', 'comments', 'admin_notes', 'relevance_rating',
+    'measurability_rating', 'actionability_rating'
+];
+
+const PANEL_REVIEW_FIELDS = [
+    'id', 'champion_id', 'panel_id', 'status', 'submitted_at',
+    'reviewed_at', 'reviewer_id', 'admin_notes'
+];
+
+const COMMENT_FIELDS = [
+    'id', 'review_id', 'champion_id', 'content', 'parent_id'
+];
+
+const USER_PROGRESS_FIELDS = [
+    'champion_id', 'panel_id', 'indicator_id', 'last_indicator_id'
+];
+
+/**
+ * Build a safe payload for database operations
+ * Only includes explicitly allowed keys
+ */
+function buildSafeDbPayload(data, allowedKeys) {
+    // Use centralized buildSafePayload if available
+    if (typeof window.buildSafePayload === 'function') {
+        return window.buildSafePayload(data, allowedKeys);
+    }
+    // Fallback implementation
+    const payload = {};
+    allowedKeys.forEach(key => {
+        if (data[key] !== undefined) {
+            payload[key] = data[key];
+        }
+    });
+    return payload;
+}
+
 // Get Supabase client from centralized module (if available) or initialize here
 let supabaseClient = null;
 
@@ -205,9 +268,10 @@ class SupabaseService {
      * Create or update champion profile
      */
     async upsertChampion(championData) {
+        const safeData = buildSafeDbPayload(championData, CHAMPION_FIELDS);
         const { data, error } = await this.client
             .from('champions')
-            .upsert(championData, { onConflict: 'id' })
+            .upsert(safeData, { onConflict: 'id' })
             .select()
             .single();
         if (error) throw error;
@@ -218,9 +282,10 @@ class SupabaseService {
      * Update champion profile
      */
     async updateChampion(id, updates) {
+        const safeUpdates = buildSafeDbPayload(updates, CHAMPION_FIELDS);
         const { data, error } = await this.client
             .from('champions')
-            .update({ ...updates, updated_at: new Date().toISOString() })
+            .update({ ...safeUpdates, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
             .single();
@@ -304,9 +369,10 @@ class SupabaseService {
      * Create panel (admin only)
      */
     async createPanel(panelData) {
+        const safeData = buildSafeDbPayload(panelData, PANEL_FIELDS);
         const { data, error } = await this.client
             .from('panels')
-            .insert(panelData)
+            .insert(safeData)
             .select()
             .single();
         if (error) throw error;
@@ -317,9 +383,10 @@ class SupabaseService {
      * Update panel (admin only)
      */
     async updatePanel(id, updates) {
+        const safeUpdates = buildSafeDbPayload(updates, PANEL_FIELDS);
         const { data, error } = await this.client
             .from('panels')
-            .update({ ...updates, updated_at: new Date().toISOString() })
+            .update({ ...safeUpdates, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
             .single();
@@ -406,9 +473,10 @@ class SupabaseService {
      * Create indicator (admin only)
      */
     async createIndicator(indicatorData) {
+        const safeData = buildSafeDbPayload(indicatorData, INDICATOR_FIELDS);
         const { data, error } = await this.client
             .from('indicators')
-            .insert(indicatorData)
+            .insert(safeData)
             .select()
             .single();
         if (error) throw error;
@@ -419,9 +487,10 @@ class SupabaseService {
      * Update indicator (admin only)
      */
     async updateIndicator(id, updates) {
+        const safeUpdates = buildSafeDbPayload(updates, INDICATOR_FIELDS);
         const { data, error } = await this.client
             .from('indicators')
-            .update({ ...updates, updated_at: new Date().toISOString() })
+            .update({ ...safeUpdates, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
             .single();
@@ -437,9 +506,10 @@ class SupabaseService {
      * Create a review
      */
     async createReview(reviewData) {
+        const safeData = buildSafeDbPayload(reviewData, REVIEW_FIELDS);
         const { data, error } = await this.client
             .from('reviews')
-            .insert(reviewData)
+            .insert(safeData)
             .select()
             .single();
         if (error) throw error;
@@ -540,9 +610,10 @@ class SupabaseService {
      * Update review
      */
     async updateReview(id, updates) {
+        const safeUpdates = buildSafeDbPayload(updates, REVIEW_FIELDS);
         const { data, error } = await this.client
             .from('reviews')
-            .update({ ...updates, updated_at: new Date().toISOString() })
+            .update({ ...safeUpdates, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
             .single();
@@ -604,9 +675,10 @@ class SupabaseService {
      */
     async createComment(commentData) {
         try {
+            const safeData = buildSafeDbPayload(commentData, COMMENT_FIELDS);
             const { data, error } = await this.client
                 .from('comments')
-                .insert(commentData)
+                .insert(safeData)
                 .select('*')
                 .single();
             if (error) {
