@@ -9,6 +9,31 @@
  */
 
 // =====================================================
+// FRAMEWORK TYPES (Centralized Constants)
+// =====================================================
+// Primary organizing mechanism for panels and indicators
+const FRAMEWORK_TYPES = {
+    GRI: 'gri',
+    ESRS: 'esrs',
+    IFRS: 'ifrs'
+};
+
+// Framework display labels
+const FRAMEWORK_LABELS = {
+    gri: 'GRI',
+    esrs: 'ESRS',
+    ifrs: 'IFRS'
+};
+
+// All valid framework values
+const VALID_FRAMEWORKS = Object.values(FRAMEWORK_TYPES);
+
+// Export for global access
+window.FRAMEWORK_TYPES = FRAMEWORK_TYPES;
+window.FRAMEWORK_LABELS = FRAMEWORK_LABELS;
+window.VALID_FRAMEWORKS = VALID_FRAMEWORKS;
+
+// =====================================================
 // ALLOWED FIELDS (Safe Payload Whitelisting)
 // =====================================================
 // These constants define which fields are allowed in insert/update operations
@@ -24,13 +49,14 @@ const CHAMPION_FIELDS = [
 const PANEL_FIELDS = [
     'id', 'name', 'description', 'category', 'icon', 'color',
     'order_index', 'is_active', 'impact_level', 'estimated_time',
-    'difficulty_level', 'prerequisites'
+    'difficulty_level', 'prerequisites', 'framework', 'primary_framework',
+    'esg_classification', 'impact', 'purpose', 'unicode', 'related_sdgs'
 ];
 
 const INDICATOR_FIELDS = [
     'id', 'panel_id', 'name', 'description', 'methodology', 'data_source',
     'category', 'order_index', 'is_active', 'difficulty_level', 'weight',
-    'source_url', 'example_data'
+    'source_url', 'example_data', 'framework', 'primary_framework', 'esg_class'
 ];
 
 const REVIEW_FIELDS = [

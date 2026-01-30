@@ -55,13 +55,13 @@
                 </p>
             </div>
 
-            <!-- Category Filter -->
+            <!-- Framework Filter -->
             <div class="flex-center mb-8">
                 <div class="btn-group" style="display: flex; gap: var(--space-2); background: white; padding: var(--space-2); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
-                    <button class="btn btn-ghost filter-btn active" data-filter="all">All Panels</button>
-                    <button class="btn btn-ghost filter-btn" data-filter="environmental">Environmental</button>
-                    <button class="btn btn-ghost filter-btn" data-filter="social">Social</button>
-                    <button class="btn btn-ghost filter-btn" data-filter="governance">Governance</button>
+                    <button class="btn btn-ghost filter-btn active" data-filter="all">All Frameworks</button>
+                    <button class="btn btn-ghost filter-btn" data-filter="gri">GRI</button>
+                    <button class="btn btn-ghost filter-btn" data-filter="esrs">ESRS</button>
+                    <button class="btn btn-ghost filter-btn" data-filter="ifrs">IFRS</button>
                 </div>
             </div>
 
@@ -72,40 +72,40 @@
 
             <!-- Panels Grid -->
             <div id="panels-grid" class="hidden">
-                <!-- Environmental Panels -->
-                <section id="environmental-section" class="mb-8">
-                    <h2 class="mb-4" style="color: var(--environmental);">
+                <!-- GRI Panels -->
+                <section id="gri-section" class="mb-8">
+                    <h2 class="mb-4" style="color: var(--primary-600);">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                             <path d="M12 22c4-4 8-7.5 8-12a8 8 0 1 0-16 0c0 4.5 4 8 8 12z"></path>
                         </svg>
-                        Environmental
+                        GRI
                     </h2>
-                    <div class="features-grid" id="environmental-panels"></div>
+                    <div class="features-grid" id="gri-panels"></div>
                 </section>
 
-                <!-- Social Panels -->
-                <section id="social-section" class="mb-8">
-                    <h2 class="mb-4" style="color: var(--social);">
+                <!-- ESRS Panels -->
+                <section id="esrs-section" class="mb-8">
+                    <h2 class="mb-4" style="color: var(--secondary-600);">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
                         </svg>
-                        Social
+                        ESRS
                     </h2>
-                    <div class="features-grid" id="social-panels"></div>
+                    <div class="features-grid" id="esrs-panels"></div>
                 </section>
 
-                <!-- Governance Panels -->
-                <section id="governance-section" class="mb-8">
-                    <h2 class="mb-4" style="color: var(--governance);">
+                <!-- IFRS Panels -->
+                <section id="ifrs-section" class="mb-8">
+                    <h2 class="mb-4" style="color: var(--accent-600);">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                             <path d="M3 21h18"></path>
                             <path d="M3 10h18"></path>
                             <path d="M5 6l7-3 7 3"></path>
                         </svg>
-                        Governance
+                        IFRS
                     </h2>
-                    <div class="features-grid" id="governance-panels"></div>
+                    <div class="features-grid" id="ifrs-panels"></div>
                 </section>
             </div>
         </div>

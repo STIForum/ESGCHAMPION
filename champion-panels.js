@@ -51,12 +51,12 @@ class ChampionPanels {
         // Setup modal
         this.setupModal();
         
-        // Check URL params for category filter
+        // Check URL params for framework filter
         const params = new URLSearchParams(window.location.search);
-        const category = params.get('category');
-        if (category) {
-            this.filterPanels(category);
-            this.updateFilterButtons(category);
+        const framework = params.get('framework');
+        if (framework) {
+            this.filterPanels(framework);
+            this.updateFilterButtons(framework);
         }
     }
 
@@ -65,15 +65,25 @@ class ChampionPanels {
             const panels = await window.championDB.getPanelsWithCounts();
             this.panels = panels;
             
-            // Group by category
-            const environmental = panels.filter(p => p.category === 'environmental');
-            const social = panels.filter(p => p.category === 'social');
-            const governance = panels.filter(p => p.category === 'governance');
+            // Helper to normalize framework value
+            const normalizeFramework = (panel) => {
+                const fw = (panel.primary_framework || panel.framework || '').toLowerCase();
+                if (fw === 'gri') return 'gri';
+                if (fw === 'esrs') return 'esrs';
+                if (fw === 'ifrs') return 'ifrs';
+                // Default to GRI for legacy panels without framework
+                return 'gri';
+            };
             
-            // Render each category
-            this.renderPanelCategory('environmental-panels', environmental);
-            this.renderPanelCategory('social-panels', social);
-            this.renderPanelCategory('governance-panels', governance);
+            // Group by framework
+            const gri = panels.filter(p => normalizeFramework(p) === 'gri');
+            const esrs = panels.filter(p => normalizeFramework(p) === 'esrs');
+            const ifrs = panels.filter(p => normalizeFramework(p) === 'ifrs');
+            
+            // Render each framework section
+            this.renderPanelSection('gri-panels', gri, 'gri');
+            this.renderPanelSection('esrs-panels', esrs, 'esrs');
+            this.renderPanelSection('ifrs-panels', ifrs, 'ifrs');
             
             // Show content using centralized utility
             _hideLoading('loading-state');
@@ -85,17 +95,17 @@ class ChampionPanels {
         }
     }
 
-    renderPanelCategory(containerId, panels) {
+    renderPanelSection(containerId, panels, framework) {
         const container = document.getElementById(containerId);
         
         if (!panels || panels.length === 0) {
-            container.innerHTML = '<p class="text-secondary">No panels available in this category.</p>';
+            container.innerHTML = `<p class="text-secondary">No panels available in ${(window.FRAMEWORK_LABELS && window.FRAMEWORK_LABELS[framework]) || framework.toUpperCase()} framework.</p>`;
             return;
         }
 
         container.innerHTML = panels.map(panel => {
-            const icon = this.getPanelIcon(panel.name, panel.category);
-            const impactLevel = panel.impact_level || 'high';
+            const icon = this.getPanelIcon(panel.name, framework);
+            const impactLevel = panel.impact_level || panel.impact || 'high';
             const estimatedTime = panel.estimated_time || '10-13 min';
             const points = panel.indicator_count ? panel.indicator_count * 90 : 0;
             
@@ -116,7 +126,7 @@ class ChampionPanels {
             }
             
             return `
-            <div class="panel-card ${panel.category} ${isAwaitingApproval ? 'awaiting-approval' : ''}" style="cursor: pointer;" onclick="panelsPage.startPanelReview('${panel.id}', '${panel.name.replace(/'/g, "\\'")}')">
+            <div class="panel-card ${framework} ${isAwaitingApproval ? 'awaiting-approval' : ''}" data-framework="${framework}" style="cursor: pointer;" onclick="panelsPage.startPanelReview('${panel.id}', '${panel.name.replace(/'/g, "\\'")}')">
                 <h3 style="font-size: var(--text-xl); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2);">
                     <span style="font-size: 1.2em;">${icon}</span>
                     ${panel.name}
@@ -127,7 +137,7 @@ class ChampionPanels {
                 </p>
                 
                 <div style="margin-bottom: var(--space-3);">
-                    <span class="impact-badge impact-${impactLevel}">Impact: ${impactLevel.charAt(0).toUpperCase() + impactLevel.slice(1)}</span>
+                    <span class="impact-badge impact-${(impactLevel || 'high').toLowerCase()}">${typeof impactLevel === 'string' ? impactLevel.charAt(0).toUpperCase() + impactLevel.slice(1) : 'High'}</span>
                 </div>
                 
                 <div class="flex-between" style="margin-bottom: var(--space-3); color: var(--gray-500); font-size: var(--text-sm);">
@@ -191,7 +201,7 @@ class ChampionPanels {
         await this.openIndicatorModal(panelId, panelName);
     }
 
-    getPanelIcon(name, category) {
+    getPanelIcon(name, framework) {
         const iconMap = {
             'climate': '🌍',
             'energy': '⚡',
@@ -217,10 +227,10 @@ class ChampionPanels {
             if (nameLower.includes(key)) return icon;
         }
         
-        // Default icons by category
-        if (category === 'environmental') return '🌱';
-        if (category === 'social') return '👥';
-        if (category === 'governance') return '🏛️';
+        // Default icons by framework
+        if (framework === 'gri') return '🌱';
+        if (framework === 'esrs') return '📊';
+        if (framework === 'ifrs') return '💼';
         return '📊';
     }
 
@@ -296,8 +306,24 @@ class ChampionPanels {
         document.body.style.overflow = 'hidden';
         
         try {
-            // Fetch ALL indicators system-wide (not panel-specific)
-            this.allIndicators = await window.championDB.getAllIndicators();
+            // Get the panel's framework first
+            const panel = this.panels.find(p => p.id === panelId);
+            const panelFramework = (panel?.primary_framework || panel?.framework || '').toLowerCase();
+            
+            // Fetch ALL indicators then filter by framework
+            const allIndicators = await window.championDB.getAllIndicators();
+            
+            // Filter indicators to match panel's framework (strict enforcement)
+            if (panelFramework && window.VALID_FRAMEWORKS?.includes(panelFramework)) {
+                this.allIndicators = allIndicators.filter(ind => {
+                    const indFramework = (ind.primary_framework || ind.framework || '').toLowerCase();
+                    return indFramework === panelFramework;
+                });
+            } else {
+                // Fallback: show all if panel has no framework set
+                this.allIndicators = allIndicators;
+            }
+            
             this.renderIndicatorsList(this.allIndicators);
         } catch (error) {
             console.error('Error loading indicators:', error);
@@ -451,21 +477,23 @@ class ChampionPanels {
         this.currentFilter = filter;
         
         const sections = {
-            environmental: document.getElementById('environmental-section'),
-            social: document.getElementById('social-section'),
-            governance: document.getElementById('governance-section')
+            gri: document.getElementById('gri-section'),
+            esrs: document.getElementById('esrs-section'),
+            ifrs: document.getElementById('ifrs-section')
         };
 
         if (filter === 'all') {
             Object.values(sections).forEach(section => {
-                section.classList.remove('hidden');
+                if (section) section.classList.remove('hidden');
             });
         } else {
-            Object.entries(sections).forEach(([category, section]) => {
-                if (category === filter) {
-                    section.classList.remove('hidden');
-                } else {
-                    section.classList.add('hidden');
+            Object.entries(sections).forEach(([framework, section]) => {
+                if (section) {
+                    if (framework === filter) {
+                        section.classList.remove('hidden');
+                    } else {
+                        section.classList.add('hidden');
+                    }
                 }
             });
         }
@@ -473,9 +501,9 @@ class ChampionPanels {
         // Update URL without reload
         const url = new URL(window.location);
         if (filter === 'all') {
-            url.searchParams.delete('category');
+            url.searchParams.delete('framework');
         } else {
-            url.searchParams.set('category', filter);
+            url.searchParams.set('framework', filter);
         }
         window.history.replaceState({}, '', url);
     }

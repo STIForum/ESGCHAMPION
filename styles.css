@@ -797,6 +797,22 @@ p {
     color: var(--governance);
 }
 
+/* Framework badges */
+.badge-gri {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-esrs {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.badge-ifrs {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
 /* =====================================================
    MODALS
    ===================================================== */

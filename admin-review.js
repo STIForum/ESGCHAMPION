@@ -162,7 +162,8 @@ class AdminReviewPage {
         container.innerHTML = reviews.map(review => {
             // Handle both database schema and legacy localStorage format
             const panelName = review.panels?.name || review.panelName || 'Unknown Panel';
-            const panelCategory = review.panels?.category || 'environmental';
+            const panelFramework = (review.panels?.primary_framework || review.panels?.framework || '').toLowerCase();
+            const frameworkLabel = window.FRAMEWORK_LABELS?.[panelFramework] || panelFramework.toUpperCase() || 'N/A';
             const championName = review.champions?.full_name || review.championName || 'Anonymous';
             const submittedAt = review.created_at || review.submittedAt;
             const indicatorCount = review.indicatorCount || '—';
@@ -171,7 +172,7 @@ class AdminReviewPage {
             <div class="panel-review-card" data-id="${review.id}" onclick="adminPage.openPanelReviewModal('${review.id}')">
                 <div class="flex-between mb-4">
                     <div>
-                        <span class="badge badge-${panelCategory}" style="margin-bottom: var(--space-2);">${panelCategory}</span>
+                        <span class="badge badge-${panelFramework || 'primary'}" style="margin-bottom: var(--space-2);">${frameworkLabel}</span>
                         <h3 style="margin-bottom: var(--space-1);">${panelName}</h3>
                         <div class="text-secondary" style="font-size: var(--text-sm);">
                             ${indicatorCount} indicators reviewed
@@ -227,7 +228,8 @@ class AdminReviewPage {
 
             // Handle both database and localStorage formats
             const panelName = submission.panels?.name || submission.panelName || 'Unknown Panel';
-            const panelCategory = submission.panels?.category || 'environmental';
+            const panelFramework = (submission.panels?.primary_framework || submission.panels?.framework || '').toLowerCase();
+            const frameworkLabel = window.FRAMEWORK_LABELS?.[panelFramework] || panelFramework.toUpperCase() || 'N/A';
             const championName = submission.champions?.full_name || submission.championName || 'Anonymous';
             const championEmail = submission.champions?.email || '';
             const submittedAt = submission.created_at || submission.submittedAt;
@@ -239,7 +241,7 @@ class AdminReviewPage {
                 <div style="margin-bottom: var(--space-4); background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4);">
                     <div class="flex-between mb-3">
                         <span class="text-secondary">Panel:</span>
-                        <span><span class="badge badge-${panelCategory}">${panelCategory}</span> <strong>${panelName}</strong></span>
+                        <span><span class="badge badge-${panelFramework || 'primary'}">${frameworkLabel}</span> <strong>${panelName}</strong></span>
                     </div>
                     <div class="flex-between mb-3">
                         <span class="text-secondary">Submitted by:</span>
@@ -515,7 +517,7 @@ class AdminReviewPage {
                         </div>
                     </div>
                     <div class="text-right">
-                        <span class="badge badge-${review.panels?.category || 'primary'}">${review.panels?.name || 'Unknown'}</span>
+                        <span class="badge badge-${(review.panels?.primary_framework || '').toLowerCase() || 'primary'}">${review.panels?.name || 'Unknown'}</span>
                         <div class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">
                             ${_formatDate(review.created_at)}
                         </div>
@@ -849,22 +851,31 @@ class AdminReviewPage {
         try {
             const panels = await window.adminService.getAllPanels();
             
+            // Helper to get framework display
+            const getFramework = (panel) => {
+                const fw = (panel.primary_framework || panel.framework || '').toLowerCase();
+                return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || 'N/A';
+            };
+            
             container.innerHTML = `
                 <div class="table-container">
                     <table class="table">
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Category</th>
+                                <th>Framework</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${panels.map(panel => `
+                            ${panels.map(panel => {
+                                const framework = getFramework(panel);
+                                const fwLower = (panel.primary_framework || panel.framework || '').toLowerCase();
+                                return `
                                 <tr>
                                     <td><strong>${panel.name}</strong></td>
-                                    <td><span class="badge badge-${panel.category}">${panel.category}</span></td>
+                                    <td><span class="badge badge-${fwLower || 'primary'}">${framework}</span></td>
                                     <td>
                                         <span class="badge badge-${panel.is_active ? 'success' : 'error'}">
                                             ${panel.is_active ? 'Active' : 'Inactive'}
@@ -874,7 +885,7 @@ class AdminReviewPage {
                                         <button class="btn btn-ghost btn-sm" onclick="adminPage.editPanel('${panel.id}')">Edit</button>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -892,6 +903,12 @@ class AdminReviewPage {
         try {
             const indicators = await window.adminService.getAllIndicators();
             
+            // Helper to get framework display
+            const getFramework = (indicator) => {
+                const fw = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
+                return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || '';
+            };
+            
             container.innerHTML = `
                 <div class="table-container">
                     <table class="table">
@@ -899,19 +916,20 @@ class AdminReviewPage {
                             <tr>
                                 <th>Name</th>
                                 <th>Panel</th>
+                                <th>Framework</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${indicators.map(indicator => `
+                            ${indicators.map(indicator => {
+                                const framework = getFramework(indicator);
+                                const fwLower = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
+                                return `
                                 <tr>
                                     <td><strong>${indicator.name}</strong></td>
-                                    <td>
-                                        <span class="badge badge-${indicator.panels?.category || 'primary'}">
-                                            ${indicator.panels?.name || 'Unknown'}
-                                        </span>
-                                    </td>
+                                    <td>${indicator.panels?.name || 'Unknown'}</td>
+                                    <td><span class="badge badge-${fwLower || 'primary'}">${framework || 'N/A'}</span></td>
                                     <td>
                                         <span class="badge badge-${indicator.is_active ? 'success' : 'error'}">
                                             ${indicator.is_active ? 'Active' : 'Inactive'}
@@ -921,7 +939,7 @@ class AdminReviewPage {
                                         <button class="btn btn-ghost btn-sm" onclick="adminPage.editIndicator('${indicator.id}')">Edit</button>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -1004,7 +1022,7 @@ class AdminReviewPage {
 
         body.innerHTML = `
             <div class="mb-4">
-                <span class="badge badge-${review.panels?.category || 'primary'}">${review.panels?.name || 'Unknown'}</span>
+                <span class="badge badge-${(review.panels?.primary_framework || '').toLowerCase() || 'primary'}">${review.panels?.name || 'Unknown'}</span>
                 <span class="badge badge-primary" style="margin-left: var(--space-2);">${review.indicators?.name || 'Unknown'}</span>
             </div>
             
@@ -1182,6 +1200,9 @@ class AdminReviewPage {
 
             this.currentEditingPanel = panel;
 
+            // Normalize framework value to lowercase
+            const normalizedFramework = (panel.primary_framework || panel.framework || '').toLowerCase();
+
             // Populate form fields
             document.getElementById('edit-panel-id').value = panel.id;
             document.getElementById('edit-panel-title').value = panel.name || '';
@@ -1189,7 +1210,7 @@ class AdminReviewPage {
             document.getElementById('edit-panel-impact').value = panel.impact || '';
             document.getElementById('edit-panel-description').value = panel.description || '';
             document.getElementById('edit-panel-esg-classification').value = panel.esg_classification || '';
-            document.getElementById('edit-panel-framework').value = panel.primary_framework || '';
+            document.getElementById('edit-panel-framework').value = normalizedFramework;
             document.getElementById('edit-panel-purpose').value = panel.purpose || '';
             document.getElementById('edit-panel-unicode').value = panel.unicode || '';
             document.getElementById('edit-panel-icon').value = panel.icon || '';
