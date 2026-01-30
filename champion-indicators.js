@@ -71,9 +71,32 @@ class ChampionIndicators {
         this.frameworkOptions = [
             { value: 'gri', label: 'GRI' },
             { value: 'esrs', label: 'ESRS' },
-            { value: 'ifrs', label: 'IFRS' },
-            { value: 'sector', label: 'Sector' },
-            { value: 'other', label: 'Other' }
+            { value: 'ifrs', label: 'IFRS' }
+        ];
+
+        this.geographicFootprintOptions = [
+            { value: 'uk_only', label: 'UK Only' },
+            { value: 'uk_eu', label: 'UK + EU' },
+            { value: 'global', label: 'Global' }
+        ];
+
+        this.estimatedTimeOptions = [
+            { value: 'under_30', label: '<30 min' },
+            { value: '30_to_90', label: '30–90 min' },
+            { value: 'over_90', label: '>90 min' }
+        ];
+
+        this.supportRequiredOptions = [
+            { value: 'none', label: 'None' },
+            { value: 'basic_guidance', label: 'Basic Guidance (online references and AI)' },
+            { value: 'external_consultant', label: 'External Consultant' }
+        ];
+
+        this.stakeholderPriorityOptions = [
+            { value: 'customers', label: 'Customers' },
+            { value: 'investors', label: 'Investors' },
+            { value: 'regulators', label: 'Regulators' },
+            { value: 'employees', label: 'Employees' }
         ];
 
         this.esgClasses = [
@@ -127,19 +150,24 @@ class ChampionIndicators {
         this.helpText = {
             smeSize: 'Select the size band of SMEs you have in mind when scoring this indicator. This anchors feasibility, cost, and relevance to a realistic resource level (e.g., micro vs medium firms will differ strongly).',
             sector: 'Choose the main industry or sector for which you are validating this indicator. STIF uses this to understand sector-specific materiality (e.g., water for food, emissions for manufacturing).',
-            indicatorTitle: 'Human-readable name of the indicator. Helps SMEs and reviewers understand what is measured without the full framework text.',
-            frameworkCodes: 'Official framework references (e.g., GRI, ESRS, IFRS). Allow STIF to cross-link to standards and ensure regulatory alignment.',
-            primaryFramework: 'Select the main standard that defines this indicator. This normalises overlapping indicators across frameworks and determines regulatory weight.',
-            esgClass: 'Classify the indicator as Environment, Social, or Governance to support high-level reporting balance.',
-            sdgs: 'Select the SDGs that this indicator meaningfully contributes to. SDG alignment can slightly uplift indicators without overriding mandatory requirements.',
-            relevance: 'Assess how material this indicator is for SMEs of this size and sector. High = core to impacts/value; Low = peripheral.',
-            regulatory: 'Judge strength of external expectations (law, ESRS/IFRS/GRI, customers). Mandatory indicators stay in Core regardless of other scores.',
-            feasibility: 'Rate how realistic it is for this SME profile to measure the indicator within 6–12 months using typical systems/processes.',
-            cost: 'Estimate proportional effort and cost for this SME profile. High cost means the indicator is heavy relative to typical SME resources.',
-            misreporting: 'Assess how likely SMEs are to mis-measure or mis-communicate this indicator. High risk covers ambiguous definitions or high stakes if wrong.',
-            tier: 'Given your ratings, choose the tier this indicator should have for this SME size and sector.',
-            rationale: 'Add a brief justification focusing on relevance and regulatory necessity versus cost and feasibility. Max 150 characters.',
-            tags: 'If relevant, tag specific sub-sectors (e.g., Meat processing, Software, Apparel) for finer-grained use.',
+            geographicFootprint: 'Select the geographic scope for this validation. Different regions have different regulatory requirements.',
+            indicatorTitle: 'This is the human-readable name of the indicator. It helps SMEs and reviewers understand what is being measured without reading the full framework text.',
+            indicatorDescription: 'Short description of the description of the indicator.',
+            frameworkCodes: 'These are the official framework references (e.g., GRI, ESRS, IFRS). They allow STIF to cross-link to standards and ensure regulatory alignment.',
+            primaryFramework: 'Select the main standard that defines this indicator. This helps normalise overlapping indicators across frameworks and determine regulatory weight.',
+            esgClass: 'Classify the indicator as Environment, Social, or Governance. This supports high-level reporting structure and balance across ESG pillars.',
+            sdgs: 'Select the SDGs that this indicator meaningfully contributes to. STIF uses SDG links to slightly uplift indicators aligned with an SME\'s declared SDG priorities, without overriding mandatory requirements.',
+            relevance: 'Assess how material this indicator typically is for SMEs of this size and sector. High = core to the SME\'s material impacts or value creation in this sector; Low = usually peripheral or not relevant.',
+            regulatory: 'Judge the strength of external expectations (law, ESRS/IFRS/GRI, key customers, certifications). Mandatory indicators must stay in the Core tier regardless of other scores.',
+            feasibility: 'Rate how realistic it is for this SME profile to measure the indicator within 6–12 months, using typical systems and processes in that sector and size band.',
+            cost: 'Estimate the proportional effort and cost for this SME profile (internal time, tools, external support). High cost means the indicator is heavy relative to typical SME resources.',
+            estimatedTime: 'Time required to report on this indicator by businesses.',
+            supportRequired: 'This explains the level of support required to report on this indicator by SMEs (small and medium businesses).',
+            misreporting: 'Assess how likely it is that SMEs mis-measure or mis-communicate this indicator. High risk covers ambiguous definitions, heavy estimation, or high reputational/regulatory stakes if wrong.',
+            tier: 'Given your ratings above, choose the tier you believe this indicator should have for this SME size and sector.',
+            stakeholderPriority: 'This priority explains to which stakeholder in the business that this indicator matters the most.',
+            rationale: 'Add a brief justification for your tier choice, focusing on relevance and regulatory necessity vs cost and feasibility. This supports transparency and later audit or refinement of the rules.',
+            tags: 'If relevant, tag specific sub-sectors (e.g., Meat processing, Software, Apparel). This allows finer-grained use of your assessment in particular niches.',
             notes: 'Capture any important conditions or exceptions (e.g., only feasible in water-stressed regions).'
         };
     }
@@ -199,6 +227,7 @@ class ChampionIndicators {
             indicatorName: '',
             sme_size_band: '',
             primary_sector: '',
+            geographic_footprint: '',
             primary_framework: '',
             esg_class: '',
             sdgs: [],
@@ -206,8 +235,11 @@ class ChampionIndicators {
             regulatory_necessity: '',
             operational_feasibility: '',
             cost_to_collect: '',
+            estimated_time: '',
+            support_required: '',
             misreporting_risk: '',
             suggested_tier: '',
+            stakeholder_priority: '',
             rationale: '',
             optional_tags: [],
             notes: '',
@@ -437,6 +469,13 @@ class ChampionIndicators {
                             ${this.sectorOptions.map(opt => `<option value="${opt.value}" ${state.primary_sector === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
                         </select>
                     </div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Geographic Footprint</label>
+                            ${this.renderInfo('geographicFootprint', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('geographic_footprint', this.geographicFootprintOptions, state.geographic_footprint, false)}
+                    </div>
                 </div>
 
                 <div class="section-block">
@@ -455,6 +494,14 @@ class ChampionIndicators {
                             ${this.renderInfo('frameworkCodes', indicator.id)}
                         </div>
                         <input type="text" class="form-input" value="${frameworkCodeDisplay}" readonly>
+                        <span class="pill-muted">Read-only</span>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Indicator Description</label>
+                            ${this.renderInfo('indicatorDescription', indicator.id)}
+                        </div>
+                        <textarea class="form-input" rows="3" readonly style="resize: none;">${indicator.description || ''}</textarea>
                         <span class="pill-muted">Read-only</span>
                     </div>
                     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4);">
@@ -532,10 +579,36 @@ class ChampionIndicators {
                         </div>
                         ${this.renderSingleChips('misreporting_risk', this.triLevelOptions, state.misreporting_risk, scoringLocked)}
                     </div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Estimated Time to Collect</label>
+                            ${this.renderInfo('estimatedTime', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('estimated_time', this.estimatedTimeOptions, state.estimated_time, scoringLocked)}
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Support Required to Report This Indicator</label>
+                            ${this.renderInfo('supportRequired', indicator.id)}
+                        </div>
+                        ${this.renderSingleChips('support_required', this.supportRequiredOptions, state.support_required, scoringLocked)}
+                    </div>
                 </div>
 
                 <div class="section-block">
                     <div class="section-title">D. Overall Tier and Short Rationale</div>
+
+                    <div class="field-row">
+                        <div class="field-header">
+                            <label class="form-label">Stakeholder Priority</label>
+                            ${this.renderInfo('stakeholderPriority', indicator.id)}
+                        </div>
+                        ${this.renderMultiChips('stakeholder_priority', this.stakeholderPriorityOptions, state.stakeholder_priority)}
+                        <span class="inline-helper">Multi-select chips</span>
+                    </div>
+
                     <div class="field-row">
                         <div class="field-header">
                             <label class="form-label" for="suggested_tier">Suggested STIF Tier</label>
@@ -812,6 +885,7 @@ class ChampionIndicators {
                 indicatorId: review.indicatorId,
                 sme_size_band: review.sme_size_band,
                 primary_sector: review.primary_sector,
+                geographic_footprint: review.geographic_footprint || null,
                 primary_framework: review.primary_framework,
                 esg_class: review.esg_class,
                 sdgs: review.sdgs || [],
@@ -820,6 +894,9 @@ class ChampionIndicators {
                 operational_feasibility: review.operational_feasibility,
                 cost_to_collect: review.cost_to_collect,
                 misreporting_risk: review.misreporting_risk,
+                estimated_time: review.estimated_time || null,
+                support_required: review.support_required || null,
+                stakeholder_priority: review.stakeholder_priority || [],
                 suggested_tier: review.suggested_tier,
                 rationale: review.rationale,
                 optional_tags: review.optional_tags || [],
@@ -1230,8 +1307,12 @@ class ChampionIndicators {
         const sdgButtons = document.querySelectorAll('.chip[data-field="sdgs"].selected');
         state.sdgs = Array.from(sdgButtons).map(btn => parseInt(btn.getAttribute('data-value'), 10)).filter(Boolean);
 
+        // Stakeholder priority multi-select chips
+        const stakeholderButtons = document.querySelectorAll('.chip[data-field="stakeholder_priority"].selected');
+        state.stakeholder_priority = Array.from(stakeholderButtons).map(btn => btn.getAttribute('data-value')).filter(Boolean);
+
         // Dimension chips single select
-        const singleFields = ['relevance', 'regulatory_necessity', 'operational_feasibility', 'cost_to_collect', 'misreporting_risk'];
+        const singleFields = ['relevance', 'regulatory_necessity', 'operational_feasibility', 'cost_to_collect', 'misreporting_risk', 'geographic_footprint', 'estimated_time', 'support_required'];
         singleFields.forEach(field => {
             const selected = document.querySelector(`.chip[data-field="${field}"].selected`);
             state[field] = selected ? selected.getAttribute('data-value') : '';
@@ -1318,6 +1399,19 @@ class ChampionIndicators {
                     <button type="button" class="chip sdg-chip ${selectedSet.has(opt.value) ? 'selected' : ''}" data-value="${opt.value}" data-field="sdgs">
                         <span class="sdg-dot"></span>
                         <span>${opt.label}</span>
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    renderMultiChips(field, options, selectedValues = []) {
+        const selectedSet = new Set(selectedValues || []);
+        return `
+            <div class="chip-group" data-field="${field}" data-multi="true">
+                ${options.map(opt => `
+                    <button type="button" class="chip ${selectedSet.has(opt.value) ? 'selected' : ''}" data-value="${opt.value}" data-field="${field}">
+                        ${opt.label}
                     </button>
                 `).join('')}
             </div>
