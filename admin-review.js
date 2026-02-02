@@ -1815,9 +1815,6 @@ class AdminReviewPage {
         modal.classList.add('active');
 
         try {
-            // Load panels for dropdown
-            await this.populatePanelDropdowns();
-
             // Fetch indicator data
             const indicators = await window.adminService.getAllIndicators();
             const indicator = indicators.find(i => i.id === indicatorId);
