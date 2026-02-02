@@ -1688,14 +1688,11 @@ class AdminReviewPage {
         const modal = document.getElementById('add-indicator-modal');
         
         if (backdrop && modal) {
-            // Load panels for the dropdown
-            await this.populatePanelDropdowns();
-            
             backdrop.classList.add('active');
             modal.classList.add('active');
             
             // Focus first input
-            setTimeout(() => document.getElementById('indicator-panel').focus(), 100);
+            setTimeout(() => document.getElementById('indicator-title').focus(), 100);
         }
     }
 
@@ -1723,31 +1720,8 @@ class AdminReviewPage {
         }
     }
 
-    async populatePanelDropdowns() {
-        try {
-            this.panelsList = await window.adminService.getAllPanels();
-            
-            const addDropdown = document.getElementById('indicator-panel');
-            const editDropdown = document.getElementById('edit-indicator-panel');
-            
-            const optionsHtml = this.panelsList.map(panel => 
-                `<option value="${panel.id}">${panel.name}</option>`
-            ).join('');
-            
-            if (addDropdown) {
-                addDropdown.innerHTML = '<option value="">Select panel</option>' + optionsHtml;
-            }
-            if (editDropdown) {
-                editDropdown.innerHTML = '<option value="">Select panel</option>' + optionsHtml;
-            }
-        } catch (error) {
-            console.error('Error loading panels for dropdown:', error);
-        }
-    }
-
     validateAddIndicatorForm() {
         const requiredFields = [
-            { id: 'indicator-panel', label: 'Panel' },
             { id: 'indicator-title', label: 'Indicator Title' }
         ];
 
@@ -1780,7 +1754,6 @@ class AdminReviewPage {
         try {
             // Collect form values
             const indicatorData = {
-                panel_id: document.getElementById('indicator-panel').value,
                 name: document.getElementById('indicator-title').value.trim(),
                 unit: document.getElementById('indicator-unit').value.trim() || null,
                 formula_required: document.getElementById('indicator-formula-required').checked,
@@ -1859,7 +1832,6 @@ class AdminReviewPage {
 
             // Populate form fields
             document.getElementById('edit-indicator-id').value = indicator.id;
-            document.getElementById('edit-indicator-panel').value = indicator.panel_id || '';
             document.getElementById('edit-indicator-title').value = indicator.name || '';
             document.getElementById('edit-indicator-unit').value = indicator.unit || '';
             document.getElementById('edit-indicator-formula-required').checked = indicator.formula_required || false;
@@ -1923,7 +1895,6 @@ class AdminReviewPage {
 
     validateEditIndicatorForm() {
         const requiredFields = [
-            { id: 'edit-indicator-panel', label: 'Panel' },
             { id: 'edit-indicator-title', label: 'Indicator Title' }
         ];
 
@@ -1957,7 +1928,6 @@ class AdminReviewPage {
             const indicatorId = document.getElementById('edit-indicator-id').value;
 
             const updates = {
-                panel_id: document.getElementById('edit-indicator-panel').value,
                 name: document.getElementById('edit-indicator-title').value.trim(),
                 unit: document.getElementById('edit-indicator-unit').value.trim() || null,
                 formula_required: document.getElementById('edit-indicator-formula-required').checked,
