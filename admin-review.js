@@ -354,20 +354,26 @@ class AdminReviewPage {
             `;
 
             footer.innerHTML = `
-                <button class="btn btn-ghost" onclick="adminPage.closePanelReviewModal()">Cancel</button>
-                <button class="btn btn-error" onclick="adminPage.rejectPanelReview('${submissionId}')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Reject
-                </button>
-                <button class="btn btn-success" onclick="adminPage.approvePanelReview('${submissionId}')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Approve Panel Review
-                </button>
+                <div style="width: 100%; margin-bottom: var(--space-3);">
+                    <label class="form-label" style="font-weight: 500;">Admin Comment (optional)</label>
+                    <textarea id="admin-review-comment" class="form-textarea" placeholder="Add your feedback or comments about this review..." rows="2" style="width: 100%; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; gap: var(--space-3); justify-content: flex-end;">
+                    <button class="btn btn-ghost" onclick="adminPage.closePanelReviewModal()">Cancel</button>
+                    <button class="btn btn-error" onclick="adminPage.rejectPanelReview('${submissionId}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Reject
+                    </button>
+                    <button class="btn btn-success" onclick="adminPage.approvePanelReview('${submissionId}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-1);">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Approve Panel Review
+                    </button>
+                </div>
             `;
 
         } catch (error) {
@@ -382,6 +388,12 @@ class AdminReviewPage {
         backdrop.classList.remove('active');
         modal.classList.remove('active');
         this.selectedPanelReview = null;
+        
+        // Clear admin comment field
+        const commentField = document.getElementById('admin-review-comment');
+        if (commentField) {
+            commentField.value = '';
+        }
     }
 
     async approvePanelReview(submissionId) {
@@ -392,14 +404,22 @@ class AdminReviewPage {
         }
 
         try {
-            // Update in database
-            await window.championDB.updateSubmissionStatus(submissionId, 'approved');
+            // Get admin comment
+            const adminComment = document.getElementById('admin-review-comment')?.value?.trim() || '';
+            
+            // Get current admin user
+            const adminUser = window.championAuth.getUser();
+            const adminId = adminUser?.id || null;
+
+            // Update submission and indicator reviews in database
+            await window.championDB.approveSubmissionWithComment(submissionId, adminComment, adminId);
 
             // Also update localStorage for backwards compatibility
             const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
             const idx = submissions.findIndex(s => s.id === submissionId);
             if (idx !== -1) {
                 submissions[idx].status = 'approved';
+                submissions[idx].admin_notes = adminComment;
                 localStorage.setItem('panelSubmissions', JSON.stringify(submissions));
                 
                 // Update panelReviews in sessionStorage

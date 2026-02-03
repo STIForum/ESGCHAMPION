@@ -1108,6 +1108,42 @@ class SupabaseService {
     }
 
     /**
+     * Approve submission with admin comment - updates both submission and indicator reviews
+     */
+    async approveSubmissionWithComment(submissionId, adminComment, adminId) {
+        // Update the submission status to approved with admin notes
+        const { data: submission, error: submissionError } = await this.client
+            .from('panel_review_submissions')
+            .update({ 
+                status: 'approved',
+                admin_notes: adminComment || null,
+                reviewed_by: adminId || null,
+                reviewed_at: new Date().toISOString()
+            })
+            .eq('id', submissionId)
+            .select()
+            .single();
+        
+        if (submissionError) throw submissionError;
+
+        // Update all indicator reviews for this submission to 'accepted' status
+        const { error: indicatorError } = await this.client
+            .from('panel_review_indicator_reviews')
+            .update({ 
+                review_status: 'accepted',
+                updated_at: new Date().toISOString()
+            })
+            .eq('submission_id', submissionId);
+        
+        if (indicatorError) {
+            console.error('Error updating indicator reviews:', indicatorError);
+            // Don't throw - submission was already updated
+        }
+
+        return submission;
+    }
+
+    /**
      * Get user's panel review submissions
      */
     async getUserPanelReviewSubmissions(userId) {

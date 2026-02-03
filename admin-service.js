@@ -332,6 +332,7 @@ class AdminService {
                 id,
                 panel_id,
                 status,
+                created_at,
                 submitted_at,
                 reviewed_at,
                 admin_notes,
@@ -382,8 +383,10 @@ class AdminService {
                 clarity_rating,
                 analysis,
                 status,
+                review_status,
                 feedback,
                 created_at,
+                updated_at,
                 indicators (
                     id,
                     name,
@@ -409,8 +412,8 @@ class AdminService {
                     panel_name: submission.panels?.name || '',
                     panel_framework: submission.panels?.primary_framework || '',
                     panel_esg_class: submission.panels?.esg_classification || '',
-                    submitted_at: submission.submitted_at,
-                    reviewed_at: submission.reviewed_at,
+                    submitted_at: submission.submitted_at || submission.created_at || '',
+                    reviewed_at: submission.reviewed_at || '',
                     admin_notes: submission.admin_notes || '',
                     
                     // Champion info
@@ -447,7 +450,7 @@ class AdminService {
                     clarity_rating: review.clarity_rating || '',
                     analysis: review.analysis || '',
                     
-                    review_status: review.status || '',
+                    review_status: review.review_status || review.status || 'pending',
                     review_feedback: review.feedback || '',
                     review_created_at: review.created_at
                 });

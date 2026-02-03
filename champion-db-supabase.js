@@ -588,6 +588,18 @@ class ChampionDB {
     }
 
     /**
+     * Approve submission with admin comment - updates both submission and indicator reviews
+     */
+    async approveSubmissionWithComment(submissionId, adminComment, adminId) {
+        try {
+            return await this.service.approveSubmissionWithComment(submissionId, adminComment, adminId);
+        } catch (error) {
+            console.error('Error approving submission with comment:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get user's panel review submissions
      */
     async getUserPanelReviewSubmissions() {
