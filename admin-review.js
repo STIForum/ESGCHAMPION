@@ -1151,10 +1151,10 @@ class AdminReviewPage {
             btn.innerHTML = '<span class="loading-spinner" style="width: 20px; height: 20px;"></span> Exporting...';
 
             await window.adminService.exportData();
-            window.showToast('Data exported successfully!', 'success');
+            window.showToast('Approved reviews exported successfully!', 'success');
         } catch (error) {
             console.error('Export error:', error);
-            window.showToast('Failed to export data.', 'error');
+            window.showToast(error.message || 'Failed to export data.', 'error');
         } finally {
             const btn = document.getElementById('export-btn');
             btn.disabled = false;
