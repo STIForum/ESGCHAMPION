@@ -754,6 +754,17 @@ class AdminReviewPage {
             toggleVisibilityBtn.addEventListener('click', () => this.togglePanelVisibility());
         }
 
+        // Edit Panel CSV Import handlers
+        const editPanelDownloadCsvBtn = document.getElementById('edit-panel-download-csv-btn');
+        const editPanelCsvInput = document.getElementById('edit-panel-csv-input');
+        
+        if (editPanelDownloadCsvBtn) {
+            editPanelDownloadCsvBtn.addEventListener('click', () => this.downloadCsvTemplate());
+        }
+        if (editPanelCsvInput) {
+            editPanelCsvInput.addEventListener('change', (e) => this.handleEditPanelCsvImport(e));
+        }
+
         // Clear validation errors on input for edit form
         const editPanelForm = document.getElementById('edit-panel-form');
         if (editPanelForm) {
@@ -1329,6 +1340,28 @@ class AdminReviewPage {
 
             // Update visibility toggle button state
             this.updateVisibilityButtonState(panel.is_active !== false);
+
+            // Load indicator count for this panel
+            try {
+                const indicators = await window.supabaseService.getIndicatorsByPanel(panelId);
+                const countEl = document.getElementById('edit-panel-indicator-count');
+                if (countEl) {
+                    countEl.textContent = indicators?.length || 0;
+                }
+            } catch (indicatorErr) {
+                console.warn('Could not load indicator count:', indicatorErr);
+            }
+
+            // Reset CSV status
+            const csvStatus = document.getElementById('edit-panel-csv-status');
+            if (csvStatus) {
+                csvStatus.style.display = 'none';
+                csvStatus.textContent = '';
+            }
+            const csvInput = document.getElementById('edit-panel-csv-input');
+            if (csvInput) {
+                csvInput.value = '';
+            }
 
             // Focus first input
             setTimeout(() => document.getElementById('edit-panel-title').focus(), 100);
@@ -2246,6 +2279,99 @@ class AdminReviewPage {
         
         result.push(current);
         return result;
+    }
+
+    /**
+     * Handle CSV import from the Edit Panel modal
+     */
+    async handleEditPanelCsvImport(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const statusDiv = document.getElementById('edit-panel-csv-status');
+        const panelId = this.currentEditingPanel?.id;
+
+        if (!panelId) {
+            if (statusDiv) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = 'var(--warning-light)';
+                statusDiv.style.color = 'var(--warning-dark)';
+                statusDiv.innerHTML = '<strong>⚠️ No panel selected.</strong>';
+            }
+            event.target.value = '';
+            return;
+        }
+
+        if (statusDiv) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = 'var(--primary-50)';
+            statusDiv.style.color = 'var(--primary-600)';
+            statusDiv.innerHTML = '<span class="loading-spinner-sm" style="width: 14px; height: 14px; margin-right: var(--space-2); display: inline-block;"></span> Processing CSV file...';
+        }
+
+        try {
+            const text = await file.text();
+            const indicators = this.parseCsv(text);
+
+            if (indicators.length === 0) {
+                throw new Error('No valid indicators found in CSV');
+            }
+
+            // Import indicators for this panel
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+
+            for (const indicator of indicators) {
+                try {
+                    await window.adminService.createIndicator({
+                        ...indicator,
+                        panel_id: panelId,
+                        is_active: true,
+                        order_index: 0
+                    });
+                    successCount++;
+                } catch (err) {
+                    errorCount++;
+                    errors.push(`${indicator.name || 'Unknown'}: ${err.message}`);
+                }
+            }
+
+            // Update indicator count display
+            const countEl = document.getElementById('edit-panel-indicator-count');
+            if (countEl) {
+                const currentCount = parseInt(countEl.textContent) || 0;
+                countEl.textContent = currentCount + successCount;
+            }
+
+            // Show results
+            if (successCount > 0 && errorCount === 0) {
+                if (statusDiv) {
+                    statusDiv.style.background = 'var(--success-light)';
+                    statusDiv.style.color = 'var(--success-dark)';
+                    statusDiv.innerHTML = `<strong>✅ Import Successful!</strong> ${successCount} indicator(s) added to this panel.`;
+                }
+                window.showToast?.(`${successCount} indicators imported!`, 'success');
+            } else if (successCount > 0 && errorCount > 0) {
+                if (statusDiv) {
+                    statusDiv.style.background = 'var(--warning-light)';
+                    statusDiv.style.color = 'var(--warning-dark)';
+                    statusDiv.innerHTML = `<strong>⚠️ Partial Import:</strong> ${successCount} imported, ${errorCount} failed.`;
+                }
+            } else {
+                throw new Error(`All ${errorCount} indicators failed to import`);
+            }
+
+        } catch (error) {
+            console.error('Edit panel CSV import error:', error);
+            if (statusDiv) {
+                statusDiv.style.background = 'var(--error-light)';
+                statusDiv.style.color = 'var(--error-dark)';
+                statusDiv.innerHTML = `<strong>❌ Import Failed:</strong> ${error.message}`;
+            }
+        }
+
+        event.target.value = '';
     }
 
     // =====================================================

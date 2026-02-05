@@ -585,7 +585,7 @@ class ChampionIndicators {
                             <label class="form-label">Estimated Time to Collect</label>
                             ${this.renderInfo('estimatedTime', indicator.id)}
                         </div>
-                        ${this.renderSingleChips('estimated_time', this.estimatedTimeOptions, state.estimated_time, scoringLocked)}
+                        ${this.renderSingleChips('estimated_time', this.estimatedTimeOptions, state.estimated_time, false)}
                     </div>
 
                     <div class="field-row">
@@ -593,7 +593,7 @@ class ChampionIndicators {
                             <label class="form-label">Support Required to Report This Indicator</label>
                             ${this.renderInfo('supportRequired', indicator.id)}
                         </div>
-                        ${this.renderSingleChips('support_required', this.supportRequiredOptions, state.support_required, scoringLocked)}
+                        ${this.renderSingleChips('support_required', this.supportRequiredOptions, state.support_required, false)}
                     </div>
                 </div>
 
@@ -1212,16 +1212,44 @@ class ChampionIndicators {
     refreshFormUI(state) {
         const scoringUnlocked = this.isScoringUnlocked(state);
 
+        // Fields that require SME context to be filled first
+        const scoringFields = ['relevance', 'regulatory_necessity', 'operational_feasibility', 'cost_to_collect', 'misreporting_risk'];
+        // Fields that are always unlocked (optional context fields)
+        const alwaysUnlockedFields = ['estimated_time', 'support_required', 'geographic_footprint', 'stakeholder_priority', 'sdgs'];
+        
         document.querySelectorAll('.chip-group').forEach(group => {
             const field = group.getAttribute('data-field');
-            if (field === 'sdgs') return;
-            if (['relevance', 'regulatory_necessity', 'operational_feasibility', 'cost_to_collect', 'misreporting_risk'].includes(field)) {
+            
+            // Skip always-unlocked fields
+            if (alwaysUnlockedFields.includes(field)) {
+                group.setAttribute('data-locked', 'false');
+                group.querySelectorAll('.chip').forEach(chip => chip.classList.remove('disabled'));
+                // Remove locked hint if present
+                const hint = group.nextElementSibling;
+                if (hint && hint.classList.contains('locked-hint')) {
+                    hint.style.display = 'none';
+                }
+                return;
+            }
+            
+            // Lock/unlock scoring fields based on SME context
+            if (scoringFields.includes(field)) {
                 if (scoringUnlocked) {
                     group.setAttribute('data-locked', 'false');
                     group.querySelectorAll('.chip').forEach(chip => chip.classList.remove('disabled'));
+                    // Hide locked hint
+                    const hint = group.nextElementSibling;
+                    if (hint && hint.classList.contains('locked-hint')) {
+                        hint.style.display = 'none';
+                    }
                 } else {
                     group.setAttribute('data-locked', 'true');
                     group.querySelectorAll('.chip').forEach(chip => chip.classList.add('disabled'));
+                    // Show locked hint
+                    const hint = group.nextElementSibling;
+                    if (hint && hint.classList.contains('locked-hint')) {
+                        hint.style.display = '';
+                    }
                 }
             }
         });
