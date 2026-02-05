@@ -422,6 +422,7 @@ class AdminReviewPage {
             // Send notification to the champion
             if (championId) {
                 try {
+                    // Send review approved notification
                     await window.championDB.createNotification(
                         championId,
                         'review_accepted',
@@ -432,6 +433,19 @@ class AdminReviewPage {
                             submission_id: submissionId, 
                             panel_name: panelName,
                             admin_comment: adminComment 
+                        }
+                    );
+                    
+                    // Send credits awarded notification (10 credits per approved review)
+                    await window.championDB.createNotification(
+                        championId,
+                        'credits_awarded',
+                        'Credits Earned! 💰',
+                        `You earned 10 credits for your approved review of "${panelName}".`,
+                        '/champion-dashboard.html',
+                        { 
+                            credits: 10,
+                            panel_name: panelName
                         }
                     );
                 } catch (notifError) {
@@ -1748,6 +1762,13 @@ class AdminReviewPage {
             // Save to database via admin service
             const savedPanel = await window.adminService.createPanel(panelData);
 
+            // Send new panel notification to all champions
+            try {
+                await this.sendNewPanelNotifications(savedPanel, title);
+            } catch (notifError) {
+                console.warn('Failed to send new panel notifications:', notifError);
+            }
+
             window.showToast?.('Panel created successfully!', 'success');
             
             // Close modal and reset form
@@ -2583,6 +2604,56 @@ class AdminReviewPage {
 
     showError(message) {
         _showErrorState('loading-state', message, () => location.reload());
+    }
+
+    /**
+     * Send notification to all champions about a new panel
+     */
+    async sendNewPanelNotifications(savedPanel, panelTitle) {
+        if (!window.supabaseService || !window.supabaseService.supabase) {
+            console.warn('Supabase service not available for notifications');
+            return;
+        }
+
+        try {
+            // Get all active champions
+            const { data: champions, error } = await window.supabaseService.supabase
+                .from('champions')
+                .select('id')
+                .eq('is_active', true);
+
+            if (error) {
+                console.warn('Failed to fetch champions for notification:', error);
+                return;
+            }
+
+            if (!champions || champions.length === 0) {
+                return;
+            }
+
+            // Send notification to each champion
+            const notificationPromises = champions.map(champion => 
+                window.championDB?.createNotification(
+                    champion.id,
+                    'new_panel',
+                    'New Panel Available! 📋',
+                    `A new panel "${panelTitle}" has been added. Start reviewing to earn credits!`,
+                    '/champion-panels.html',
+                    { 
+                        panel_id: savedPanel?.id,
+                        panel_name: panelTitle
+                    }
+                ).catch(err => {
+                    console.warn(`Failed to notify champion ${champion.id}:`, err);
+                    return null;
+                })
+            );
+
+            await Promise.allSettled(notificationPromises);
+            console.log(`Sent new panel notifications to ${champions.length} champions`);
+        } catch (err) {
+            console.warn('Error sending new panel notifications:', err);
+        }
     }
 }
 

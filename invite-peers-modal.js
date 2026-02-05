@@ -244,12 +244,34 @@ Thanks!`;
         };
 
         try {
-            // TODO: Implement actual email sending via backend
-            // For now, log the payload and show success
-            console.log('Invite Peers Payload:', payload);
+            // Get current user ID
+            const currentUser = window.supabaseService?.currentUser;
+            const championId = currentUser?.id;
 
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (championId && window.supabaseService?.supabase) {
+                // Save invitations to database
+                const invitationPromises = validation.emails.map(async (email) => {
+                    const token = this.generateInviteToken();
+                    const expiresAt = new Date();
+                    expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
+
+                    return window.supabaseService.supabase
+                        .from('invitations')
+                        .insert({
+                            email: email.toLowerCase(),
+                            invited_by: championId,
+                            token: token,
+                            expires_at: expiresAt.toISOString(),
+                            status: 'pending'
+                        });
+                });
+
+                await Promise.allSettled(invitationPromises);
+                console.log('Invitations saved to database');
+            }
+
+            // TODO: Implement actual email sending via backend
+            console.log('Invite Peers Payload:', payload);
 
             window.showToast?.('Invitations sent successfully!', 'success') || alert('Invitations sent successfully!');
             this.close();
@@ -261,6 +283,15 @@ Thanks!`;
             sendBtn.disabled = false;
             sendBtn.innerHTML = 'Send Invitations';
         }
+    }
+
+    /**
+     * Generate a unique invite token
+     */
+    generateInviteToken() {
+        return 'inv_' + Math.random().toString(36).substring(2, 15) + 
+               Math.random().toString(36).substring(2, 15) + 
+               '_' + Date.now().toString(36);
     }
 
     shareViaLinkedIn() {

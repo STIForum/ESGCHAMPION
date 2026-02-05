@@ -357,29 +357,39 @@ class DynamicNavigation {
             {
                 id: 'mock-notif-002',
                 type: 'credits_awarded',
-                title: 'Credits Earned',
-                message: 'You earned 10 credits for your approved review.',
+                title: 'Credits Earned! 💰',
+                message: 'You earned 10 credits for your approved review of "Climate & GHG Emissions".',
                 read: false,
                 is_read: false,
-                created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString()
+                created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+                data: {
+                    credits: 10,
+                    panel_name: 'Climate & GHG Emissions'
+                }
             },
             {
                 id: 'mock-notif-003',
                 type: 'peer_joined',
-                title: 'Peer Joined',
+                title: 'Your Peer Joined! 🎉',
                 message: 'John Doe accepted your invitation and joined STIF!',
                 read: false,
                 is_read: false,
-                created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+                data: {
+                    new_user_name: 'John Doe'
+                }
             },
             {
                 id: 'mock-notif-004',
                 type: 'new_panel',
-                title: 'New Panel Available',
-                message: 'A new "Data Privacy & Cybersecurity" panel is now available for review.',
+                title: 'New Panel Available! 📋',
+                message: 'A new "Data Privacy & Cybersecurity" panel is now available for review. Start reviewing to earn credits!',
                 read: true,
                 is_read: true,
-                created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+                data: {
+                    panel_name: 'Data Privacy & Cybersecurity'
+                }
             }
         ];
     }
@@ -452,16 +462,93 @@ class DynamicNavigation {
         // Mark as read
         this.markNotificationRead(notificationId);
 
-        // Check if notification has details to show (like admin feedback)
-        const isReviewNotification = ['review_accepted', 'review_rejected', 'review_approved'].includes(notification.type);
+        // Check notification type and handle accordingly
+        const reviewNotifications = ['review_accepted', 'review_rejected', 'review_approved'];
+        const detailNotifications = ['credits_awarded', 'peer_joined', 'new_panel'];
 
-        if (isReviewNotification) {
-            // Always show modal for review notifications
+        if (reviewNotifications.includes(notification.type)) {
+            // Show detailed modal for review notifications
             this.showNotificationDetailModal(notification);
+        } else if (detailNotifications.includes(notification.type)) {
+            // Show generic detail modal for other notification types
+            this.showGenericNotificationModal(notification);
         } else if (notification.link) {
             // Navigate to the link
             window.location.href = notification.link;
         }
+    }
+
+    /**
+     * Show generic notification modal
+     */
+    showGenericNotificationModal(notification) {
+        // Remove existing modal if any
+        const existingModal = document.getElementById('notification-detail-modal-backdrop');
+        if (existingModal) existingModal.remove();
+
+        const icon = this.getNotificationIcon(notification.type);
+        const iconClass = this.getNotificationIconClass(notification.type);
+        const bgColor = iconClass === 'icon-success' ? 'var(--success-light)' 
+            : iconClass === 'icon-warning' ? 'var(--warning-light)'
+            : iconClass === 'icon-primary' ? 'var(--primary-50)'
+            : 'var(--info-light)';
+        const strokeColor = iconClass === 'icon-success' ? 'var(--success)' 
+            : iconClass === 'icon-warning' ? 'var(--warning)'
+            : iconClass === 'icon-primary' ? 'var(--primary-600)'
+            : 'var(--info)';
+
+        // Build action button based on type
+        let actionButton = '';
+        if (notification.type === 'new_panel') {
+            actionButton = `<a href="/champion-panels.html" class="btn btn-primary">View Panels</a>`;
+        } else if (notification.type === 'peer_joined') {
+            actionButton = `<a href="/champion-dashboard.html" class="btn btn-primary">Go to Dashboard</a>`;
+        } else if (notification.type === 'credits_awarded') {
+            actionButton = `<a href="/champion-dashboard.html" class="btn btn-primary">View Credits</a>`;
+        }
+
+        const modalHTML = `
+            <div class="modal-backdrop active" id="notification-detail-modal-backdrop">
+                <div class="modal active" style="max-width: 450px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">${notification.title}</h3>
+                        <button class="modal-close" onclick="window.dynamicNav.closeNotificationDetailModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="text-align: center; margin-bottom: var(--space-4);">
+                            <div style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3); background: ${bgColor};">
+                                <div style="color: ${strokeColor}; transform: scale(1.5);">${icon}</div>
+                            </div>
+                            <p class="text-secondary" style="font-size: var(--text-base);">${notification.message}</p>
+                        </div>
+                        ${notification.data?.credits ? `
+                            <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-3); text-align: center; margin-bottom: var(--space-4);">
+                                <span class="text-secondary">Credits earned:</span>
+                                <strong style="margin-left: var(--space-2); color: var(--warning); font-size: var(--text-lg);">+${notification.data.credits}</strong>
+                            </div>
+                        ` : ''}
+                        ${notification.data?.new_user_name ? `
+                            <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-3); text-align: center; margin-bottom: var(--space-4);">
+                                <span class="text-secondary">New member:</span>
+                                <strong style="margin-left: var(--space-2);">${notification.data.new_user_name}</strong>
+                            </div>
+                        ` : ''}
+                        ${notification.data?.panel_name ? `
+                            <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-3); text-align: center; margin-bottom: var(--space-4);">
+                                <span class="text-secondary">Panel:</span>
+                                <strong style="margin-left: var(--space-2);">${notification.data.panel_name}</strong>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        ${actionButton}
+                        <button type="button" class="btn btn-secondary" onclick="window.dynamicNav.closeNotificationDetailModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
     /**

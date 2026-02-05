@@ -556,6 +556,10 @@
                 return;
             }
             
+            // Check for invitation token in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteToken = urlParams.get('invite') || urlParams.get('token');
+            
             const formData = {
                 first_name: document.getElementById('first_name').value,
                 last_name: document.getElementById('last_name').value,
@@ -574,7 +578,8 @@
                 nda_accepted: document.getElementById('nda_accepted').checked,
                 terms_accepted: document.getElementById('terms_accepted').checked,
                 ip_accepted: document.getElementById('ip_accepted').checked,
-                digital_signature: document.getElementById('digital_signature').value
+                digital_signature: document.getElementById('digital_signature').value,
+                invite_token: inviteToken // Pass invitation token if present
             };
             
             const email = document.getElementById('email').value;
@@ -589,6 +594,11 @@
                 const result = await window.championAuth.register(email, password, formData);
                 
                 if (result.success) {
+                    // Handle invitation acceptance and notify inviter
+                    if (inviteToken && result.data?.user?.id) {
+                        await handleInvitationAcceptance(inviteToken, result.data.user.id, formData.full_name);
+                    }
+                    
                     // Show success message
                     document.getElementById('register-form-container').classList.add('hidden');
                     document.getElementById('success-container').classList.remove('hidden');
@@ -603,6 +613,52 @@
                 submitBtn.textContent = 'Register as Champion';
             }
         });
+
+        /**
+         * Handle invitation acceptance - update invitation status and notify inviter
+         */
+        async function handleInvitationAcceptance(token, newUserId, newUserName) {
+            try {
+                if (!window.supabaseService?.supabase) return;
+
+                // Find the invitation
+                const { data: invitation, error } = await window.supabaseService.supabase
+                    .from('invitations')
+                    .select('id, invited_by, email')
+                    .eq('token', token)
+                    .eq('status', 'pending')
+                    .single();
+
+                if (error || !invitation) {
+                    console.log('No valid invitation found for token');
+                    return;
+                }
+
+                // Update invitation status
+                await window.supabaseService.supabase
+                    .from('invitations')
+                    .update({ status: 'accepted' })
+                    .eq('id', invitation.id);
+
+                // Send notification to the inviter
+                if (invitation.invited_by && window.championDB?.createNotification) {
+                    await window.championDB.createNotification(
+                        invitation.invited_by,
+                        'peer_joined',
+                        'Your Peer Joined! 🎉',
+                        `${newUserName || 'A peer'} accepted your invitation and joined STIF!`,
+                        '/champion-dashboard.html',
+                        { 
+                            new_user_id: newUserId,
+                            new_user_name: newUserName
+                        }
+                    );
+                    console.log('Peer joined notification sent to inviter');
+                }
+            } catch (err) {
+                console.warn('Error handling invitation acceptance:', err);
+            }
+        }
 
         function showError(message) {
             const errorEl = document.getElementById('error-message');
