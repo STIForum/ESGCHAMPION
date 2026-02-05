@@ -40,6 +40,11 @@ CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
 -- =====================================================
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies first to avoid conflicts
+DROP POLICY IF EXISTS "Champions can view own notifications" ON notifications;
+DROP POLICY IF EXISTS "Champions can update own notifications" ON notifications;
+DROP POLICY IF EXISTS "System can create notifications" ON notifications;
+
 CREATE POLICY "Champions can view own notifications" ON notifications
     FOR SELECT USING (auth.uid() = champion_id);
 
