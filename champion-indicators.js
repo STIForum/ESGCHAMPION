@@ -81,9 +81,9 @@ class ChampionIndicators {
         ];
 
         this.estimatedTimeOptions = [
-            { value: 'under_30', label: '<30 min' },
-            { value: '30_to_90', label: '30–90 min' },
-            { value: 'over_90', label: '>90 min' }
+            { value: 'less_30', label: '<30 min' },
+            { value: '30_90', label: '30–90 min' },
+            { value: 'more_90', label: '>90 min' }
         ];
 
         this.supportRequiredOptions = [

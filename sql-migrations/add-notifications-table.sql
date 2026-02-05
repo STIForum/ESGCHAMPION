@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS notifications (
         'new_comment',
         'vote_received',
         'credits_awarded',
+        'peer_joined',
+        'new_panel',
         'admin_message',
         'system'
     )),
@@ -202,4 +204,37 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER comment_notification
     AFTER INSERT ON comments
     FOR EACH ROW EXECUTE FUNCTION notify_on_new_comment();
+
+-- =====================================================
+-- UPDATE TYPE CHECK CONSTRAINT (for existing tables)
+-- =====================================================
+DO $$
+BEGIN
+    -- Drop the old constraint if it exists
+    IF EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'notifications_type_check' 
+        AND conrelid = 'notifications'::regclass
+    ) THEN
+        ALTER TABLE notifications DROP CONSTRAINT notifications_type_check;
+    END IF;
+    
+    -- Add updated constraint with all notification types
+    ALTER TABLE notifications ADD CONSTRAINT notifications_type_check
+    CHECK (type IN (
+        'review_accepted',
+        'review_rejected',
+        'new_comment',
+        'vote_received',
+        'credits_awarded',
+        'peer_joined',
+        'new_panel',
+        'admin_message',
+        'system'
+    ));
+EXCEPTION
+    WHEN others THEN
+        -- Constraint may already be correct
+        NULL;
+END $$;
 

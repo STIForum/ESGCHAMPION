@@ -280,20 +280,29 @@ class DynamicNavigation {
     async loadNotifications() {
         try {
             let notifications = [];
+            let dbNotifications = [];
             
             // Try to get notifications from database
             try {
                 if (window.championDB && window.championDB.getNotifications) {
-                    notifications = await window.championDB.getNotifications();
+                    dbNotifications = await window.championDB.getNotifications();
+                    console.log('Loaded notifications from DB:', dbNotifications?.length || 0);
                 }
             } catch (dbError) {
-                console.warn('Could not load notifications from DB, using mock data');
+                console.warn('Could not load notifications from DB:', dbError.message);
             }
 
-            // If no notifications from DB, use mock data for demo
-            if (!notifications || notifications.length === 0) {
+            // If we have DB notifications, normalize and use them
+            if (dbNotifications && dbNotifications.length > 0) {
+                // Normalize DB notification format (is_read -> read)
+                notifications = dbNotifications.map(n => ({
+                    ...n,
+                    read: n.is_read || n.read || false
+                }));
+            } else {
+                // No DB notifications, use mock data for demo
                 notifications = this.getMockNotifications();
-                // Apply saved read states from localStorage
+                // Apply saved read states from localStorage for mock data
                 notifications = this.applyStoredReadStates(notifications);
             }
 
