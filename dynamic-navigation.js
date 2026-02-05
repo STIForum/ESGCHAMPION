@@ -293,6 +293,8 @@ class DynamicNavigation {
             // If no notifications from DB, use mock data for demo
             if (!notifications || notifications.length === 0) {
                 notifications = this.getMockNotifications();
+                // Apply saved read states from localStorage
+                notifications = this.applyStoredReadStates(notifications);
             }
 
             this.notifications = notifications;
@@ -301,6 +303,36 @@ class DynamicNavigation {
             
         } catch (error) {
             console.error('Error loading notifications:', error);
+        }
+    }
+
+    /**
+     * Apply stored read states from localStorage to notifications
+     */
+    applyStoredReadStates(notifications) {
+        try {
+            const readStates = JSON.parse(localStorage.getItem('notificationReadStates') || '{}');
+            return notifications.map(n => {
+                if (readStates[n.id]) {
+                    return { ...n, read: true, is_read: true };
+                }
+                return n;
+            });
+        } catch (err) {
+            return notifications;
+        }
+    }
+
+    /**
+     * Save notification read state to localStorage
+     */
+    saveReadState(notificationId) {
+        try {
+            const readStates = JSON.parse(localStorage.getItem('notificationReadStates') || '{}');
+            readStates[notificationId] = true;
+            localStorage.setItem('notificationReadStates', JSON.stringify(readStates));
+        } catch (err) {
+            console.warn('Could not save notification read state:', err);
         }
     }
 
@@ -532,6 +564,9 @@ class DynamicNavigation {
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
             
+            // Save read state to localStorage for persistence
+            this.saveReadState(notificationId);
+            
             // Only update in database if it's a real UUID (not a mock notification)
             const isMockNotification = notificationId.startsWith('mock-');
             if (!isMockNotification) {
@@ -552,6 +587,8 @@ class DynamicNavigation {
             this.notifications.forEach(n => {
                 n.read = true;
                 n.is_read = true;
+                // Save each read state to localStorage
+                this.saveReadState(n.id);
             });
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
