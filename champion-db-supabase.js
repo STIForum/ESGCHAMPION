@@ -458,6 +458,13 @@ class ChampionDB {
         return await this.service.markAllNotificationsRead();
     }
 
+    /**
+     * Create a notification
+     */
+    async createNotification(championId, type, title, message, link = null, data = null) {
+        return await this.service.createNotification(championId, type, title, message, link, data);
+    }
+
     // =====================================================
     // PROGRESS
     // =====================================================
@@ -595,6 +602,18 @@ class ChampionDB {
             return await this.service.approveSubmissionWithComment(submissionId, adminComment, adminId);
         } catch (error) {
             console.error('Error approving submission with comment:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Reject submission with admin comment
+     */
+    async rejectSubmissionWithComment(submissionId, adminComment, adminId) {
+        try {
+            return await this.service.rejectSubmissionWithComment(submissionId, adminComment, adminId);
+        } catch (error) {
+            console.error('Error rejecting submission with comment:', error);
             throw error;
         }
     }

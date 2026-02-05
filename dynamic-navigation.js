@@ -367,7 +367,11 @@ class DynamicNavigation {
         }
 
         list.innerHTML = notifications.map(notification => `
-            <div class="notification-item ${notification.read ? 'read' : 'unread'}" data-id="${notification.id}" onclick="window.dynamicNav.markNotificationRead('${notification.id}')">
+            <div class="notification-item ${notification.read ? 'read' : 'unread'}" 
+                 data-id="${notification.id}" 
+                 data-type="${notification.type}"
+                 data-has-details="${notification.data ? 'true' : 'false'}"
+                 onclick="window.dynamicNav.handleNotificationClick('${notification.id}')">
                 <div class="notification-icon ${this.getNotificationIconClass(notification.type)}">
                     ${this.getNotificationIcon(notification.type)}
                 </div>
@@ -399,6 +403,117 @@ class DynamicNavigation {
     }
 
     /**
+     * Handle notification click - show details if available
+     */
+    handleNotificationClick(notificationId) {
+        const notification = this.notifications?.find(n => n.id === notificationId);
+        if (!notification) return;
+
+        // Mark as read
+        this.markNotificationRead(notificationId);
+
+        // Check if notification has details to show (like admin feedback)
+        const isReviewNotification = ['review_accepted', 'review_rejected'].includes(notification.type);
+        const hasAdminComment = notification.data?.admin_comment || notification.data?.rejection_reason;
+
+        if (isReviewNotification && (hasAdminComment || notification.data)) {
+            this.showNotificationDetailModal(notification);
+        } else if (notification.link) {
+            // Navigate to the link
+            window.location.href = notification.link;
+        }
+    }
+
+    /**
+     * Show notification detail modal with admin feedback
+     */
+    showNotificationDetailModal(notification) {
+        // Remove existing modal if any
+        const existingModal = document.getElementById('notification-detail-modal-backdrop');
+        if (existingModal) existingModal.remove();
+
+        const isApproved = notification.type === 'review_accepted';
+        const adminComment = notification.data?.admin_comment || notification.data?.rejection_reason || '';
+        const panelName = notification.data?.panel_name || 'Panel';
+
+        const modalHTML = `
+            <div class="modal-backdrop active" id="notification-detail-modal-backdrop">
+                <div class="modal active" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">${notification.title}</h3>
+                        <button class="modal-close" onclick="window.dynamicNav.closeNotificationDetailModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="text-align: center; margin-bottom: var(--space-4);">
+                            <div style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3); background: ${isApproved ? 'var(--success-light)' : 'var(--warning-light)'};">
+                                ${isApproved 
+                                    ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+                                    : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
+                                }
+                            </div>
+                            <h4 style="margin-bottom: var(--space-2);">${isApproved ? 'Congratulations!' : 'Feedback Required'}</h4>
+                            <p class="text-secondary">${notification.message}</p>
+                        </div>
+
+                        <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4);">
+                            <div style="margin-bottom: var(--space-3);">
+                                <span class="text-secondary">Panel:</span>
+                                <strong style="margin-left: var(--space-2);">${panelName}</strong>
+                            </div>
+                            <div style="margin-bottom: var(--space-3);">
+                                <span class="text-secondary">Status:</span>
+                                <span class="badge ${isApproved ? 'badge-success' : 'badge-warning'}" style="margin-left: var(--space-2);">
+                                    ${isApproved ? 'Approved' : 'Needs Changes'}
+                                </span>
+                            </div>
+                            ${adminComment ? `
+                                <div>
+                                    <span class="text-secondary">Admin Feedback:</span>
+                                    <div style="margin-top: var(--space-2); padding: var(--space-3); background: white; border-radius: var(--radius-md); border-left: 3px solid ${isApproved ? 'var(--success)' : 'var(--warning)'};">
+                                        ${adminComment}
+                                    </div>
+                                </div>
+                            ` : '<p class="text-muted"><em>No additional feedback provided.</em></p>'}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        ${!isApproved ? `
+                            <a href="/champion-panels.html" class="btn btn-primary">Review Panels</a>
+                        ` : ''}
+                        <button type="button" class="btn btn-secondary" onclick="window.dynamicNav.closeNotificationDetailModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Close on backdrop click
+        document.getElementById('notification-detail-modal-backdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'notification-detail-modal-backdrop') {
+                this.closeNotificationDetailModal();
+            }
+        });
+
+        // Close on Escape
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeNotificationDetailModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
+    /**
+     * Close notification detail modal
+     */
+    closeNotificationDetailModal() {
+        const modal = document.getElementById('notification-detail-modal-backdrop');
+        if (modal) modal.remove();
+    }
+
+    /**
      * Mark a notification as read
      */
     markNotificationRead(notificationId) {
@@ -408,8 +523,12 @@ class DynamicNavigation {
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
             
-            // TODO: Update in database
-            // window.championDB.markNotificationRead(notificationId);
+            // Update in database
+            try {
+                window.championDB?.markAsRead?.(notificationId);
+            } catch (err) {
+                console.warn('Could not update notification in DB:', err);
+            }
         }
     }
 
@@ -422,8 +541,12 @@ class DynamicNavigation {
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
             
-            // TODO: Update in database
-            // window.championDB.markAllNotificationsRead();
+            // Update in database
+            try {
+                window.championDB?.markAllAsRead?.();
+            } catch (err) {
+                console.warn('Could not update notifications in DB:', err);
+            }
             
             window.showToast?.('All notifications marked as read', 'success');
         }
@@ -435,9 +558,14 @@ class DynamicNavigation {
     getNotificationIcon(type) {
         const icons = {
             review_approved: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+            review_accepted: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+            review_rejected: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
             credits_earned: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="6"></line></svg>',
+            credits_awarded: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="6"></line></svg>',
             peer_joined: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
             new_panel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
+            admin_message: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>',
+            system: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
             default: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path></svg>'
         };
         return icons[type] || icons.default;
@@ -449,9 +577,14 @@ class DynamicNavigation {
     getNotificationIconClass(type) {
         const classes = {
             review_approved: 'icon-success',
+            review_accepted: 'icon-success',
+            review_rejected: 'icon-warning',
             credits_earned: 'icon-warning',
+            credits_awarded: 'icon-warning',
             peer_joined: 'icon-primary',
-            new_panel: 'icon-info'
+            new_panel: 'icon-info',
+            admin_message: 'icon-primary',
+            system: 'icon-info'
         };
         return classes[type] || 'icon-default';
     }

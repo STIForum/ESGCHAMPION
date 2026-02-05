@@ -411,8 +411,33 @@ class AdminReviewPage {
             const adminUser = window.championAuth.getUser();
             const adminId = adminUser?.id || null;
 
+            // Get submission details for notification
+            const submission = this.selectedPanelReview;
+            const championId = submission?.reviewer_user_id || submission?.championId;
+            const panelName = submission?.panels?.name || submission?.panelName || 'Panel';
+
             // Update submission and indicator reviews in database
             await window.championDB.approveSubmissionWithComment(submissionId, adminComment, adminId);
+
+            // Send notification to the champion
+            if (championId) {
+                try {
+                    await window.championDB.createNotification(
+                        championId,
+                        'review_accepted',
+                        'Review Approved! 🎉',
+                        `Your review for "${panelName}" has been approved!${adminComment ? ' Admin feedback: ' + adminComment : ''}`,
+                        '/champion-dashboard.html',
+                        { 
+                            submission_id: submissionId, 
+                            panel_name: panelName,
+                            admin_comment: adminComment 
+                        }
+                    );
+                } catch (notifError) {
+                    console.warn('Failed to send notification:', notifError);
+                }
+            }
 
             // Also update localStorage for backwards compatibility
             const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
@@ -455,14 +480,48 @@ class AdminReviewPage {
         }
 
         try {
-            // Update in database
-            await window.championDB.updateSubmissionStatus(submissionId, 'rejected');
+            // Get admin comment (rejection reason)
+            const adminComment = document.getElementById('admin-review-comment')?.value?.trim() || '';
+            
+            // Get current admin user
+            const adminUser = window.championAuth.getUser();
+            const adminId = adminUser?.id || null;
+            
+            // Get submission details for notification
+            const submission = this.selectedPanelReview;
+            const championId = submission?.reviewer_user_id || submission?.championId;
+            const panelName = submission?.panels?.name || submission?.panelName || 'Panel';
+
+            // Update in database with rejection comment
+            await window.championDB.rejectSubmissionWithComment(submissionId, adminComment, adminId);
+
+            // Send notification to the champion
+            if (championId) {
+                try {
+                    await window.championDB.createNotification(
+                        championId,
+                        'review_rejected',
+                        'Review Requires Changes',
+                        `Your review for "${panelName}" needs some changes.${adminComment ? ' Feedback: ' + adminComment : ' Please review and resubmit.'}`,
+                        '/champion-panels.html',
+                        { 
+                            submission_id: submissionId, 
+                            panel_name: panelName,
+                            admin_comment: adminComment,
+                            rejection_reason: adminComment
+                        }
+                    );
+                } catch (notifError) {
+                    console.warn('Failed to send notification:', notifError);
+                }
+            }
 
             // Also update localStorage for backwards compatibility
             const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
             const idx = submissions.findIndex(s => s.id === submissionId);
             if (idx !== -1) {
                 submissions[idx].status = 'rejected';
+                submissions[idx].admin_notes = adminComment;
                 localStorage.setItem('panelSubmissions', JSON.stringify(submissions));
                 
                 // Remove from panelReviews in sessionStorage
@@ -752,6 +811,17 @@ class AdminReviewPage {
         }
         if (cancelIndicatorBtn) {
             cancelIndicatorBtn.addEventListener('click', () => this.closeAddIndicatorModal());
+        }
+
+        // CSV Import
+        const csvImportInput = document.getElementById('csv-import-input');
+        const downloadCsvTemplateBtn = document.getElementById('download-csv-template-btn');
+        
+        if (csvImportInput) {
+            csvImportInput.addEventListener('change', (e) => this.handleCsvImport(e));
+        }
+        if (downloadCsvTemplateBtn) {
+            downloadCsvTemplateBtn.addEventListener('click', () => this.downloadCsvTemplate());
         }
 
         // Edit Indicator Modal
@@ -1711,8 +1781,65 @@ class AdminReviewPage {
             backdrop.classList.add('active');
             modal.classList.add('active');
             
-            // Focus first input
-            setTimeout(() => document.getElementById('indicator-title').focus(), 100);
+            // Load panels for dropdown
+            await this.loadPanelDropdown();
+            
+            // Clear CSV import status
+            const csvStatus = document.getElementById('csv-import-status');
+            if (csvStatus) {
+                csvStatus.style.display = 'none';
+                csvStatus.innerHTML = '';
+            }
+            
+            // Focus panel dropdown first
+            setTimeout(() => document.getElementById('indicator-panel')?.focus(), 100);
+        }
+    }
+
+    /**
+     * Load panels into the indicator panel dropdown
+     */
+    async loadPanelDropdown() {
+        const panelSelect = document.getElementById('indicator-panel');
+        if (!panelSelect) return;
+
+        try {
+            const panels = await window.adminService.getAllPanels();
+            
+            panelSelect.innerHTML = '<option value="">Select a panel for this indicator</option>';
+            
+            if (panels && panels.length > 0) {
+                // Group by framework
+                const frameworks = { gri: [], esrs: [], ifrs: [], other: [] };
+                panels.forEach(panel => {
+                    if (panel.is_active !== false) {
+                        const fw = (panel.primary_framework || '').toLowerCase();
+                        if (frameworks[fw]) {
+                            frameworks[fw].push(panel);
+                        } else {
+                            frameworks.other.push(panel);
+                        }
+                    }
+                });
+
+                // Add options grouped by framework
+                for (const [fw, fwPanels] of Object.entries(frameworks)) {
+                    if (fwPanels.length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = fw.toUpperCase() || 'Other';
+                        fwPanels.forEach(panel => {
+                            const option = document.createElement('option');
+                            option.value = panel.id;
+                            option.textContent = panel.name;
+                            optgroup.appendChild(option);
+                        });
+                        panelSelect.appendChild(optgroup);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading panels for dropdown:', error);
+            panelSelect.innerHTML = '<option value="">Error loading panels</option>';
         }
     }
 
@@ -1738,10 +1865,21 @@ class AdminReviewPage {
                 error.textContent = '';
             });
         }
+        
+        // Also reset CSV input
+        const csvInput = document.getElementById('csv-import-input');
+        if (csvInput) csvInput.value = '';
+        
+        const csvStatus = document.getElementById('csv-import-status');
+        if (csvStatus) {
+            csvStatus.style.display = 'none';
+            csvStatus.innerHTML = '';
+        }
     }
 
     validateAddIndicatorForm() {
         const requiredFields = [
+            { id: 'indicator-panel', label: 'Panel' },
             { id: 'indicator-title', label: 'Indicator Title' }
         ];
 
@@ -1774,6 +1912,7 @@ class AdminReviewPage {
         try {
             // Collect form values
             const indicatorData = {
+                panel_id: document.getElementById('indicator-panel').value,
                 name: document.getElementById('indicator-title').value.trim(),
                 unit: document.getElementById('indicator-unit').value.trim() || null,
                 formula_required: document.getElementById('indicator-formula-required').checked,
@@ -1819,6 +1958,273 @@ class AdminReviewPage {
                 saveBtn.innerHTML = 'Save Indicator';
             }
         }
+    }
+
+    // =====================================================
+    // CSV IMPORT FOR INDICATORS
+    // =====================================================
+
+    /**
+     * Download CSV template for indicator import
+     */
+    downloadCsvTemplate() {
+        const headers = [
+            'name',
+            'code',
+            'description',
+            'unit',
+            'primary_framework',
+            'framework_version',
+            'esg_class',
+            'impact_level',
+            'difficulty_level',
+            'estimated_time',
+            'validation_question',
+            'response_type',
+            'why_it_matters',
+            'related_sdgs',
+            'tags',
+            'formula_required'
+        ];
+
+        const sampleRow = [
+            'Scope 1 GHG Emissions',
+            'GRI 305-1',
+            'Direct GHG emissions from owned or controlled sources',
+            'tCO2e',
+            'gri',
+            '2021',
+            'Environment',
+            'High',
+            'Moderate',
+            '5-10 minutes',
+            'What are your total Scope 1 emissions in tonnes CO2e?',
+            'Short Text',
+            'Critical for climate action and regulatory compliance',
+            'SDG 13; SDG 7',
+            'emissions; climate; carbon',
+            'false'
+        ];
+
+        const csvContent = headers.join(',') + '\n' + sampleRow.map(v => `"${v}"`).join(',');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'indicator-import-template.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        
+        window.showToast?.('CSV template downloaded', 'success');
+    }
+
+    /**
+     * Handle CSV file import
+     */
+    async handleCsvImport(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const statusDiv = document.getElementById('csv-import-status');
+        const panelId = document.getElementById('indicator-panel')?.value;
+
+        if (!panelId) {
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = `
+                <div style="padding: var(--space-3); background: var(--warning-light); border-radius: var(--radius-md); color: var(--warning-dark);">
+                    <strong>⚠️ Please select a panel first</strong>
+                    <p style="margin-top: var(--space-1); font-size: var(--text-sm);">You must choose a panel before importing indicators.</p>
+                </div>
+            `;
+            event.target.value = '';
+            return;
+        }
+
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = `
+            <div style="padding: var(--space-3); background: var(--primary-light); border-radius: var(--radius-md);">
+                <span class="loading-spinner-sm" style="width: 14px; height: 14px; margin-right: var(--space-2);"></span>
+                Processing CSV file...
+            </div>
+        `;
+
+        try {
+            const text = await file.text();
+            const indicators = this.parseCsv(text);
+
+            if (indicators.length === 0) {
+                throw new Error('No valid indicators found in CSV');
+            }
+
+            // Import indicators
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+
+            for (const indicator of indicators) {
+                try {
+                    await window.adminService.createIndicator({
+                        ...indicator,
+                        panel_id: panelId,
+                        is_active: true,
+                        order_index: 0
+                    });
+                    successCount++;
+                } catch (err) {
+                    errorCount++;
+                    errors.push(`${indicator.name || 'Unknown'}: ${err.message}`);
+                }
+            }
+
+            // Show results
+            if (successCount > 0 && errorCount === 0) {
+                statusDiv.innerHTML = `
+                    <div style="padding: var(--space-3); background: var(--success-light); border-radius: var(--radius-md); color: var(--success-dark);">
+                        <strong>✅ Import Successful!</strong>
+                        <p style="margin-top: var(--space-1); font-size: var(--text-sm);">${successCount} indicator(s) imported successfully.</p>
+                    </div>
+                `;
+                window.showToast?.(`${successCount} indicators imported successfully!`, 'success');
+                
+                // Refresh indicators list after import
+                if (this.currentTab === 'indicators') {
+                    await this.loadIndicators();
+                }
+            } else if (successCount > 0 && errorCount > 0) {
+                statusDiv.innerHTML = `
+                    <div style="padding: var(--space-3); background: var(--warning-light); border-radius: var(--radius-md); color: var(--warning-dark);">
+                        <strong>⚠️ Partial Import</strong>
+                        <p style="margin-top: var(--space-1); font-size: var(--text-sm);">${successCount} imported, ${errorCount} failed.</p>
+                        <details style="margin-top: var(--space-2);">
+                            <summary style="cursor: pointer;">Show errors</summary>
+                            <ul style="margin-top: var(--space-2); font-size: var(--text-xs);">
+                                ${errors.slice(0, 5).map(e => `<li>${e}</li>`).join('')}
+                                ${errors.length > 5 ? `<li>... and ${errors.length - 5} more</li>` : ''}
+                            </ul>
+                        </details>
+                    </div>
+                `;
+            } else {
+                throw new Error(`All ${errorCount} indicators failed to import`);
+            }
+
+        } catch (error) {
+            console.error('CSV import error:', error);
+            statusDiv.innerHTML = `
+                <div style="padding: var(--space-3); background: var(--error-light); border-radius: var(--radius-md); color: var(--error-dark);">
+                    <strong>❌ Import Failed</strong>
+                    <p style="margin-top: var(--space-1); font-size: var(--text-sm);">${error.message}</p>
+                </div>
+            `;
+        }
+
+        event.target.value = '';
+    }
+
+    /**
+     * Parse CSV content to indicator objects
+     */
+    parseCsv(csvText) {
+        const lines = csvText.split('\n').map(line => line.trim()).filter(line => line);
+        if (lines.length < 2) return [];
+
+        // Parse headers
+        const headers = this.parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
+        
+        // Map headers to indicator fields
+        const headerMap = {
+            'name': 'name',
+            'title': 'name',
+            'indicator_title': 'name',
+            'code': 'code',
+            'indicator_code': 'code',
+            'description': 'description',
+            'unit': 'unit',
+            'primary_framework': 'primary_framework',
+            'framework': 'primary_framework',
+            'framework_version': 'framework_version',
+            'version': 'framework_version',
+            'esg_class': 'esg_class',
+            'esg': 'esg_class',
+            'impact_level': 'impact_level',
+            'impact': 'impact_level',
+            'difficulty_level': 'difficulty_level',
+            'difficulty': 'difficulty_level',
+            'estimated_time': 'estimated_time',
+            'time': 'estimated_time',
+            'validation_question': 'validation_question',
+            'question': 'validation_question',
+            'response_type': 'response_type',
+            'why_it_matters': 'why_it_matters',
+            'why_matters': 'why_it_matters',
+            'related_sdgs': 'related_sdgs',
+            'sdgs': 'related_sdgs',
+            'tags': 'tags',
+            'formula_required': 'formula_required',
+            'icon': 'icon'
+        };
+
+        const indicators = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = this.parseCsvLine(lines[i]);
+            if (values.length === 0 || values.every(v => !v)) continue;
+
+            const indicator = {};
+            
+            headers.forEach((header, index) => {
+                const field = headerMap[header];
+                if (field && values[index] !== undefined) {
+                    let value = values[index].trim();
+                    
+                    // Handle special fields
+                    if (field === 'related_sdgs' && value) {
+                        indicator[field] = value.split(';').map(s => s.trim()).filter(s => s);
+                    } else if (field === 'formula_required') {
+                        indicator[field] = value.toLowerCase() === 'true' || value === '1';
+                    } else if (value) {
+                        indicator[field] = value;
+                    }
+                }
+            });
+
+            // Only add if has at least a name
+            if (indicator.name) {
+                indicators.push(indicator);
+            }
+        }
+
+        return indicators;
+    }
+
+    /**
+     * Parse a single CSV line handling quoted values
+     */
+    parseCsvLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                    current += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        
+        result.push(current);
+        return result;
     }
 
     // =====================================================

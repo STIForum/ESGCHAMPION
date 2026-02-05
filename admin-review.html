@@ -555,11 +555,59 @@
     <div class="modal-backdrop" id="add-indicator-modal-backdrop">
         <div class="modal" id="add-indicator-modal" style="max-width: 700px; max-height: 90vh;">
             <div class="modal-header">
-                <h3 class="modal-title">Add Indicator</h3>
+                <h3 class="modal-title">Add Indicator to Panel</h3>
                 <button class="modal-close" id="add-indicator-modal-close">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- CSV Import Section -->
+                <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);">
+                        <div>
+                            <strong>Import from CSV</strong>
+                            <p class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">Upload a CSV file to import multiple indicators at once.</p>
+                        </div>
+                        <div style="display: flex; gap: var(--space-2);">
+                            <button type="button" class="btn btn-secondary btn-sm" id="download-csv-template-btn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Template
+                            </button>
+                            <label class="btn btn-primary btn-sm" style="cursor: pointer;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Import CSV
+                                <input type="file" id="csv-import-input" accept=".csv" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+                    <div id="csv-import-status" style="display: none; margin-top: var(--space-3);"></div>
+                </div>
+
+                <div style="text-align: center; color: var(--gray-400); margin-bottom: var(--space-4);">
+                    <span style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                        <span style="width: 40px; height: 1px; background: var(--gray-200);"></span>
+                        or add manually
+                        <span style="width: 40px; height: 1px; background: var(--gray-200);"></span>
+                    </span>
+                </div>
+
                 <form id="add-indicator-form">
+                    <!-- Panel Selection (Required) -->
+                    <div class="form-group">
+                        <label class="form-label">Panel <span style="color: var(--error);">*</span></label>
+                        <select class="form-select" id="indicator-panel" name="panelId" required>
+                            <option value="">Select a panel for this indicator</option>
+                        </select>
+                        <span class="form-error" id="indicator-panel-error"></span>
+                        <p class="form-helper">Indicators are specific to panels and cannot be shared across panels.</p>
+                    </div>
+
                     <!-- Unit + Formula Required -->
                     <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: end;">
                         <div class="form-group">

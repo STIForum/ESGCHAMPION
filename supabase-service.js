@@ -788,6 +788,28 @@ class SupabaseService {
         return data;
     }
 
+    /**
+     * Create a notification for a champion
+     */
+    async createNotification(championId, type, title, message, link = null, data = null) {
+        const { data: result, error } = await this.client
+            .from('notifications')
+            .insert({
+                champion_id: championId,
+                type: type,
+                title: title,
+                message: message,
+                link: link,
+                data: data,
+                is_read: false
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return result;
+    }
+
     // =====================================================
     // PROGRESS TRACKING
     // =====================================================
@@ -1138,6 +1160,41 @@ class SupabaseService {
         if (indicatorError) {
             console.error('Error updating indicator reviews:', indicatorError);
             // Don't throw - submission was already updated
+        }
+
+        return submission;
+    }
+
+    /**
+     * Reject submission with admin comment
+     */
+    async rejectSubmissionWithComment(submissionId, adminComment, adminId) {
+        // Update the submission status to rejected with admin notes
+        const { data: submission, error: submissionError } = await this.client
+            .from('panel_review_submissions')
+            .update({ 
+                status: 'rejected',
+                admin_notes: adminComment || null,
+                reviewed_by: adminId || null,
+                reviewed_at: new Date().toISOString()
+            })
+            .eq('id', submissionId)
+            .select()
+            .single();
+        
+        if (submissionError) throw submissionError;
+
+        // Update all indicator reviews for this submission to 'rejected' status
+        const { error: indicatorError } = await this.client
+            .from('panel_review_indicator_reviews')
+            .update({ 
+                review_status: 'rejected',
+                updated_at: new Date().toISOString()
+            })
+            .eq('submission_id', submissionId);
+        
+        if (indicatorError) {
+            console.error('Error updating indicator reviews:', indicatorError);
         }
 
         return submission;
