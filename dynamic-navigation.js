@@ -310,36 +310,44 @@ class DynamicNavigation {
     getMockNotifications() {
         return [
             {
-                id: '1',
-                type: 'review_approved',
-                title: 'Review Approved',
+                id: 'mock-notif-001',
+                type: 'review_accepted',
+                title: 'Review Approved! 🎉',
                 message: 'Your review for "Climate & GHG Emissions" panel has been approved!',
                 read: false,
-                created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() // 30 min ago
+                is_read: false,
+                created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+                data: {
+                    panel_name: 'Climate & GHG Emissions',
+                    admin_comment: 'Great work! Your analysis was thorough and well-structured.'
+                }
             },
             {
-                id: '2',
-                type: 'credits_earned',
+                id: 'mock-notif-002',
+                type: 'credits_awarded',
                 title: 'Credits Earned',
                 message: 'You earned 10 credits for your approved review.',
                 read: false,
-                created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString() // 1 hour ago
+                is_read: false,
+                created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString()
             },
             {
-                id: '3',
+                id: 'mock-notif-003',
                 type: 'peer_joined',
                 title: 'Peer Joined',
                 message: 'John Doe accepted your invitation and joined STIF!',
                 read: false,
-                created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() // 2 hours ago
+                is_read: false,
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
             },
             {
-                id: '4',
+                id: 'mock-notif-004',
                 type: 'new_panel',
                 title: 'New Panel Available',
                 message: 'A new "Data Privacy & Cybersecurity" panel is now available for review.',
                 read: true,
-                created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() // 1 day ago
+                is_read: true,
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
             }
         ];
     }
@@ -413,10 +421,10 @@ class DynamicNavigation {
         this.markNotificationRead(notificationId);
 
         // Check if notification has details to show (like admin feedback)
-        const isReviewNotification = ['review_accepted', 'review_rejected'].includes(notification.type);
-        const hasAdminComment = notification.data?.admin_comment || notification.data?.rejection_reason;
+        const isReviewNotification = ['review_accepted', 'review_rejected', 'review_approved'].includes(notification.type);
 
-        if (isReviewNotification && (hasAdminComment || notification.data)) {
+        if (isReviewNotification) {
+            // Always show modal for review notifications
             this.showNotificationDetailModal(notification);
         } else if (notification.link) {
             // Navigate to the link
@@ -518,16 +526,20 @@ class DynamicNavigation {
      */
     markNotificationRead(notificationId) {
         const notification = this.notifications?.find(n => n.id === notificationId);
-        if (notification && !notification.read) {
+        if (notification && !notification.read && !notification.is_read) {
             notification.read = true;
+            notification.is_read = true;
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
             
-            // Update in database
-            try {
-                window.championDB?.markAsRead?.(notificationId);
-            } catch (err) {
-                console.warn('Could not update notification in DB:', err);
+            // Only update in database if it's a real UUID (not a mock notification)
+            const isMockNotification = notificationId.startsWith('mock-');
+            if (!isMockNotification) {
+                try {
+                    window.championDB?.markAsRead?.(notificationId);
+                } catch (err) {
+                    console.warn('Could not update notification in DB:', err);
+                }
             }
         }
     }
@@ -537,15 +549,21 @@ class DynamicNavigation {
      */
     markAllNotificationsRead() {
         if (this.notifications) {
-            this.notifications.forEach(n => n.read = true);
+            this.notifications.forEach(n => {
+                n.read = true;
+                n.is_read = true;
+            });
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
             
-            // Update in database
-            try {
-                window.championDB?.markAllAsRead?.();
-            } catch (err) {
-                console.warn('Could not update notifications in DB:', err);
+            // Only call DB if we have real notifications (check if any don't start with mock-)
+            const hasRealNotifications = this.notifications.some(n => !n.id.startsWith('mock-'));
+            if (hasRealNotifications) {
+                try {
+                    window.championDB?.markAllAsRead?.();
+                } catch (err) {
+                    console.warn('Could not update notifications in DB:', err);
+                }
             }
             
             window.showToast?.('All notifications marked as read', 'success');
