@@ -424,12 +424,24 @@ class ChampionDB {
      * Get notifications
      */
     async getNotifications() {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated');
-        }
+        try {
+            const auth = window.championAuth;
+            if (!auth || !auth.isAuthenticated()) {
+                console.log('getNotifications: not authenticated');
+                return [];
+            }
 
-        return await this.service.getNotifications(auth.getUser().id);
+            const userId = auth.getUser()?.id;
+            if (!userId) {
+                console.log('getNotifications: no user ID');
+                return [];
+            }
+
+            return await this.service.getNotifications(userId);
+        } catch (error) {
+            console.warn('getNotifications error:', error.message);
+            return [];
+        }
     }
 
     /**
