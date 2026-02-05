@@ -747,67 +747,108 @@ class SupabaseService {
      * Get notifications for a champion
      */
     async getNotifications(championId, limit = 20) {
-        const { data, error } = await this.client
-            .from('notifications')
-            .select('*')
-            .eq('champion_id', championId)
-            .order('created_at', { ascending: false })
-            .limit(limit);
-        if (error) throw error;
-        return data;
+        try {
+            const { data, error } = await this.client
+                .from('notifications')
+                .select('*')
+                .eq('champion_id', championId)
+                .order('created_at', { ascending: false })
+                .limit(limit);
+            if (error) {
+                // Table may not exist yet - return empty array
+                console.warn('Notifications not available:', error.message);
+                return [];
+            }
+            return data || [];
+        } catch (err) {
+            console.warn('Failed to load notifications:', err.message);
+            return [];
+        }
     }
 
     /**
      * Mark notification as read
      */
     async markNotificationRead(notificationId) {
-        const { data, error } = await this.client.rpc('mark_notification_read', {
-            p_notification_id: notificationId
-        });
-        if (error) throw error;
-        return data;
+        try {
+            const { data, error } = await this.client.rpc('mark_notification_read', {
+                p_notification_id: notificationId
+            });
+            if (error) {
+                console.warn('Could not mark notification as read:', error.message);
+                return false;
+            }
+            return data;
+        } catch (err) {
+            console.warn('markNotificationRead failed:', err.message);
+            return false;
+        }
     }
 
     /**
      * Mark all notifications as read
      */
     async markAllNotificationsRead() {
-        const { data, error } = await this.client.rpc('mark_all_notifications_read');
-        if (error) throw error;
-        return data;
+        try {
+            const { data, error } = await this.client.rpc('mark_all_notifications_read');
+            if (error) {
+                console.warn('Could not mark all notifications as read:', error.message);
+                return 0;
+            }
+            return data;
+        } catch (err) {
+            console.warn('markAllNotificationsRead failed:', err.message);
+            return 0;
+        }
     }
 
     /**
      * Get unread notification count
      */
     async getUnreadNotificationCount(championId) {
-        const { data, error } = await this.client.rpc('get_unread_notification_count', {
-            p_champion_id: championId
-        });
-        if (error) throw error;
-        return data;
+        try {
+            const { data, error } = await this.client.rpc('get_unread_notification_count', {
+                p_champion_id: championId
+            });
+            if (error) {
+                console.warn('Could not get unread count:', error.message);
+                return 0;
+            }
+            return data || 0;
+        } catch (err) {
+            console.warn('getUnreadNotificationCount failed:', err.message);
+            return 0;
+        }
     }
 
     /**
      * Create a notification for a champion
      */
     async createNotification(championId, type, title, message, link = null, data = null) {
-        const { data: result, error } = await this.client
-            .from('notifications')
-            .insert({
-                champion_id: championId,
-                type: type,
-                title: title,
-                message: message,
-                link: link,
-                data: data,
-                is_read: false
-            })
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return result;
+        try {
+            const { data: result, error } = await this.client
+                .from('notifications')
+                .insert({
+                    champion_id: championId,
+                    type: type,
+                    title: title,
+                    message: message,
+                    link: link,
+                    data: data,
+                    is_read: false
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                console.warn('Could not create notification:', error.message);
+                return null;
+            }
+            return result;
+        } catch (err) {
+            console.warn('createNotification failed:', err.message);
+            return null;
+        }
     }
 
     // =====================================================
