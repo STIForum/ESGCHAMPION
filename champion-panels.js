@@ -306,22 +306,19 @@ class ChampionPanels {
         document.body.style.overflow = 'hidden';
         
         try {
-            // Get the panel's framework first
-            const panel = this.panels.find(p => p.id === panelId);
-            const panelFramework = (panel?.primary_framework || panel?.framework || '').toLowerCase();
+            // Fetch only indicators that belong to THIS specific panel
+            // Framework is just for categorizing panels, not for loading indicators
+            const panelData = await window.championDB.getPanelWithIndicators(panelId);
+            this.allIndicators = panelData.indicators || [];
             
-            // Fetch ALL indicators then filter by framework
-            const allIndicators = await window.championDB.getAllIndicators();
-            
-            // Filter indicators to match panel's framework (strict enforcement)
-            if (panelFramework && window.VALID_FRAMEWORKS?.includes(panelFramework)) {
-                this.allIndicators = allIndicators.filter(ind => {
-                    const indFramework = (ind.primary_framework || ind.framework || '').toLowerCase();
-                    return indFramework === panelFramework;
-                });
-            } else {
-                // Fallback: show all if panel has no framework set
-                this.allIndicators = allIndicators;
+            if (this.allIndicators.length === 0) {
+                indicatorsList.innerHTML = `
+                    <div class="text-center p-6 text-secondary">
+                        <p style="margin-bottom: var(--space-2);">No indicators available for this panel.</p>
+                        <p class="text-sm">The admin needs to add indicators specific to this panel before it can be reviewed.</p>
+                    </div>
+                `;
+                return;
             }
             
             this.renderIndicatorsList(this.allIndicators);
@@ -352,7 +349,7 @@ class ChampionPanels {
             const importance = indicator.importance_level || 'medium';
             const difficulty = indicator.difficulty || 'moderate';
             const timeEstimate = indicator.time_estimate || '3-5 min';
-            const griStandard = indicator.gri_standard || '';
+            const standardRef = indicator.gri_standard || indicator.standard_reference || '';
             const impactRating = indicator.impact_rating || 4;
             
             return `
@@ -366,14 +363,12 @@ class ChampionPanels {
                         <span class="meta-badge importance-${importance}">${importance.charAt(0).toUpperCase() + importance.slice(1)} Importance</span>
                         <span class="meta-badge difficulty-badge">${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
                         <span class="meta-badge time-badge">${timeEstimate}</span>
-                        ${griStandard ? `<span class="meta-badge gri-badge">${griStandard}</span>` : ''}
+                        ${standardRef ? `<span class="meta-badge gri-badge">${standardRef}</span>` : ''}
                     </div>
                     
                     <div class="indicator-impact">
                         Impact: ${this.renderStars(impactRating)}
                     </div>
-                    
-                    ${indicator.panels ? `<div class="indicator-panel">Panel: ${indicator.panels.name}</div>` : ''}
                 </div>
             </label>
         `}).join('');
