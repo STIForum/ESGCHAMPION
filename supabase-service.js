@@ -826,6 +826,8 @@ class SupabaseService {
      */
     async createNotification(championId, type, title, message, link = null, data = null) {
         try {
+            console.log('Creating notification:', { championId, type, title });
+            
             const { data: result, error } = await this.client
                 .from('notifications')
                 .insert({
@@ -841,12 +843,13 @@ class SupabaseService {
                 .single();
             
             if (error) {
-                console.warn('Could not create notification:', error.message);
+                console.error('Could not create notification:', error.message, error);
                 return null;
             }
+            console.log('Notification created successfully:', result?.id);
             return result;
         } catch (err) {
-            console.warn('createNotification failed:', err.message);
+            console.error('createNotification failed:', err.message, err);
             return null;
         }
     }
