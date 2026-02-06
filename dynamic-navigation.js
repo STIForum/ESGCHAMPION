@@ -677,8 +677,8 @@ class DynamicNavigation {
             // Save read state to localStorage for persistence
             this.saveReadState(notificationId);
             
-            // Only update in database if it's a real UUID (not a mock notification)
-            const isMockNotification = notificationId.startsWith('mock-');
+            // Only update in database if it's a real UUID (not a mock/demo notification)
+            const isMockNotification = notificationId.startsWith('mock-') || notificationId.startsWith('demo-');
             if (!isMockNotification) {
                 try {
                     window.championDB?.markAsRead?.(notificationId);
@@ -703,8 +703,10 @@ class DynamicNavigation {
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
             
-            // Only call DB if we have real notifications (check if any don't start with mock-)
-            const hasRealNotifications = this.notifications.some(n => !n.id.startsWith('mock-'));
+            // Only call DB if we have real notifications (not mock/demo)
+            const hasRealNotifications = this.notifications.some(n => 
+                !n.id.startsWith('mock-') && !n.id.startsWith('demo-')
+            );
             if (hasRealNotifications) {
                 try {
                     window.championDB?.markAllAsRead?.();
