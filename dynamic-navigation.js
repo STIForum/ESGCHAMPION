@@ -308,14 +308,17 @@ class DynamicNavigation {
                 // No DB notifications or error, use mock data for demo
                 console.log('Using mock notifications (DB returned:', dbNotifications, 'error:', dbError?.message || 'none', ')');
                 notifications = this.getMockNotifications();
-                // Apply saved read states from localStorage for mock data
-                notifications = this.applyStoredReadStates(notifications);
+                console.log('Mock notifications created:', JSON.stringify(notifications.map(n => ({id: n.id, read: n.read}))));
+                // Don't apply stored read states - mock notifications use session IDs so they're always fresh
             }
 
             this.notifications = notifications;
             this.renderNotifications(notifications);
             this.updateNotificationBadge(notifications);
-            console.log('Notifications rendered, unread count:', notifications.filter(n => !n.read).length);
+            
+            // Debug: log badge element and unread count
+            const badge = document.getElementById('notification-count');
+            console.log('Badge element found:', !!badge, 'Unread count:', notifications.filter(n => !n.read).length);
             
         } catch (error) {
             console.error('Error loading notifications:', error);
@@ -361,9 +364,11 @@ class DynamicNavigation {
      * Get mock notifications for demo
      */
     getMockNotifications() {
+        // Generate unique IDs based on current session to ensure fresh notifications
+        const sessionId = Date.now().toString(36);
         return [
             {
-                id: 'mock-notif-001',
+                id: `mock-${sessionId}-001`,
                 type: 'review_accepted',
                 title: 'Review Approved! 🎉',
                 message: 'Your review for "Climate & GHG Emissions" panel has been approved!',
@@ -376,7 +381,7 @@ class DynamicNavigation {
                 }
             },
             {
-                id: 'mock-notif-002',
+                id: `mock-${sessionId}-002`,
                 type: 'credits_awarded',
                 title: 'Credits Earned! 💰',
                 message: 'You earned 10 credits for your approved review of "Climate & GHG Emissions".',
@@ -389,7 +394,7 @@ class DynamicNavigation {
                 }
             },
             {
-                id: 'mock-notif-003',
+                id: `mock-${sessionId}-003`,
                 type: 'peer_joined',
                 title: 'Your Peer Joined! 🎉',
                 message: 'John Doe accepted your invitation and joined STIF!',
@@ -401,7 +406,7 @@ class DynamicNavigation {
                 }
             },
             {
-                id: 'mock-notif-004',
+                id: `mock-${sessionId}-004`,
                 type: 'new_panel',
                 title: 'New Panel Available! 📋',
                 message: 'A new "Data Privacy & Cybersecurity" panel is now available for review. Start reviewing to earn credits!',
