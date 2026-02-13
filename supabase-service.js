@@ -1265,12 +1265,13 @@ class SupabaseService {
     async getUserSubmittedIndicatorIds(userId, panelId) {
         // Get all submissions for this user and panel that are pending or approved
         // (not rejected - rejected can be resubmitted)
+        // Note: We check both champion_id and reviewer_user_id for compatibility
         const { data: submissions, error: subError } = await this.client
             .from('panel_review_submissions')
             .select('id, status')
-            .eq('reviewer_user_id', userId)
             .eq('panel_id', panelId)
-            .in('status', ['pending', 'approved']);
+            .in('status', ['pending', 'approved'])
+            .or(`champion_id.eq.${userId},reviewer_user_id.eq.${userId}`);
         
         if (subError) {
             console.error('Error fetching submissions:', subError);
