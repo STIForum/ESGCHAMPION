@@ -357,18 +357,18 @@ class ChampionPanels {
             const standardRef = indicator.gri_standard || indicator.standard_reference || '';
             const impactRating = indicator.impact_rating || 4;
             
-            // Check if this indicator has been accepted
-            const isAccepted = this.acceptedIndicatorIds?.includes(indicator.id);
-            const disabledClass = isAccepted ? 'indicator-accepted' : '';
-            const disabledAttr = isAccepted ? 'disabled' : '';
+            // Check if this indicator has been submitted (pending or accepted)
+            const isSubmitted = this.acceptedIndicatorIds?.includes(indicator.id);
+            const disabledClass = isSubmitted ? 'indicator-submitted' : '';
+            const disabledAttr = isSubmitted ? 'disabled' : '';
             
             return `
-            <label class="indicator-checkbox-item ${disabledClass}" data-id="${indicator.id}" ${isAccepted ? 'title="Already reviewed and accepted"' : ''}>
+            <label class="indicator-checkbox-item ${disabledClass}" data-id="${indicator.id}" ${isSubmitted ? 'title="Already submitted for review"' : ''}>
                 <input type="checkbox" value="${indicator.id}" ${this.selectedIndicators.has(indicator.id) ? 'checked' : ''} ${disabledAttr} onchange="panelsPage.toggleIndicator('${indicator.id}')">
                 <div class="indicator-info">
                     <div class="indicator-name">
                         ${indicator.name}
-                        ${isAccepted ? '<span class="accepted-badge">✓ Accepted</span>' : ''}
+                        ${isSubmitted ? '<span class="submitted-badge">✓ Submitted</span>' : ''}
                     </div>
                     <div class="indicator-desc">${indicator.description || 'No description'}</div>
                     

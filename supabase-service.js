@@ -1258,35 +1258,51 @@ class SupabaseService {
     }
 
     /**
-     * Get user's accepted indicator IDs for a specific panel
-     * Returns indicator IDs that have been submitted and accepted by admin
+     * Get user's submitted indicator IDs for a specific panel
+     * Returns indicator IDs that have been submitted (pending or accepted) by the user
+     * These should be greyed out and not selectable again
      */
-    async getUserAcceptedIndicatorIds(userId, panelId) {
-        // Get accepted submissions for this user and panel
+    async getUserSubmittedIndicatorIds(userId, panelId) {
+        // Get all submissions for this user and panel that are pending or approved
+        // (not rejected - rejected can be resubmitted)
         const { data: submissions, error: subError } = await this.client
             .from('panel_review_submissions')
-            .select('id')
+            .select('id, status')
             .eq('reviewer_user_id', userId)
             .eq('panel_id', panelId)
-            .eq('status', 'approved');
+            .in('status', ['pending', 'approved']);
         
-        if (subError) throw subError;
+        if (subError) {
+            console.error('Error fetching submissions:', subError);
+            return [];
+        }
         if (!submissions || submissions.length === 0) return [];
 
         const submissionIds = submissions.map(s => s.id);
 
-        // Get indicator reviews for these submissions that are accepted
+        // Get all indicator reviews for these submissions
         const { data: indicatorReviews, error: indError } = await this.client
             .from('panel_review_indicator_reviews')
-            .select('indicator_id')
-            .in('submission_id', submissionIds)
-            .eq('review_status', 'accepted');
+            .select('indicator_id, submission_id')
+            .in('submission_id', submissionIds);
         
-        if (indError) throw indError;
+        if (indError) {
+            console.error('Error fetching indicator reviews:', indError);
+            return [];
+        }
         
-        // Return unique indicator IDs
+        // Return unique indicator IDs with their status
         const indicatorIds = [...new Set((indicatorReviews || []).map(r => r.indicator_id))];
         return indicatorIds;
+    }
+
+    /**
+     * Get user's accepted indicator IDs for a specific panel (legacy - kept for compatibility)
+     * Returns indicator IDs that have been submitted and accepted by admin
+     */
+    async getUserAcceptedIndicatorIds(userId, panelId) {
+        // Now calls the new method that includes both pending and approved
+        return await this.getUserSubmittedIndicatorIds(userId, panelId);
     }
 }
 
