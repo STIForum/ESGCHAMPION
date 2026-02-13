@@ -282,6 +282,7 @@ class ChampionPanels {
         this.currentPanelId = panelId;
         this.currentPanelName = panelName;
         this.selectedIndicators.clear();
+        this.acceptedIndicatorIds = []; // Track accepted indicators
         
         const backdrop = document.getElementById('indicator-modal-backdrop');
         const modal = document.getElementById('indicator-modal');
@@ -306,10 +307,14 @@ class ChampionPanels {
         document.body.style.overflow = 'hidden';
         
         try {
-            // Fetch only indicators that belong to THIS specific panel
-            // Framework is just for categorizing panels, not for loading indicators
-            const panelData = await window.championDB.getPanelWithIndicators(panelId);
+            // Fetch indicators and accepted indicator IDs in parallel
+            const [panelData, acceptedIds] = await Promise.all([
+                window.championDB.getPanelWithIndicators(panelId),
+                window.championDB.getUserAcceptedIndicatorIds(panelId)
+            ]);
+            
             this.allIndicators = panelData.indicators || [];
+            this.acceptedIndicatorIds = acceptedIds || [];
             
             if (this.allIndicators.length === 0) {
                 indicatorsList.innerHTML = `
@@ -352,11 +357,19 @@ class ChampionPanels {
             const standardRef = indicator.gri_standard || indicator.standard_reference || '';
             const impactRating = indicator.impact_rating || 4;
             
+            // Check if this indicator has been accepted
+            const isAccepted = this.acceptedIndicatorIds?.includes(indicator.id);
+            const disabledClass = isAccepted ? 'indicator-accepted' : '';
+            const disabledAttr = isAccepted ? 'disabled' : '';
+            
             return `
-            <label class="indicator-checkbox-item" data-id="${indicator.id}">
-                <input type="checkbox" value="${indicator.id}" ${this.selectedIndicators.has(indicator.id) ? 'checked' : ''} onchange="panelsPage.toggleIndicator('${indicator.id}')">
+            <label class="indicator-checkbox-item ${disabledClass}" data-id="${indicator.id}" ${isAccepted ? 'title="Already reviewed and accepted"' : ''}>
+                <input type="checkbox" value="${indicator.id}" ${this.selectedIndicators.has(indicator.id) ? 'checked' : ''} ${disabledAttr} onchange="panelsPage.toggleIndicator('${indicator.id}')">
                 <div class="indicator-info">
-                    <div class="indicator-name">${indicator.name}</div>
+                    <div class="indicator-name">
+                        ${indicator.name}
+                        ${isAccepted ? '<span class="accepted-badge">✓ Accepted</span>' : ''}
+                    </div>
                     <div class="indicator-desc">${indicator.description || 'No description'}</div>
                     
                     <div class="indicator-meta-badges">
@@ -400,16 +413,21 @@ class ChampionPanels {
 
     toggleSelectAll() {
         const btn = document.getElementById('select-all-btn');
-        const checkboxes = document.querySelectorAll('#indicators-list input[type="checkbox"]');
+        const checkboxes = document.querySelectorAll('#indicators-list input[type="checkbox"]:not([disabled])');
         
-        if (this.selectedIndicators.size === this.allIndicators.length) {
+        // Get selectable indicators (not accepted)
+        const selectableIndicators = this.allIndicators.filter(
+            ind => !this.acceptedIndicatorIds?.includes(ind.id)
+        );
+        
+        if (this.selectedIndicators.size === selectableIndicators.length && selectableIndicators.length > 0) {
             // Deselect all
             this.selectedIndicators.clear();
             checkboxes.forEach(cb => cb.checked = false);
             btn.textContent = 'Select All';
         } else {
-            // Select all
-            this.allIndicators.forEach(ind => this.selectedIndicators.add(ind.id));
+            // Select all (only selectable ones)
+            selectableIndicators.forEach(ind => this.selectedIndicators.add(ind.id));
             checkboxes.forEach(cb => cb.checked = true);
             btn.textContent = 'Deselect All';
         }
@@ -422,10 +440,21 @@ class ChampionPanels {
         const reviewBtn = document.getElementById('review-selected-btn');
         const selectAllBtn = document.getElementById('select-all-btn');
         
-        countEl.textContent = `${this.selectedIndicators.size} of ${this.allIndicators.length} selected`;
+        // Get selectable indicators (not accepted)
+        const selectableIndicators = this.allIndicators.filter(
+            ind => !this.acceptedIndicatorIds?.includes(ind.id)
+        );
+        const acceptedCount = this.allIndicators.length - selectableIndicators.length;
+        
+        let countText = `${this.selectedIndicators.size} of ${selectableIndicators.length} selected`;
+        if (acceptedCount > 0) {
+            countText += ` (${acceptedCount} already accepted)`;
+        }
+        countEl.textContent = countText;
+        
         reviewBtn.disabled = this.selectedIndicators.size === 0;
         
-        if (this.selectedIndicators.size === this.allIndicators.length && this.allIndicators.length > 0) {
+        if (this.selectedIndicators.size === selectableIndicators.length && selectableIndicators.length > 0) {
             selectAllBtn.textContent = 'Deselect All';
         } else {
             selectAllBtn.textContent = 'Select All';

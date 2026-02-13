@@ -646,6 +646,23 @@ class ChampionDB {
             return [];
         }
     }
+
+    /**
+     * Get user's accepted indicator IDs for a specific panel
+     */
+    async getUserAcceptedIndicatorIds(panelId) {
+        const auth = window.championAuth;
+        if (!auth.isAuthenticated()) {
+            return [];
+        }
+
+        try {
+            return await this.service.getUserAcceptedIndicatorIds(auth.getUser().id, panelId);
+        } catch (error) {
+            console.error('Error getting user accepted indicators:', error);
+            return [];
+        }
+    }
 }
 
 // Create and export singleton instance

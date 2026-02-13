@@ -1256,6 +1256,38 @@ class SupabaseService {
         if (error) throw error;
         return data || [];
     }
+
+    /**
+     * Get user's accepted indicator IDs for a specific panel
+     * Returns indicator IDs that have been submitted and accepted by admin
+     */
+    async getUserAcceptedIndicatorIds(userId, panelId) {
+        // Get accepted submissions for this user and panel
+        const { data: submissions, error: subError } = await this.client
+            .from('panel_review_submissions')
+            .select('id')
+            .eq('reviewer_user_id', userId)
+            .eq('panel_id', panelId)
+            .eq('status', 'approved');
+        
+        if (subError) throw subError;
+        if (!submissions || submissions.length === 0) return [];
+
+        const submissionIds = submissions.map(s => s.id);
+
+        // Get indicator reviews for these submissions that are accepted
+        const { data: indicatorReviews, error: indError } = await this.client
+            .from('panel_review_indicator_reviews')
+            .select('indicator_id')
+            .in('submission_id', submissionIds)
+            .eq('review_status', 'accepted');
+        
+        if (indError) throw indError;
+        
+        // Return unique indicator IDs
+        const indicatorIds = [...new Set((indicatorReviews || []).map(r => r.indicator_id))];
+        return indicatorIds;
+    }
 }
 
 // Create and export singleton instance
