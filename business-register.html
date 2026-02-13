@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Business Registration - STIF SME Portal">
-    <title>Business Registration | STIF - SME Portal</title>
+    <title>Business Registration | STIF - Sustainability Technology and Innovation Forum</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,260 +12,107 @@
     <link rel="stylesheet" href="styles.css">
     
     <style>
-        :root {
-            --business-bg: #0f172a;
-            --business-card: #1e293b;
-            --business-border: #334155;
-            --business-text: #f1f5f9;
-            --business-muted: #94a3b8;
-            --business-accent: #3b82f6;
-        }
-        
-        body {
-            background: var(--business-bg);
-            color: var(--business-text);
-            min-height: 100vh;
-        }
-        
-        .business-header {
-            background: var(--business-bg);
-            border-bottom: 1px solid var(--business-border);
-            padding: var(--space-4) var(--space-6);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-        
-        .business-header-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .business-logo {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            text-decoration: none;
-            color: var(--business-text);
-        }
-        
-        .business-logo-badge {
-            background: var(--business-accent);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: var(--text-sm);
-        }
-        
-        .business-logo-text {
-            font-weight: 500;
-            color: var(--business-muted);
-        }
-        
         .auth-page {
-            min-height: 100vh;
+            min-height: calc(100vh - 70px);
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            padding: calc(80px + var(--space-8)) var(--space-6) var(--space-8);
+            padding: calc(70px + var(--space-8)) var(--space-6) var(--space-8);
+            background: linear-gradient(135deg, var(--primary-50) 0%, white 50%, var(--gray-50) 100%);
         }
-        
         .auth-card {
             width: 100%;
             max-width: 800px;
-            background: var(--business-card);
-            border: 1px solid var(--business-border);
+            background: white;
             border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
             padding: var(--space-10);
         }
-        
         .auth-header {
             text-align: center;
             margin-bottom: var(--space-8);
         }
-        
+        .auth-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+        }
         .auth-title {
             font-size: var(--text-2xl);
             margin-bottom: var(--space-2);
-            color: var(--business-text);
         }
-        
         .auth-subtitle {
-            color: var(--business-muted);
+            color: var(--gray-500);
             font-size: var(--text-sm);
         }
-        
         .form-section {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--business-border);
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
             border-radius: var(--radius-xl);
             padding: var(--space-6);
             margin-bottom: var(--space-6);
         }
-        
         .section-header {
             display: flex;
             align-items: center;
             gap: var(--space-3);
             margin-bottom: var(--space-5);
         }
-        
         .section-icon {
             width: 40px;
             height: 40px;
-            background: rgba(59, 130, 246, 0.1);
+            background: var(--primary-100);
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--business-accent);
+            color: var(--primary);
         }
-        
         .section-title {
             font-size: var(--text-lg);
             font-weight: 600;
-            color: var(--business-text);
+            color: var(--gray-900);
             margin: 0;
         }
-        
         .section-subtitle {
             font-size: var(--text-sm);
-            color: var(--business-muted);
+            color: var(--gray-500);
             margin: 0;
         }
-        
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: var(--space-4);
         }
-        
-        .form-group {
-            margin-bottom: var(--space-4);
-        }
-        
-        .form-label {
-            display: block;
-            font-size: var(--text-sm);
-            font-weight: 500;
-            color: var(--business-muted);
-            margin-bottom: var(--space-2);
-        }
-        
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: var(--space-3) var(--space-4);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--business-border);
-            border-radius: var(--radius-lg);
-            color: var(--business-text);
-            font-size: var(--text-base);
-            transition: all var(--transition);
-        }
-        
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--business-accent);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .form-input::placeholder {
-            color: var(--business-muted);
-            opacity: 0.5;
-        }
-        
-        .form-select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 40px;
-        }
-        
-        .form-select option {
-            background: var(--business-card);
-            color: var(--business-text);
-        }
-        
-        .required {
-            color: #ef4444;
-        }
-        
-        .btn-business {
-            background: var(--business-accent);
-            color: white;
-            border: none;
-            padding: var(--space-3) var(--space-6);
-            border-radius: var(--radius-lg);
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2);
-            transition: all var(--transition);
-        }
-        
-        .btn-business:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-        }
-        
-        .btn-business:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
         .auth-footer {
             text-align: center;
             margin-top: var(--space-6);
             padding-top: var(--space-6);
-            border-top: 1px solid var(--business-border);
+            border-top: 1px solid var(--gray-100);
         }
-        
         .auth-footer p {
-            color: var(--business-muted);
+            color: var(--gray-500);
             font-size: var(--text-sm);
         }
-        
-        .auth-footer a {
-            color: var(--business-accent);
-            text-decoration: none;
-        }
-        
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
-        
         .success-message {
             text-align: center;
             padding: var(--space-8);
         }
-        
         .success-icon {
             width: 80px;
             height: 80px;
-            background: rgba(34, 197, 94, 0.1);
+            background: var(--success-100);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto var(--space-6);
-            color: #22c55e;
+            color: var(--success);
         }
-        
         @media (max-width: 640px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            .auth-card {
-                padding: var(--space-6);
-            }
+            .form-row { grid-template-columns: 1fr; }
+            .auth-card { padding: var(--space-6); }
         }
     </style>
     
@@ -274,29 +121,50 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="business-header">
-        <div class="business-header-inner">
-            <a href="/" class="business-logo">
-                <span class="business-logo-badge">STIF</span>
-                <span class="business-logo-text">Business Portal</span>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <img src="assets/images/logo1.png" alt="STIF Logo" class="logo-img">
+                <span class="logo-text">Sustainability Technology and Innovation Forum</span>
             </a>
-            <div>
-                <a href="/business-login.html" style="color: var(--business-muted); text-decoration: none; font-size: var(--text-sm);">
-                    Already have an account? <span style="color: var(--business-accent);">Login</span>
-                </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/about.html" class="nav-link">About</a></li>
+                    <li><a href="/faq.html" class="nav-link">FAQ</a></li>
+                </ul>
+            </nav>
+            <div class="nav-actions">
+                <a href="/business-login.html" class="btn btn-ghost">Login</a>
             </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <ul class="mobile-nav-menu">
+            <li><a href="/" class="mobile-nav-link">Home</a></li>
+            <li><a href="/about.html" class="mobile-nav-link">About</a></li>
+            <li><a href="/faq.html" class="mobile-nav-link">FAQ</a></li>
+            <li><a href="/business-login.html" class="mobile-nav-link">Login</a></li>
+        </ul>
+    </div>
 
     <!-- Main Content -->
     <main class="auth-page">
         <div class="auth-card">
             <div class="auth-header">
+                <div class="auth-logo">
+                    <img src="assets/images/logo1.png" alt="STIF" style="height: 40px;">
+                </div>
                 <h1 class="auth-title">Create Business Account</h1>
                 <p class="auth-subtitle">Set up your SME sustainability reporting profile</p>
             </div>
 
-            <!-- Registration Form -->
             <div id="register-form-container">
                 <form id="business-register-form">
                     <!-- Basic Information -->
@@ -313,21 +181,19 @@
                                 <p class="section-subtitle">Core identity and registration details.</p>
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="first_name">First Name <span class="required">*</span></label>
+                                <label class="form-label" for="first_name">First Name <span class="text-error">*</span></label>
                                 <input type="text" id="first_name" name="first_name" class="form-input" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="last_name">Last Name <span class="required">*</span></label>
+                                <label class="form-label" for="last_name">Last Name <span class="text-error">*</span></label>
                                 <input type="text" id="last_name" name="last_name" class="form-input" required>
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="company_name">Company Name <span class="required">*</span></label>
+                                <label class="form-label" for="company_name">Company Name <span class="text-error">*</span></label>
                                 <input type="text" id="company_name" name="company_name" class="form-input" required>
                             </div>
                             <div class="form-group">
@@ -335,7 +201,6 @@
                                 <input type="text" id="registration_number" name="registration_number" class="form-input">
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="role">Role / Designation</label>
@@ -361,11 +226,9 @@
                                 </select>
                             </div>
                         </div>
-                        
                         <div class="form-group">
                             <label class="form-label" for="reporting_year">Reporting Year</label>
                             <select id="reporting_year" name="reporting_year" class="form-select">
-                                <option value="">Select reporting year</option>
                                 <option value="2024">2024</option>
                                 <option value="2025">2025</option>
                                 <option value="2026" selected>2026</option>
@@ -387,10 +250,9 @@
                                 <p class="section-subtitle">How we can reach you.</p>
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="email">Business Email <span class="required">*</span></label>
+                                <label class="form-label" for="email">Business Email <span class="text-error">*</span></label>
                                 <input type="email" id="email" name="email" class="form-input" required>
                             </div>
                             <div class="form-group">
@@ -398,7 +260,6 @@
                                 <input type="tel" id="mobile" name="mobile" class="form-input">
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="office_phone">Office Phone</label>
@@ -409,7 +270,6 @@
                                 <input type="url" id="linkedin" name="linkedin" class="form-input" placeholder="https://linkedin.com/company/...">
                             </div>
                         </div>
-                        
                         <div class="form-group">
                             <label class="form-label" for="website">Website</label>
                             <input type="url" id="website" name="website" class="form-input" placeholder="https://yourcompany.com">
@@ -429,7 +289,6 @@
                                 <p class="section-subtitle">Tell us about your organization.</p>
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="company_size">Company Size</label>
@@ -447,7 +306,6 @@
                                 <input type="text" id="country" name="country" class="form-input">
                             </div>
                         </div>
-                        
                         <div class="form-group">
                             <label class="form-label" for="address">Business Address</label>
                             <textarea id="address" name="address" class="form-textarea" rows="2"></textarea>
@@ -469,7 +327,6 @@
                                 <p class="section-subtitle">Your ESG priorities and initiatives.</p>
                             </div>
                         </div>
-                        
                         <div class="form-group">
                             <label class="form-label" for="esg_focus">Primary ESG Focus</label>
                             <select id="esg_focus" name="esg_focus" class="form-select">
@@ -480,7 +337,6 @@
                                 <option value="all">All Areas</option>
                             </select>
                         </div>
-                        
                         <div class="form-group">
                             <label class="form-label" for="esg_initiatives">Ongoing ESG Initiatives</label>
                             <textarea id="esg_initiatives" name="esg_initiatives" class="form-textarea" rows="3" placeholder="Describe any current sustainability projects or goals..."></textarea>
@@ -501,23 +357,21 @@
                                 <p class="section-subtitle">Set your login credentials.</p>
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="password">Password <span class="required">*</span></label>
+                                <label class="form-label" for="password">Password <span class="text-error">*</span></label>
                                 <input type="password" id="password" name="password" class="form-input" required minlength="8">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="confirm_password">Confirm Password <span class="required">*</span></label>
+                                <label class="form-label" for="confirm_password">Confirm Password <span class="text-error">*</span></label>
                                 <input type="password" id="confirm_password" name="confirm_password" class="form-input" required>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Submit -->
                     <div style="display: flex; justify-content: flex-end; gap: var(--space-4);">
-                        <a href="/" class="btn btn-ghost" style="color: var(--business-muted);">Cancel</a>
-                        <button type="submit" class="btn-business" id="submit-btn">
+                        <a href="/" class="btn btn-ghost">Cancel</a>
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                                 <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -529,7 +383,6 @@
                 </form>
             </div>
 
-            <!-- Success Message (hidden by default) -->
             <div id="success-message" class="success-message hidden">
                 <div class="success-icon">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -537,9 +390,9 @@
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
                 </div>
-                <h2 style="color: var(--business-text); margin-bottom: var(--space-2);">Account Created!</h2>
-                <p style="color: var(--business-muted); margin-bottom: var(--space-6);">Please check your email to verify your account, then login to access your dashboard.</p>
-                <a href="/business-login.html" class="btn-business">Go to Login</a>
+                <h2>Account Created!</h2>
+                <p style="color: var(--gray-500); margin-bottom: var(--space-6);">Please check your email to verify your account, then login to access your dashboard.</p>
+                <a href="/business-login.html" class="btn btn-primary">Go to Login</a>
             </div>
 
             <div class="auth-footer">
@@ -550,10 +403,10 @@
     </main>
 
     <script src="supabase-service.js"></script>
+    <script src="mobile-menu.js"></script>
     <script>
         document.getElementById('business-register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="loading-spinner-sm"></span> Creating...';
@@ -562,74 +415,50 @@
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirm_password').value;
                 
-                if (password !== confirmPassword) {
-                    throw new Error('Passwords do not match');
-                }
-                
-                if (password.length < 8) {
-                    throw new Error('Password must be at least 8 characters');
-                }
+                if (password !== confirmPassword) throw new Error('Passwords do not match');
+                if (password.length < 8) throw new Error('Password must be at least 8 characters');
                 
                 const email = document.getElementById('email').value;
-                
-                // Create auth user
                 const supabase = window.getSupabase();
+                
                 const { data: authData, error: authError } = await supabase.auth.signUp({
                     email: email,
                     password: password,
-                    options: {
-                        data: {
-                            user_type: 'business'
-                        }
-                    }
+                    options: { data: { user_type: 'business' } }
                 });
-                
                 if (authError) throw authError;
                 
-                // Create business user profile
-                const { error: profileError } = await supabase
-                    .from('business_users')
-                    .insert({
-                        auth_user_id: authData.user.id,
-                        first_name: document.getElementById('first_name').value,
-                        last_name: document.getElementById('last_name').value,
-                        company_name: document.getElementById('company_name').value,
-                        company_registration_number: document.getElementById('registration_number').value || null,
-                        role_designation: document.getElementById('role').value || null,
-                        industry: document.getElementById('industry').value || null,
-                        reporting_year: parseInt(document.getElementById('reporting_year').value) || new Date().getFullYear(),
-                        business_email: email,
-                        mobile_number: document.getElementById('mobile').value || null,
-                        office_phone: document.getElementById('office_phone').value || null,
-                        linkedin_url: document.getElementById('linkedin').value || null,
-                        website: document.getElementById('website').value || null,
-                        company_size: document.getElementById('company_size').value || null,
-                        country: document.getElementById('country').value || null,
-                        business_address: document.getElementById('address').value || null,
-                        primary_esg_focus: document.getElementById('esg_focus').value || null,
-                        ongoing_esg_initiatives: document.getElementById('esg_initiatives').value || null,
-                        subscription_status: 'active',
-                        account_status: 'complete'
-                    });
-                
+                const { error: profileError } = await supabase.from('business_users').insert({
+                    auth_user_id: authData.user.id,
+                    first_name: document.getElementById('first_name').value,
+                    last_name: document.getElementById('last_name').value,
+                    company_name: document.getElementById('company_name').value,
+                    company_registration_number: document.getElementById('registration_number').value || null,
+                    role_designation: document.getElementById('role').value || null,
+                    industry: document.getElementById('industry').value || null,
+                    reporting_year: parseInt(document.getElementById('reporting_year').value) || new Date().getFullYear(),
+                    business_email: email,
+                    mobile_number: document.getElementById('mobile').value || null,
+                    office_phone: document.getElementById('office_phone').value || null,
+                    linkedin_url: document.getElementById('linkedin').value || null,
+                    website: document.getElementById('website').value || null,
+                    company_size: document.getElementById('company_size').value || null,
+                    country: document.getElementById('country').value || null,
+                    business_address: document.getElementById('address').value || null,
+                    primary_esg_focus: document.getElementById('esg_focus').value || null,
+                    ongoing_esg_initiatives: document.getElementById('esg_initiatives').value || null,
+                    subscription_status: 'active',
+                    account_status: 'complete'
+                });
                 if (profileError) throw profileError;
                 
-                // Show success
                 document.getElementById('register-form-container').classList.add('hidden');
                 document.getElementById('success-message').classList.remove('hidden');
-                
             } catch (error) {
                 console.error('Registration error:', error);
                 alert(error.message || 'Registration failed. Please try again.');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                        <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    Create Account
-                `;
+                submitBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Create Account`;
             }
         });
     </script>

@@ -3,163 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Account Settings - STIF SME Portal">
-    <title>Account Settings | STIF - SME Portal</title>
+    <meta name="description" content="Business Account Settings - STIF SME Portal">
+    <title>Account Settings | STIF - Sustainability Technology and Innovation Forum</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
     <style>
-        :root {
-            --business-bg: #0f172a;
-            --business-card: #1e293b;
-            --business-card-hover: #273449;
-            --business-border: #334155;
-            --business-text: #f1f5f9;
-            --business-muted: #94a3b8;
-            --business-accent: #3b82f6;
-            --business-success: #22c55e;
-        }
-        
-        body {
-            background: var(--business-bg);
-            color: var(--business-text);
-            min-height: 100vh;
-        }
-        
-        /* Header */
-        .business-header {
-            background: var(--business-bg);
-            border-bottom: 1px solid var(--business-border);
-            padding: var(--space-4) var(--space-6);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-        
-        .business-header-inner {
-            max-width: 1200px;
-            margin: 0 auto;
+        .settings-layout {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            min-height: calc(100vh - 70px);
         }
         
-        .business-logo {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            text-decoration: none;
-            color: var(--business-text);
+        .settings-sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            padding: var(--space-6);
+            position: sticky;
+            top: 70px;
+            height: calc(100vh - 70px);
+            overflow-y: auto;
         }
         
-        .business-logo-badge {
-            background: var(--business-accent);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: var(--text-sm);
+        .settings-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
         
-        .business-logo-text {
-            font-weight: 500;
-            color: var(--business-muted);
+        .settings-nav-item {
+            margin-bottom: var(--space-2);
         }
         
-        .header-nav {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-        }
-        
-        .nav-link {
-            color: var(--business-muted);
-            text-decoration: none;
-            font-size: var(--text-sm);
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            transition: all var(--transition);
-        }
-        
-        .nav-link:hover {
-            color: var(--business-text);
-            background: rgba(255,255,255,0.05);
-        }
-        
-        .nav-link.active {
-            color: var(--business-accent);
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
-        .user-menu {
+        .settings-nav-link {
             display: flex;
             align-items: center;
             gap: var(--space-3);
-        }
-        
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: rgba(59, 130, 246, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--business-accent);
-            font-weight: 600;
-            font-size: var(--text-sm);
-        }
-        
-        .btn-logout {
-            background: transparent;
-            border: 1px solid var(--business-border);
-            color: var(--business-muted);
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            font-size: var(--text-sm);
-            cursor: pointer;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
             transition: all var(--transition);
         }
         
-        .btn-logout:hover {
-            border-color: #ef4444;
-            color: #ef4444;
+        .settings-nav-link:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
         }
         
-        /* Main Content */
-        .settings-page {
-            padding: calc(80px + var(--space-8)) var(--space-6) var(--space-8);
-            max-width: 900px;
-            margin: 0 auto;
+        .settings-nav-link.active {
+            background: var(--primary-100);
+            color: var(--primary);
         }
         
-        /* Page Header */
-        .page-header {
+        .settings-content {
+            flex: 1;
+            padding: var(--space-8);
+            background: var(--gray-50);
+        }
+        
+        .settings-container {
+            max-width: 800px;
+        }
+        
+        .settings-header {
             margin-bottom: var(--space-8);
         }
         
-        .page-title {
+        .settings-title {
             font-size: var(--text-2xl);
-            font-weight: 600;
+            font-weight: 700;
+            color: var(--gray-900);
             margin-bottom: var(--space-2);
-            color: var(--business-text);
         }
         
-        .page-subtitle {
-            color: var(--business-muted);
-            font-size: var(--text-base);
+        .settings-description {
+            color: var(--gray-600);
         }
         
-        /* Form Sections */
-        .form-section {
-            background: var(--business-card);
-            border: 1px solid var(--business-border);
+        .settings-section {
+            background: white;
             border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
             padding: var(--space-6);
             margin-bottom: var(--space-6);
         }
@@ -168,39 +100,49 @@
             display: flex;
             align-items: center;
             gap: var(--space-3);
-            margin-bottom: var(--space-5);
+            margin-bottom: var(--space-6);
             padding-bottom: var(--space-4);
-            border-bottom: 1px solid var(--business-border);
+            border-bottom: 1px solid var(--gray-200);
         }
         
         .section-icon {
             width: 40px;
             height: 40px;
-            background: rgba(59, 130, 246, 0.1);
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--business-accent);
+        }
+        
+        .section-icon.primary {
+            background: var(--primary-100);
+            color: var(--primary);
+        }
+        
+        .section-icon.environmental {
+            background: var(--environmental-bg);
+            color: var(--environmental);
+        }
+        
+        .section-icon.social {
+            background: var(--social-bg);
+            color: var(--social);
+        }
+        
+        .section-icon.governance {
+            background: var(--governance-bg);
+            color: var(--governance);
         }
         
         .section-title {
             font-size: var(--text-lg);
             font-weight: 600;
-            color: var(--business-text);
-            margin: 0;
+            color: var(--gray-900);
         }
         
-        .section-subtitle {
-            font-size: var(--text-sm);
-            color: var(--business-muted);
-            margin: 0;
-        }
-        
-        /* Form Elements */
         .form-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: var(--space-4);
         }
         
@@ -210,430 +152,394 @@
         
         .form-label {
             display: block;
-            font-size: var(--text-sm);
-            font-weight: 500;
-            color: var(--business-muted);
             margin-bottom: var(--space-2);
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: var(--text-sm);
         }
         
         .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: var(--space-3) var(--space-4);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--business-border);
+            border: 1px solid var(--gray-300);
             border-radius: var(--radius-lg);
-            color: var(--business-text);
             font-size: var(--text-base);
+            background: white;
             transition: all var(--transition);
         }
         
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
-            border-color: var(--business-accent);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .form-input::placeholder {
-            color: var(--business-muted);
-            opacity: 0.5;
-        }
-        
-        .form-select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 40px;
-        }
-        
-        .form-select option {
-            background: var(--business-card);
-            color: var(--business-text);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-100);
         }
         
         .form-textarea {
+            min-height: 120px;
             resize: vertical;
-            min-height: 100px;
         }
         
-        /* Buttons */
-        .btn-business {
-            background: var(--business-accent);
-            color: white;
-            border: none;
-            padding: var(--space-3) var(--space-6);
-            border-radius: var(--radius-lg);
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2);
-            transition: all var(--transition);
-        }
-        
-        .btn-business:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-        }
-        
-        .btn-business:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--business-border);
-            color: var(--business-muted);
-            padding: var(--space-3) var(--space-6);
-            border-radius: var(--radius-lg);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition);
-        }
-        
-        .btn-outline:hover {
-            border-color: var(--business-text);
-            color: var(--business-text);
-        }
-        
-        .form-actions {
+        .action-buttons {
             display: flex;
+            gap: var(--space-4);
             justify-content: flex-end;
-            gap: var(--space-3);
             margin-top: var(--space-6);
             padding-top: var(--space-6);
-            border-top: 1px solid var(--business-border);
+            border-top: 1px solid var(--gray-200);
         }
         
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--business-success);
-            color: white;
-            padding: var(--space-3) var(--space-5);
+        .alert {
+            padding: var(--space-4);
             border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
             display: flex;
             align-items: center;
-            gap: var(--space-2);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
+            gap: var(--space-3);
         }
         
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
+        .alert-success {
+            background: var(--success-100);
+            color: var(--success);
+            border: 1px solid var(--success);
         }
         
-        /* Loading */
-        .loading-state {
-            text-align: center;
-            padding: var(--space-12);
-            color: var(--business-muted);
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid var(--error);
         }
         
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--business-border);
-            border-top-color: var(--business-accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto var(--space-4);
-        }
+        .hidden { display: none !important; }
         
-        .loading-spinner-sm {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,0.2);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+            .settings-layout {
+                flex-direction: column;
+            }
+            
+            .settings-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                top: 0;
+                padding: var(--space-4);
+            }
+            
+            .settings-nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--space-2);
+            }
+            
+            .settings-content {
+                padding: var(--space-4);
+            }
+            
             .form-row {
                 grid-template-columns: 1fr;
             }
-            .form-actions {
-                flex-direction: column;
-            }
-            .btn-business, .btn-outline {
-                width: 100%;
-                justify-content: center;
-            }
-            .header-nav {
-                display: none;
-            }
         }
     </style>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
 </head>
 <body>
     <!-- Header -->
-    <header class="business-header">
-        <div class="business-header-inner">
-            <a href="/business-dashboard.html" class="business-logo">
-                <span class="business-logo-badge">STIF</span>
-                <span class="business-logo-text">Business Portal</span>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <img src="assets/images/logo1.png" alt="STIF Logo" class="logo-img">
+                <span class="logo-text">Sustainability Technology and Innovation Forum</span>
             </a>
-            
-            <nav class="header-nav">
-                <a href="/business-dashboard.html" class="nav-link">Dashboard</a>
-                <a href="/business-settings.html" class="nav-link active">Settings</a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/business-dashboard.html" class="nav-link">Dashboard</a></li>
+                    <li><a href="/business-settings.html" class="nav-link active">Settings</a></li>
+                </ul>
             </nav>
-            
-            <div class="user-menu">
-                <div class="user-avatar" id="user-avatar">--</div>
-                <button class="btn-logout" id="logout-btn">Logout</button>
-            </div>
+            <div class="nav-actions"></div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </header>
 
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <ul class="mobile-nav-menu"></ul>
+    </div>
+
     <!-- Main Content -->
-    <main class="settings-page">
-        <!-- Loading State -->
-        <div id="loading-state" class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Loading your settings...</p>
-        </div>
+    <main class="settings-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="settings-sidebar">
+            <ul class="settings-nav">
+                <li class="settings-nav-item">
+                    <a href="#profile" class="settings-nav-link active" data-section="profile">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Profile Information
+                    </a>
+                </li>
+                <li class="settings-nav-item">
+                    <a href="#company" class="settings-nav-link" data-section="company">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                        Company Details
+                    </a>
+                </li>
+                <li class="settings-nav-item">
+                    <a href="#contact" class="settings-nav-link" data-section="contact">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        Contact Information
+                    </a>
+                </li>
+                <li class="settings-nav-item">
+                    <a href="#sustainability" class="settings-nav-link" data-section="sustainability">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        Sustainability Focus
+                    </a>
+                </li>
+                <li class="settings-nav-item">
+                    <a href="/business-dashboard.html" class="settings-nav-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </li>
+            </ul>
+        </aside>
 
         <!-- Settings Content -->
-        <div id="settings-content" style="display: none;">
-            <div class="page-header">
-                <h1 class="page-title">Account Settings</h1>
-                <p class="page-subtitle">Manage your business profile and preferences</p>
-            </div>
-
-            <form id="settings-form">
-                <!-- Basic Information -->
-                <div class="form-section">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="section-title">Basic Information</h2>
-                            <p class="section-subtitle">Core identity and registration details.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="first_name">First Name</label>
-                            <input type="text" id="first_name" name="first_name" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="last_name">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" class="form-input">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="company_name">Company Name</label>
-                            <input type="text" id="company_name" name="company_name" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="registration_number">Company Registration Number</label>
-                            <input type="text" id="registration_number" name="registration_number" class="form-input">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="role">Role / Designation</label>
-                            <input type="text" id="role" name="role" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="industry">Industry</label>
-                            <select id="industry" name="industry" class="form-select">
-                                <option value="">Select Industry</option>
-                                <option value="agriculture">Agriculture, Forestry & Fishing</option>
-                                <option value="automotive">Automotive & Transport</option>
-                                <option value="banking">Banking & Financial Services</option>
-                                <option value="construction">Construction & Real Estate</option>
-                                <option value="education">Education & Training</option>
-                                <option value="energy">Energy & Utilities</option>
-                                <option value="engineering">Engineering & Manufacturing</option>
-                                <option value="food">Food & Beverage</option>
-                                <option value="healthcare">Healthcare & Pharmaceuticals</option>
-                                <option value="it">Information Technology</option>
-                                <option value="retail">Retail & E-commerce</option>
-                                <option value="telecom">Telecommunications</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="reporting_year">Reporting Year</label>
-                        <select id="reporting_year" name="reporting_year" class="form-select">
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
-                        </select>
-                    </div>
+        <div class="settings-content">
+            <div class="settings-container">
+                <!-- Loading State -->
+                <div id="loading-state" class="flex-center" style="height: 400px;">
+                    <div class="loading-spinner"></div>
                 </div>
 
-                <!-- Contact Details -->
-                <div class="form-section">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="section-title">Contact Details</h2>
-                            <p class="section-subtitle">How we can reach you.</p>
-                        </div>
+                <!-- Settings Form (hidden until loaded) -->
+                <div id="settings-form" class="hidden">
+                    <div class="settings-header">
+                        <h1 class="settings-title">Account Settings</h1>
+                        <p class="settings-description">Manage your business profile and sustainability preferences</p>
                     </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="email">Business Email</label>
-                            <input type="email" id="email" name="email" class="form-input" disabled style="opacity: 0.6;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="mobile">Mobile Number</label>
-                            <input type="tel" id="mobile" name="mobile" class="form-input">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="office_phone">Office Phone</label>
-                            <input type="tel" id="office_phone" name="office_phone" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="linkedin">LinkedIn</label>
-                            <input type="url" id="linkedin" name="linkedin" class="form-input" placeholder="https://linkedin.com/company/...">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="website">Website</label>
-                        <input type="url" id="website" name="website" class="form-input" placeholder="https://yourcompany.com">
-                    </div>
-                </div>
 
-                <!-- Business Profile -->
-                <div class="form-section">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="section-title">Business Profile</h2>
-                            <p class="section-subtitle">Tell us about your organization.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="company_size">Company Size</label>
-                            <select id="company_size" name="company_size" class="form-select">
-                                <option value="">Select size</option>
-                                <option value="1-10">1-10 employees</option>
-                                <option value="11-50">11-50 employees</option>
-                                <option value="51-200">51-200 employees</option>
-                                <option value="201-500">201-500 employees</option>
-                                <option value="500+">500+ employees</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="country">Country</label>
-                            <input type="text" id="country" name="country" class="form-input">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="address">Business Address</label>
-                        <textarea id="address" name="address" class="form-textarea" rows="2"></textarea>
-                    </div>
-                </div>
-
-                <!-- Sustainability Focus -->
-                <div class="form-section">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                                <path d="M2 17l10 5 10-5"></path>
-                                <path d="M2 12l10 5 10-5"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="section-title">Sustainability Focus</h2>
-                            <p class="section-subtitle">Your ESG priorities and initiatives.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="esg_focus">Primary ESG Focus</label>
-                        <select id="esg_focus" name="esg_focus" class="form-select">
-                            <option value="">Select focus</option>
-                            <option value="environmental">Environmental</option>
-                            <option value="social">Social</option>
-                            <option value="governance">Governance</option>
-                            <option value="all">All Areas</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="esg_initiatives">Ongoing ESG Initiatives</label>
-                        <textarea id="esg_initiatives" name="esg_initiatives" class="form-textarea" rows="3" placeholder="Describe any current sustainability projects or goals..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="form-actions">
-                    <button type="button" class="btn-outline" id="cancel-btn">Cancel</button>
-                    <button type="submit" class="btn-business" id="save-btn">
+                    <!-- Alert Messages -->
+                    <div id="success-alert" class="alert alert-success hidden">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                            <polyline points="7 3 7 8 15 8"></polyline>
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
                         </svg>
-                        Save Changes
-                    </button>
+                        <span>Settings saved successfully!</span>
+                    </div>
+                    <div id="error-alert" class="alert alert-error hidden">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        <span id="error-message">An error occurred. Please try again.</span>
+                    </div>
+
+                    <!-- Profile Information Section -->
+                    <section id="profile" class="settings-section">
+                        <div class="section-header">
+                            <div class="section-icon primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            <h2 class="section-title">Profile Information</h2>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">First Name</label>
+                                <input type="text" id="first_name" class="form-input" placeholder="Enter first name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" id="last_name" class="form-input" placeholder="Enter last name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Job Title / Role</label>
+                            <input type="text" id="job_title" class="form-input" placeholder="e.g., Sustainability Manager">
+                        </div>
+                    </section>
+
+                    <!-- Company Details Section -->
+                    <section id="company" class="settings-section">
+                        <div class="section-header">
+                            <div class="section-icon environmental">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                </svg>
+                            </div>
+                            <h2 class="section-title">Company Details</h2>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" id="company_name" class="form-input" placeholder="Enter company name">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Industry</label>
+                                <select id="industry" class="form-select">
+                                    <option value="">Select industry</option>
+                                    <option value="agriculture">Agriculture & Food</option>
+                                    <option value="construction">Construction & Real Estate</option>
+                                    <option value="energy">Energy & Utilities</option>
+                                    <option value="finance">Financial Services</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                    <option value="retail">Retail & Consumer Goods</option>
+                                    <option value="technology">Technology & IT</option>
+                                    <option value="transport">Transport & Logistics</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Company Size</label>
+                                <select id="company_size" class="form-select">
+                                    <option value="">Select size</option>
+                                    <option value="1-10">1-10 employees</option>
+                                    <option value="11-50">11-50 employees</option>
+                                    <option value="51-200">51-200 employees</option>
+                                    <option value="201-500">201-500 employees</option>
+                                    <option value="501+">501+ employees</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Website</label>
+                                <input type="url" id="website" class="form-input" placeholder="https://example.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Country</label>
+                                <input type="text" id="country" class="form-input" placeholder="Enter country">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Business Address</label>
+                            <textarea id="business_address" class="form-textarea" placeholder="Enter full business address"></textarea>
+                        </div>
+                    </section>
+
+                    <!-- Contact Information Section -->
+                    <section id="contact" class="settings-section">
+                        <div class="section-header">
+                            <div class="section-icon social">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="section-title">Contact Information</h2>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Business Email</label>
+                                <input type="email" id="business_email" class="form-input" placeholder="contact@company.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mobile Number</label>
+                                <input type="tel" id="mobile_number" class="form-input" placeholder="+1 234 567 8900">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Office Phone</label>
+                                <input type="tel" id="office_phone" class="form-input" placeholder="+1 234 567 8901">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">LinkedIn Profile</label>
+                                <input type="url" id="linkedin_url" class="form-input" placeholder="https://linkedin.com/in/username">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sustainability Focus Section -->
+                    <section id="sustainability" class="settings-section">
+                        <div class="section-header">
+                            <div class="section-icon governance">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="section-title">Sustainability Focus</h2>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Primary ESG Focus</label>
+                                <select id="primary_esg_focus" class="form-select">
+                                    <option value="">Select focus area</option>
+                                    <option value="environmental">Environmental</option>
+                                    <option value="social">Social</option>
+                                    <option value="governance">Governance</option>
+                                    <option value="all">All Areas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Reporting Year</label>
+                                <select id="reporting_year" class="form-select">
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ongoing ESG Initiatives</label>
+                            <textarea id="ongoing_esg_initiatives" class="form-textarea" placeholder="Describe your current sustainability initiatives, goals, and progress..."></textarea>
+                        </div>
+                    </section>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button type="button" id="cancel-btn" class="btn btn-outline">Cancel</button>
+                        <button type="button" id="save-btn" class="btn btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Changes
+                        </button>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     </main>
 
-    <!-- Toast -->
-    <div id="toast" class="toast">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-        <span id="toast-message">Changes saved successfully!</span>
-    </div>
-
     <script src="supabase-service.js"></script>
+    <script src="champion-auth-supabase.js"></script>
+    <script src="dynamic-navigation.js"></script>
+    <script src="mobile-menu.js"></script>
     <script>
         let currentUser = null;
-        let originalData = null;
+        let originalData = {};
         
-        // Check authentication
+        const fields = [
+            'first_name', 'last_name', 'job_title', 'company_name', 'industry', 
+            'company_size', 'website', 'country', 'business_address', 
+            'business_email', 'mobile_number', 'office_phone', 'linkedin_url',
+            'primary_esg_focus', 'reporting_year', 'ongoing_esg_initiatives'
+        ];
+        
         async function checkAuth() {
             const supabase = window.getSupabase();
             const { data: { session } } = await supabase.auth.getSession();
@@ -643,12 +549,7 @@
                 return;
             }
             
-            // Get business user profile
-            const { data: businessUser, error } = await supabase
-                .from('business_users')
-                .select('*')
-                .eq('auth_user_id', session.user.id)
-                .single();
+            const { data: businessUser, error } = await supabase.from('business_users').select('*').eq('auth_user_id', session.user.id).single();
             
             if (error || !businessUser) {
                 window.location.href = '/business-login.html';
@@ -656,121 +557,85 @@
             }
             
             currentUser = businessUser;
-            originalData = { ...businessUser };
-            renderSettings();
+            populateForm();
         }
         
-        function renderSettings() {
-            // Hide loading, show content
+        function populateForm() {
             document.getElementById('loading-state').style.display = 'none';
-            document.getElementById('settings-content').style.display = 'block';
+            document.getElementById('settings-form').classList.remove('hidden');
             
-            // Set user avatar
-            const initials = (currentUser.first_name?.[0] || '') + (currentUser.last_name?.[0] || '');
-            document.getElementById('user-avatar').textContent = initials.toUpperCase() || 'BU';
-            
-            // Populate form fields
-            document.getElementById('first_name').value = currentUser.first_name || '';
-            document.getElementById('last_name').value = currentUser.last_name || '';
-            document.getElementById('company_name').value = currentUser.company_name || '';
-            document.getElementById('registration_number').value = currentUser.company_registration_number || '';
-            document.getElementById('role').value = currentUser.role_designation || '';
-            document.getElementById('industry').value = currentUser.industry || '';
-            document.getElementById('reporting_year').value = currentUser.reporting_year || new Date().getFullYear();
-            document.getElementById('email').value = currentUser.business_email || '';
-            document.getElementById('mobile').value = currentUser.mobile_number || '';
-            document.getElementById('office_phone').value = currentUser.office_phone || '';
-            document.getElementById('linkedin').value = currentUser.linkedin_url || '';
-            document.getElementById('website').value = currentUser.website || '';
-            document.getElementById('company_size').value = currentUser.company_size || '';
-            document.getElementById('country').value = currentUser.country || '';
-            document.getElementById('address').value = currentUser.business_address || '';
-            document.getElementById('esg_focus').value = currentUser.primary_esg_focus || '';
-            document.getElementById('esg_initiatives').value = currentUser.ongoing_esg_initiatives || '';
+            fields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el && currentUser[field]) {
+                    el.value = currentUser[field];
+                    originalData[field] = currentUser[field];
+                }
+            });
         }
         
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-        
-        // Form submission
-        document.getElementById('settings-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
+        async function saveSettings() {
             const saveBtn = document.getElementById('save-btn');
             saveBtn.disabled = true;
-            saveBtn.innerHTML = '<span class="loading-spinner-sm"></span> Saving...';
+            saveBtn.innerHTML = '<span class="loading-spinner" style="width: 18px; height: 18px;"></span> Saving...';
+            
+            hideAlerts();
+            
+            const updateData = {};
+            fields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el) updateData[field] = el.value.trim();
+            });
             
             try {
                 const supabase = window.getSupabase();
-                
-                const updates = {
-                    first_name: document.getElementById('first_name').value,
-                    last_name: document.getElementById('last_name').value,
-                    company_name: document.getElementById('company_name').value,
-                    company_registration_number: document.getElementById('registration_number').value || null,
-                    role_designation: document.getElementById('role').value || null,
-                    industry: document.getElementById('industry').value || null,
-                    reporting_year: parseInt(document.getElementById('reporting_year').value) || null,
-                    mobile_number: document.getElementById('mobile').value || null,
-                    office_phone: document.getElementById('office_phone').value || null,
-                    linkedin_url: document.getElementById('linkedin').value || null,
-                    website: document.getElementById('website').value || null,
-                    company_size: document.getElementById('company_size').value || null,
-                    country: document.getElementById('country').value || null,
-                    business_address: document.getElementById('address').value || null,
-                    primary_esg_focus: document.getElementById('esg_focus').value || null,
-                    ongoing_esg_initiatives: document.getElementById('esg_initiatives').value || null,
-                    updated_at: new Date().toISOString()
-                };
-                
-                const { error } = await supabase
-                    .from('business_users')
-                    .update(updates)
-                    .eq('id', currentUser.id);
+                const { error } = await supabase.from('business_users').update(updateData).eq('id', currentUser.id);
                 
                 if (error) throw error;
                 
-                // Update local data
-                currentUser = { ...currentUser, ...updates };
-                originalData = { ...currentUser };
-                
-                showToast('Changes saved successfully!');
-                
-            } catch (error) {
-                console.error('Save error:', error);
-                alert(error.message || 'Failed to save changes');
+                originalData = { ...updateData };
+                showSuccess();
+            } catch (err) {
+                showError(err.message || 'Failed to save settings');
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                        <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    Save Changes
-                `;
+                saveBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save Changes';
             }
+        }
+        
+        function cancelChanges() {
+            fields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el) el.value = originalData[field] || '';
+            });
+            hideAlerts();
+        }
+        
+        function showSuccess() {
+            document.getElementById('success-alert').classList.remove('hidden');
+            setTimeout(() => document.getElementById('success-alert').classList.add('hidden'), 5000);
+        }
+        
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-alert').classList.remove('hidden');
+        }
+        
+        function hideAlerts() {
+            document.getElementById('success-alert').classList.add('hidden');
+            document.getElementById('error-alert').classList.add('hidden');
+        }
+        
+        // Sidebar navigation highlighting
+        document.querySelectorAll('.settings-nav-link[data-section]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                document.querySelectorAll('.settings-nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
         });
         
-        // Cancel button
-        document.getElementById('cancel-btn').addEventListener('click', function() {
-            // Reset form to original data
-            currentUser = { ...originalData };
-            renderSettings();
-        });
+        document.getElementById('save-btn').addEventListener('click', saveSettings);
+        document.getElementById('cancel-btn').addEventListener('click', cancelChanges);
         
-        // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', async function() {
-            const supabase = window.getSupabase();
-            await supabase.auth.signOut();
-            window.location.href = '/';
-        });
-        
-        // Initialize
         checkAuth();
     </script>
 </body>

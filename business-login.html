@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Business Login - STIF SME Portal">
-    <title>Login | STIF - SME Portal</title>
+    <title>Login | STIF - Sustainability Technology and Innovation Forum</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,248 +12,89 @@
     <link rel="stylesheet" href="styles.css">
     
     <style>
-        :root {
-            --business-bg: #0f172a;
-            --business-card: #1e293b;
-            --business-border: #334155;
-            --business-text: #f1f5f9;
-            --business-muted: #94a3b8;
-            --business-accent: #3b82f6;
-        }
-        
-        body {
-            background: var(--business-bg);
-            color: var(--business-text);
-            min-height: 100vh;
-        }
-        
-        .business-header {
-            background: var(--business-bg);
-            border-bottom: 1px solid var(--business-border);
-            padding: var(--space-4) var(--space-6);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-        
-        .business-header-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .business-logo {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            text-decoration: none;
-            color: var(--business-text);
-        }
-        
-        .business-logo-badge {
-            background: var(--business-accent);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: var(--text-sm);
-        }
-        
-        .business-logo-text {
-            font-weight: 500;
-            color: var(--business-muted);
-        }
-        
         .auth-page {
-            min-height: 100vh;
+            min-height: calc(100vh - 70px);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: calc(80px + var(--space-8)) var(--space-6) var(--space-8);
+            padding: calc(70px + var(--space-8)) var(--space-6) var(--space-8);
+            background: linear-gradient(135deg, var(--primary-50) 0%, white 50%, var(--gray-50) 100%);
         }
-        
         .auth-card {
             width: 100%;
             max-width: 440px;
-            background: var(--business-card);
-            border: 1px solid var(--business-border);
+            background: white;
             border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
             padding: var(--space-10);
         }
-        
         .auth-header {
             text-align: center;
             margin-bottom: var(--space-8);
         }
-        
         .auth-icon {
             width: 64px;
             height: 64px;
-            background: rgba(59, 130, 246, 0.1);
+            background: var(--primary-100);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto var(--space-4);
-            color: var(--business-accent);
+            color: var(--primary);
         }
-        
         .auth-title {
             font-size: var(--text-2xl);
             margin-bottom: var(--space-2);
-            color: var(--business-text);
         }
-        
         .auth-subtitle {
-            color: var(--business-muted);
+            color: var(--gray-500);
             font-size: var(--text-sm);
         }
-        
-        .form-group {
-            margin-bottom: var(--space-5);
-        }
-        
-        .form-label {
-            display: block;
-            font-size: var(--text-sm);
-            font-weight: 500;
-            color: var(--business-muted);
-            margin-bottom: var(--space-2);
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: var(--space-3) var(--space-4);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--business-border);
-            border-radius: var(--radius-lg);
-            color: var(--business-text);
-            font-size: var(--text-base);
-            transition: all var(--transition);
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--business-accent);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .form-input::placeholder {
-            color: var(--business-muted);
-            opacity: 0.5;
-        }
-        
-        .btn-business {
-            width: 100%;
-            background: var(--business-accent);
-            color: white;
-            border: none;
-            padding: var(--space-3) var(--space-6);
-            border-radius: var(--radius-lg);
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-2);
-            transition: all var(--transition);
-            font-size: var(--text-base);
-        }
-        
-        .btn-business:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-        }
-        
-        .btn-business:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
         .forgot-link {
             display: block;
             text-align: right;
             font-size: var(--text-sm);
-            color: var(--business-accent);
+            color: var(--primary);
             text-decoration: none;
             margin-bottom: var(--space-6);
         }
-        
         .forgot-link:hover {
             text-decoration: underline;
         }
-        
         .auth-divider {
             display: flex;
             align-items: center;
             gap: var(--space-3);
             margin: var(--space-6) 0;
-        }
-        
-        .auth-divider span {
-            flex-shrink: 0;
-            color: var(--business-muted);
+            color: var(--gray-400);
             font-size: var(--text-sm);
         }
-        
-        .auth-divider::before,
-        .auth-divider::after {
+        .auth-divider::before, .auth-divider::after {
             content: '';
             flex: 1;
             height: 1px;
-            background: var(--business-border);
+            background: var(--gray-200);
         }
-        
         .auth-footer {
             text-align: center;
             margin-top: var(--space-6);
         }
-        
         .auth-footer p {
-            color: var(--business-muted);
+            color: var(--gray-500);
             font-size: var(--text-sm);
         }
-        
-        .auth-footer a {
-            color: var(--business-accent);
-            text-decoration: none;
-        }
-        
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
-        
         .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: var(--error-100);
+            border: 1px solid var(--error);
             border-radius: var(--radius-lg);
             padding: var(--space-3) var(--space-4);
             margin-bottom: var(--space-4);
-            color: #f87171;
+            color: var(--error);
             font-size: var(--text-sm);
             display: none;
         }
-        
-        .error-message.show {
-            display: block;
-        }
-        
-        .loading-spinner-sm {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,0.2);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .error-message.show { display: block; }
     </style>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -261,19 +102,38 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="business-header">
-        <div class="business-header-inner">
-            <a href="/" class="business-logo">
-                <span class="business-logo-badge">STIF</span>
-                <span class="business-logo-text">Business Portal</span>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <img src="assets/images/logo1.png" alt="STIF Logo" class="logo-img">
+                <span class="logo-text">Sustainability Technology and Innovation Forum</span>
             </a>
-            <div>
-                <a href="/business-register.html" style="color: var(--business-muted); text-decoration: none; font-size: var(--text-sm);">
-                    Don't have an account? <span style="color: var(--business-accent);">Register</span>
-                </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/about.html" class="nav-link">About</a></li>
+                    <li><a href="/faq.html" class="nav-link">FAQ</a></li>
+                </ul>
+            </nav>
+            <div class="nav-actions">
+                <a href="/business-register.html" class="btn btn-primary">Register</a>
             </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <ul class="mobile-nav-menu">
+            <li><a href="/" class="mobile-nav-link">Home</a></li>
+            <li><a href="/about.html" class="mobile-nav-link">About</a></li>
+            <li><a href="/faq.html" class="mobile-nav-link">FAQ</a></li>
+            <li><a href="/business-register.html" class="mobile-nav-link">Register</a></li>
+        </ul>
+    </div>
 
     <!-- Main Content -->
     <main class="auth-page">
@@ -303,7 +163,7 @@
                 
                 <a href="#" class="forgot-link" id="forgot-password">Forgot password?</a>
                 
-                <button type="submit" class="btn-business" id="login-btn">
+                <button type="submit" class="btn btn-primary w-full" id="login-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
                         <polyline points="10 17 15 12 10 7"></polyline>
@@ -313,9 +173,7 @@
                 </button>
             </form>
 
-            <div class="auth-divider">
-                <span>or</span>
-            </div>
+            <div class="auth-divider"><span>or</span></div>
 
             <div class="auth-footer">
                 <p>Don't have an account? <a href="/business-register.html">Create one</a></p>
@@ -325,29 +183,20 @@
     </main>
 
     <script src="supabase-service.js"></script>
+    <script src="mobile-menu.js"></script>
     <script>
         // Check if already logged in
         (async function() {
             const supabase = window.getSupabase();
             const { data: { session } } = await supabase.auth.getSession();
-            
             if (session) {
-                // Check if this is a business user
-                const { data: businessUser } = await supabase
-                    .from('business_users')
-                    .select('id')
-                    .eq('auth_user_id', session.user.id)
-                    .single();
-                
-                if (businessUser) {
-                    window.location.href = '/business-dashboard.html';
-                }
+                const { data: businessUser } = await supabase.from('business_users').select('id').eq('auth_user_id', session.user.id).single();
+                if (businessUser) window.location.href = '/business-dashboard.html';
             }
         })();
         
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const loginBtn = document.getElementById('login-btn');
             const errorEl = document.getElementById('error-message');
             
@@ -358,69 +207,38 @@
             try {
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                
                 const supabase = window.getSupabase();
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
                 
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 
-                // Check if this is a business user
-                const { data: businessUser, error: bizError } = await supabase
-                    .from('business_users')
-                    .select('id')
-                    .eq('auth_user_id', data.user.id)
-                    .single();
+                const { data: businessUser, error: bizError } = await supabase.from('business_users').select('id').eq('auth_user_id', data.user.id).single();
                 
                 if (bizError || !businessUser) {
-                    // Not a business user, sign out and show error
                     await supabase.auth.signOut();
                     throw new Error('This email is not registered as a business account. Please login as a Champion instead.');
                 }
                 
-                // Redirect to dashboard
                 window.location.href = '/business-dashboard.html';
-                
             } catch (error) {
                 console.error('Login error:', error);
                 errorEl.textContent = error.message || 'Login failed. Please try again.';
                 errorEl.classList.add('show');
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                        <polyline points="10 17 15 12 10 7"></polyline>
-                        <line x1="15" y1="12" x2="3" y2="12"></line>
-                    </svg>
-                    Sign In
-                `;
+                loginBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> Sign In`;
             }
         });
         
-        // Forgot password handler
         document.getElementById('forgot-password').addEventListener('click', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
-            
-            if (!email) {
-                alert('Please enter your email address first');
-                return;
-            }
-            
+            if (!email) { alert('Please enter your email address first'); return; }
             try {
                 const supabase = window.getSupabase();
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/reset-password.html'
-                });
-                
+                const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' });
                 if (error) throw error;
-                
                 alert('Password reset email sent. Please check your inbox.');
-            } catch (error) {
-                alert(error.message || 'Failed to send reset email');
-            }
+            } catch (error) { alert(error.message || 'Failed to send reset email'); }
         });
     </script>
 </body>

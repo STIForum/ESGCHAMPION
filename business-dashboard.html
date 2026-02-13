@@ -4,509 +4,266 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Business Dashboard - STIF SME Portal">
-    <title>Dashboard | STIF - SME Portal</title>
+    <title>Dashboard | STIF - Sustainability Technology and Innovation Forum</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
-    <style>
-        :root {
-            --business-bg: #0f172a;
-            --business-card: #1e293b;
-            --business-card-hover: #273449;
-            --business-border: #334155;
-            --business-text: #f1f5f9;
-            --business-muted: #94a3b8;
-            --business-accent: #3b82f6;
-            --business-success: #22c55e;
-            --business-warning: #f59e0b;
-        }
-        
-        body {
-            background: var(--business-bg);
-            color: var(--business-text);
-            min-height: 100vh;
-        }
-        
-        /* Header */
-        .business-header {
-            background: var(--business-bg);
-            border-bottom: 1px solid var(--business-border);
-            padding: var(--space-4) var(--space-6);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-        
-        .business-header-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .business-logo {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            text-decoration: none;
-            color: var(--business-text);
-        }
-        
-        .business-logo-badge {
-            background: var(--business-accent);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: var(--text-sm);
-        }
-        
-        .business-logo-text {
-            font-weight: 500;
-            color: var(--business-muted);
-        }
-        
-        .header-nav {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-        }
-        
-        .nav-link {
-            color: var(--business-muted);
-            text-decoration: none;
-            font-size: var(--text-sm);
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            transition: all var(--transition);
-        }
-        
-        .nav-link:hover {
-            color: var(--business-text);
-            background: rgba(255,255,255,0.05);
-        }
-        
-        .nav-link.active {
-            color: var(--business-accent);
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-        }
-        
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: rgba(59, 130, 246, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--business-accent);
-            font-weight: 600;
-            font-size: var(--text-sm);
-        }
-        
-        .btn-logout {
-            background: transparent;
-            border: 1px solid var(--business-border);
-            color: var(--business-muted);
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            font-size: var(--text-sm);
-            cursor: pointer;
-            transition: all var(--transition);
-        }
-        
-        .btn-logout:hover {
-            border-color: #ef4444;
-            color: #ef4444;
-        }
-        
-        /* Main Content */
-        .dashboard-page {
-            padding: calc(80px + var(--space-8)) var(--space-6) var(--space-8);
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        /* Welcome Section */
-        .welcome-section {
-            margin-bottom: var(--space-8);
-        }
-        
-        .welcome-title {
-            font-size: var(--text-2xl);
-            font-weight: 600;
-            margin-bottom: var(--space-2);
-            color: var(--business-text);
-        }
-        
-        .welcome-subtitle {
-            color: var(--business-muted);
-            font-size: var(--text-base);
-        }
-        
-        /* Status Cards */
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--space-4);
-            margin-bottom: var(--space-8);
-        }
-        
-        .status-card {
-            background: var(--business-card);
-            border: 1px solid var(--business-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-5);
-        }
-        
-        .status-card-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            margin-bottom: var(--space-3);
-        }
-        
-        .status-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .status-icon.success {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--business-success);
-        }
-        
-        .status-icon.accent {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--business-accent);
-        }
-        
-        .status-icon.warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--business-warning);
-        }
-        
-        .status-label {
-            font-size: var(--text-sm);
-            color: var(--business-muted);
-        }
-        
-        .status-value {
-            font-size: var(--text-xl);
-            font-weight: 600;
-            color: var(--business-text);
-        }
-        
-        /* Action Cards */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--space-4);
-        }
-        
-        .action-card {
-            background: var(--business-card);
-            border: 1px solid var(--business-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            text-decoration: none;
-            transition: all var(--transition);
-            display: block;
-        }
-        
-        .action-card:hover {
-            background: var(--business-card-hover);
-            border-color: var(--business-accent);
-            transform: translateY(-2px);
-        }
-        
-        .action-icon {
-            width: 56px;
-            height: 56px;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: var(--radius-xl);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--business-accent);
-            margin-bottom: var(--space-4);
-        }
-        
-        .action-title {
-            font-size: var(--text-lg);
-            font-weight: 600;
-            color: var(--business-text);
-            margin-bottom: var(--space-2);
-        }
-        
-        .action-description {
-            color: var(--business-muted);
-            font-size: var(--text-sm);
-            line-height: 1.5;
-        }
-        
-        /* Quick Stats */
-        .quick-stats {
-            background: var(--business-card);
-            border: 1px solid var(--business-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            margin-top: var(--space-8);
-        }
-        
-        .stats-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--space-5);
-        }
-        
-        .stats-title {
-            font-size: var(--text-lg);
-            font-weight: 600;
-            color: var(--business-text);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: var(--space-4);
-        }
-        
-        .stat-item {
-            text-align: center;
-            padding: var(--space-4);
-            background: rgba(255,255,255,0.02);
-            border-radius: var(--radius-lg);
-        }
-        
-        .stat-number {
-            font-size: var(--text-2xl);
-            font-weight: 700;
-            color: var(--business-accent);
-        }
-        
-        .stat-label {
-            font-size: var(--text-sm);
-            color: var(--business-muted);
-            margin-top: var(--space-1);
-        }
-        
-        /* Loading state */
-        .loading-state {
-            text-align: center;
-            padding: var(--space-12);
-            color: var(--business-muted);
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--business-border);
-            border-top-color: var(--business-accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto var(--space-4);
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 768px) {
-            .status-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            .action-grid {
-                grid-template-columns: 1fr;
-            }
-            .header-nav {
-                display: none;
-            }
-        }
-    </style>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
 </head>
 <body>
     <!-- Header -->
-    <header class="business-header">
-        <div class="business-header-inner">
-            <a href="/business-dashboard.html" class="business-logo">
-                <span class="business-logo-badge">STIF</span>
-                <span class="business-logo-text">Business Portal</span>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <img src="assets/images/logo1.png" alt="STIF Logo" class="logo-img">
+                <span class="logo-text">Sustainability Technology and Innovation Forum</span>
             </a>
-            
-            <nav class="header-nav">
-                <a href="/business-dashboard.html" class="nav-link active">Dashboard</a>
-                <a href="/business-settings.html" class="nav-link">Settings</a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/business-dashboard.html" class="nav-link active">Dashboard</a></li>
+                    <li><a href="/business-settings.html" class="nav-link">Settings</a></li>
+                </ul>
             </nav>
-            
-            <div class="user-menu">
-                <div class="user-avatar" id="user-avatar">--</div>
-                <button class="btn-logout" id="logout-btn">Logout</button>
-            </div>
+            <div class="nav-actions"></div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </header>
 
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <ul class="mobile-nav-menu"></ul>
+    </div>
+
     <!-- Main Content -->
-    <main class="dashboard-page">
-        <!-- Loading State -->
-        <div id="loading-state" class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Loading your dashboard...</p>
-        </div>
+    <main class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <ul class="sidebar-nav">
+                    <li>
+                        <a href="/business-dashboard.html" class="sidebar-link active">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="sidebar-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                <path d="M2 17l10 5 10-5"></path>
+                                <path d="M2 12l10 5 10-5"></path>
+                            </svg>
+                            Sustainability Reporting
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="sidebar-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            Analytics & Reports
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/business-settings.html" class="sidebar-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            Account Settings
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="sidebar-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 16v-4"></path>
+                                <path d="M12 8h.01"></path>
+                            </svg>
+                            Help & Support
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
         <!-- Dashboard Content -->
-        <div id="dashboard-content" style="display: none;">
-            <!-- Welcome Section -->
-            <section class="welcome-section">
-                <h1 class="welcome-title" id="welcome-title">Welcome back</h1>
-                <p class="welcome-subtitle">Manage your sustainability reporting and ESG metrics from one central location.</p>
-            </section>
+        <div class="main-content">
+            <div class="dashboard-container">
+                <!-- Loading State -->
+                <div id="loading-state" class="flex-center" style="height: 400px;">
+                    <div class="loading-spinner"></div>
+                </div>
 
-            <!-- Status Cards -->
-            <div class="status-grid">
-                <div class="status-card">
-                    <div class="status-card-header">
-                        <div class="status-icon success">
+                <!-- Dashboard Content (hidden until loaded) -->
+                <div id="dashboard-content" class="hidden">
+                    <!-- Welcome Header -->
+                    <div class="flex-between mb-8">
+                        <div>
+                            <h1 id="welcome-title">Welcome back!</h1>
+                            <p class="text-secondary">Manage your sustainability reporting and ESG metrics</p>
+                        </div>
+                        <a href="/business-settings.html" class="btn btn-primary">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                             </svg>
+                            Settings
+                        </a>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="stats-grid mb-8">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--success-100); color: var(--success);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                            </div>
+                            <div class="stat-value" id="subscription-status">Active</div>
+                            <div class="stat-label">Subscription Status</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--primary-100); color: var(--primary);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="stat-value" id="reporting-year">2026</div>
+                            <div class="stat-label">Reporting Year</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--success-100); color: var(--success);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                            </div>
+                            <div class="stat-value" id="account-status">Complete</div>
+                            <div class="stat-label">Account Status</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--warning-100); color: var(--warning);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div class="stat-value" id="stat-days">--</div>
+                            <div class="stat-label">Days Active</div>
                         </div>
                     </div>
-                    <div class="status-label">Subscription Status</div>
-                    <div class="status-value" id="subscription-status">Active</div>
-                </div>
-                
-                <div class="status-card">
-                    <div class="status-card-header">
-                        <div class="status-icon accent">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
+
+                    <!-- Action Cards -->
+                    <div class="grid-2 mb-8">
+                        <a href="/business-settings.html" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
+                            <div class="widget-body">
+                                <div class="feature-icon" style="background: var(--primary-100); color: var(--primary); margin-bottom: var(--space-4);">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                    </svg>
+                                </div>
+                                <h3 style="margin-bottom: var(--space-2);">Account Settings</h3>
+                                <p class="text-secondary" style="font-size: var(--text-sm);">Update your business profile, contact information, and sustainability preferences.</p>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
+                            <div class="widget-body">
+                                <div class="feature-icon" style="background: var(--environmental-bg); color: var(--environmental); margin-bottom: var(--space-4);">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                        <path d="M2 17l10 5 10-5"></path>
+                                        <path d="M2 12l10 5 10-5"></path>
+                                    </svg>
+                                </div>
+                                <h3 style="margin-bottom: var(--space-2);">Sustainability Reporting</h3>
+                                <p class="text-secondary" style="font-size: var(--text-sm);">Access ESG frameworks, track your sustainability metrics, and generate reports.</p>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
+                            <div class="widget-body">
+                                <div class="feature-icon" style="background: var(--social-bg); color: var(--social); margin-bottom: var(--space-4);">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                                    </svg>
+                                </div>
+                                <h3 style="margin-bottom: var(--space-2);">Analytics & Reports</h3>
+                                <p class="text-secondary" style="font-size: var(--text-sm);">View insights, download reports, and track your progress over time.</p>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
+                            <div class="widget-body">
+                                <div class="feature-icon" style="background: var(--governance-bg); color: var(--governance); margin-bottom: var(--space-4);">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 16v-4"></path>
+                                        <path d="M12 8h.01"></path>
+                                    </svg>
+                                </div>
+                                <h3 style="margin-bottom: var(--space-2);">Help & Support</h3>
+                                <p class="text-secondary" style="font-size: var(--text-sm);">Get help with sustainability reporting, FAQs, and contact our support team.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Quick Stats Widget -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3 class="widget-title">Reporting Overview</h3>
+                        </div>
+                        <div class="widget-body">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="stat-indicators">0</div>
+                                    <div class="stat-label">Indicators Tracked</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="stat-completed">0%</div>
+                                    <div class="stat-label">Profile Completed</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="stat-reports">0</div>
+                                    <div class="stat-label">Reports Generated</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="status-label">Reporting Year</div>
-                    <div class="status-value" id="reporting-year">2024</div>
-                </div>
-                
-                <div class="status-card">
-                    <div class="status-card-header">
-                        <div class="status-icon success">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="status-label">Account Status</div>
-                    <div class="status-value" id="account-status">Complete</div>
                 </div>
             </div>
-
-            <!-- Action Cards -->
-            <div class="action-grid">
-                <a href="/business-settings.html" class="action-card">
-                    <div class="action-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="action-title">Account Settings</h2>
-                    <p class="action-description">Update your business profile, contact information, and sustainability preferences.</p>
-                </a>
-                
-                <a href="#" class="action-card" id="sustainability-card">
-                    <div class="action-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                            <path d="M2 17l10 5 10-5"></path>
-                            <path d="M2 12l10 5 10-5"></path>
-                        </svg>
-                    </div>
-                    <h2 class="action-title">Sustainability Reporting</h2>
-                    <p class="action-description">Access ESG frameworks, track your sustainability metrics, and generate reports.</p>
-                </a>
-                
-                <a href="#" class="action-card">
-                    <div class="action-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"></line>
-                            <line x1="12" y1="20" x2="12" y2="4"></line>
-                            <line x1="6" y1="20" x2="6" y2="14"></line>
-                        </svg>
-                    </div>
-                    <h2 class="action-title">Analytics & Reports</h2>
-                    <p class="action-description">View insights, download reports, and track your progress over time.</p>
-                </a>
-                
-                <a href="#" class="action-card">
-                    <div class="action-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M12 16v-4"></path>
-                            <path d="M12 8h.01"></path>
-                        </svg>
-                    </div>
-                    <h2 class="action-title">Help & Support</h2>
-                    <p class="action-description">Get help with sustainability reporting, FAQs, and contact our support team.</p>
-                </a>
-            </div>
-
-            <!-- Quick Stats -->
-            <section class="quick-stats">
-                <div class="stats-header">
-                    <h2 class="stats-title">Reporting Overview</h2>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-number" id="stat-indicators">0</div>
-                        <div class="stat-label">Indicators Tracked</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="stat-completed">0%</div>
-                        <div class="stat-label">Profile Completed</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="stat-reports">0</div>
-                        <div class="stat-label">Reports Generated</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="stat-days">--</div>
-                        <div class="stat-label">Days Active</div>
-                    </div>
-                </div>
-            </section>
         </div>
     </main>
 
     <script src="supabase-service.js"></script>
+    <script src="champion-auth-supabase.js"></script>
+    <script src="dynamic-navigation.js"></script>
+    <script src="mobile-menu.js"></script>
     <script>
         let currentUser = null;
         
-        // Check authentication
         async function checkAuth() {
             const supabase = window.getSupabase();
             const { data: { session } } = await supabase.auth.getSession();
@@ -516,15 +273,9 @@
                 return;
             }
             
-            // Get business user profile
-            const { data: businessUser, error } = await supabase
-                .from('business_users')
-                .select('*')
-                .eq('auth_user_id', session.user.id)
-                .single();
+            const { data: businessUser, error } = await supabase.from('business_users').select('*').eq('auth_user_id', session.user.id).single();
             
             if (error || !businessUser) {
-                // Not a business user
                 window.location.href = '/business-login.html';
                 return;
             }
@@ -534,65 +285,35 @@
         }
         
         function renderDashboard() {
-            // Hide loading, show content
             document.getElementById('loading-state').style.display = 'none';
-            document.getElementById('dashboard-content').style.display = 'block';
+            document.getElementById('dashboard-content').classList.remove('hidden');
             
-            // Set welcome message
             const companyName = currentUser.company_name || 'Business User';
             document.getElementById('welcome-title').textContent = `Welcome back, ${companyName}`;
             
-            // Set user avatar
-            const initials = (currentUser.first_name?.[0] || '') + (currentUser.last_name?.[0] || '');
-            document.getElementById('user-avatar').textContent = initials.toUpperCase() || 'BU';
+            document.getElementById('subscription-status').textContent = capitalize(currentUser.subscription_status || 'Active');
+            document.getElementById('reporting-year').textContent = currentUser.reporting_year || new Date().getFullYear();
+            document.getElementById('account-status').textContent = capitalize(currentUser.account_status || 'Complete');
             
-            // Set status cards
-            document.getElementById('subscription-status').textContent = 
-                capitalize(currentUser.subscription_status || 'Active');
-            document.getElementById('reporting-year').textContent = 
-                currentUser.reporting_year || new Date().getFullYear();
-            document.getElementById('account-status').textContent = 
-                capitalize(currentUser.account_status || 'Complete');
-            
-            // Set stats
             calculateProfileCompletion();
             calculateDaysActive();
         }
         
-        function capitalize(str) {
-            return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
-        }
+        function capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''; }
         
         function calculateProfileCompletion() {
-            const fields = [
-                'first_name', 'last_name', 'company_name', 'business_email',
-                'mobile_number', 'office_phone', 'linkedin_url', 'website',
-                'company_size', 'country', 'business_address', 'industry',
-                'primary_esg_focus', 'ongoing_esg_initiatives'
-            ];
-            
-            const completed = fields.filter(f => currentUser[f] && currentUser[f].trim()).length;
-            const percentage = Math.round((completed / fields.length) * 100);
-            document.getElementById('stat-completed').textContent = percentage + '%';
+            const fields = ['first_name', 'last_name', 'company_name', 'business_email', 'mobile_number', 'office_phone', 'linkedin_url', 'website', 'company_size', 'country', 'business_address', 'industry', 'primary_esg_focus', 'ongoing_esg_initiatives'];
+            const completed = fields.filter(f => currentUser[f] && currentUser[f].toString().trim()).length;
+            document.getElementById('stat-completed').textContent = Math.round((completed / fields.length) * 100) + '%';
         }
         
         function calculateDaysActive() {
             if (currentUser.created_at) {
-                const created = new Date(currentUser.created_at);
-                const now = new Date();
-                const days = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+                const days = Math.floor((new Date() - new Date(currentUser.created_at)) / (1000 * 60 * 60 * 24));
                 document.getElementById('stat-days').textContent = days;
             }
         }
         
-        // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', async function() {
-            const supabase = window.getSupabase();
-            await supabase.auth.signOut();
-            window.location.href = '/';
-        });
-        
-        // Initialize
         checkAuth();
     </script>
 </body>
