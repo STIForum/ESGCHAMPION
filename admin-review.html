@@ -810,6 +810,16 @@
                 <form id="edit-indicator-form">
                     <input type="hidden" id="edit-indicator-id" name="id">
 
+                    <!-- Panel Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Assign to Panel <span style="color: var(--error);">*</span></label>
+                        <select class="form-select" id="edit-indicator-panel" name="panel_id" required>
+                            <option value="">Select a panel...</option>
+                        </select>
+                        <span class="form-error" id="edit-indicator-panel-error"></span>
+                        <p class="form-helper">The indicator will only appear in the selected panel.</p>
+                    </div>
+
                     <!-- Unit + Formula Required -->
                     <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: end;">
                         <div class="form-group">

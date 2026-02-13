@@ -2388,8 +2388,11 @@ class AdminReviewPage {
         modal.classList.add('active');
 
         try {
-            // Fetch indicator data
-            const indicators = await window.adminService.getAllIndicators();
+            // Fetch indicator data and panels in parallel
+            const [indicators, panels] = await Promise.all([
+                window.adminService.getAllIndicators(),
+                window.adminService.getAllPanels()
+            ]);
             const indicator = indicators.find(i => i.id === indicatorId);
 
             if (!indicator) {
@@ -2399,6 +2402,22 @@ class AdminReviewPage {
             }
 
             this.currentEditingIndicator = indicator;
+
+            // Populate panel dropdown
+            const panelSelect = document.getElementById('edit-indicator-panel');
+            if (panelSelect) {
+                panelSelect.innerHTML = '<option value="">Select a panel...</option>';
+                const activePanels = (panels || []).filter(p => p.is_active !== false);
+                activePanels.forEach(panel => {
+                    const option = document.createElement('option');
+                    option.value = panel.id;
+                    option.textContent = panel.name;
+                    if (indicator.panel_id === panel.id) {
+                        option.selected = true;
+                    }
+                    panelSelect.appendChild(option);
+                });
+            }
 
             // Populate form fields
             document.getElementById('edit-indicator-id').value = indicator.id;
@@ -2465,7 +2484,8 @@ class AdminReviewPage {
 
     validateEditIndicatorForm() {
         const requiredFields = [
-            { id: 'edit-indicator-title', label: 'Indicator Title' }
+            { id: 'edit-indicator-title', label: 'Indicator Title' },
+            { id: 'edit-indicator-panel', label: 'Panel' }
         ];
 
         let isValid = true;
@@ -2498,6 +2518,7 @@ class AdminReviewPage {
             const indicatorId = document.getElementById('edit-indicator-id').value;
 
             const updates = {
+                panel_id: document.getElementById('edit-indicator-panel').value,
                 name: document.getElementById('edit-indicator-title').value.trim(),
                 unit: document.getElementById('edit-indicator-unit').value.trim() || null,
                 formula_required: document.getElementById('edit-indicator-formula-required').checked,
