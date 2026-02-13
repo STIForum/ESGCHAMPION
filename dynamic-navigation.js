@@ -208,9 +208,36 @@ class DynamicNavigation {
             }, 100);
         } else {
             navActions.innerHTML = `
-                <a href="/champion-login.html" class="btn btn-ghost">Login</a>
-                <a href="/champion-register.html" class="btn btn-primary">Get Started</a>
+                <a href="#" class="btn btn-ghost" id="header-login-btn">Login</a>
+                <a href="#" class="btn btn-primary" id="header-get-started-btn">Get Started</a>
             `;
+            
+            // Set up modal triggers for non-authenticated users
+            this.setupAuthModals();
+        }
+    }
+
+    /**
+     * Set up auth modals for login/register selection
+     */
+    setupAuthModals() {
+        const loginBtn = document.getElementById('header-login-btn');
+        const getStartedBtn = document.getElementById('header-get-started-btn');
+        const userTypeModal = document.getElementById('user-type-modal');
+        const loginTypeModal = document.getElementById('login-type-modal');
+        
+        if (loginBtn && loginTypeModal) {
+            loginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginTypeModal.style.display = 'flex';
+            });
+        }
+        
+        if (getStartedBtn && userTypeModal) {
+            getStartedBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                userTypeModal.style.display = 'flex';
+            });
         }
     }
 
