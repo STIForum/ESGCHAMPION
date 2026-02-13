@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Business Registration - STIF SME Portal">
+    <title>Business Registration | STIF - SME Portal</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        :root {
+            --business-bg: #0f172a;
+            --business-card: #1e293b;
+            --business-border: #334155;
+            --business-text: #f1f5f9;
+            --business-muted: #94a3b8;
+            --business-accent: #3b82f6;
+        }
+        
+        body {
+            background: var(--business-bg);
+            color: var(--business-text);
+            min-height: 100vh;
+        }
+        
+        .business-header {
+            background: var(--business-bg);
+            border-bottom: 1px solid var(--business-border);
+            padding: var(--space-4) var(--space-6);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        
+        .business-header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .business-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            text-decoration: none;
+            color: var(--business-text);
+        }
+        
+        .business-logo-badge {
+            background: var(--business-accent);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: var(--text-sm);
+        }
+        
+        .business-logo-text {
+            font-weight: 500;
+            color: var(--business-muted);
+        }
+        
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: calc(80px + var(--space-8)) var(--space-6) var(--space-8);
+        }
+        
+        .auth-card {
+            width: 100%;
+            max-width: 800px;
+            background: var(--business-card);
+            border: 1px solid var(--business-border);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-10);
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+        
+        .auth-title {
+            font-size: var(--text-2xl);
+            margin-bottom: var(--space-2);
+            color: var(--business-text);
+        }
+        
+        .auth-subtitle {
+            color: var(--business-muted);
+            font-size: var(--text-sm);
+        }
+        
+        .form-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--business-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-5);
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--business-accent);
+        }
+        
+        .section-title {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--business-text);
+            margin: 0;
+        }
+        
+        .section-subtitle {
+            font-size: var(--text-sm);
+            color: var(--business-muted);
+            margin: 0;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+        }
+        
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--business-muted);
+            margin-bottom: var(--space-2);
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--business-border);
+            border-radius: var(--radius-lg);
+            color: var(--business-text);
+            font-size: var(--text-base);
+            transition: all var(--transition);
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--business-accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-input::placeholder {
+            color: var(--business-muted);
+            opacity: 0.5;
+        }
+        
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+        
+        .form-select option {
+            background: var(--business-card);
+            color: var(--business-text);
+        }
+        
+        .required {
+            color: #ef4444;
+        }
+        
+        .btn-business {
+            background: var(--business-accent);
+            color: white;
+            border: none;
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all var(--transition);
+        }
+        
+        .btn-business:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .btn-business:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--business-border);
+        }
+        
+        .auth-footer p {
+            color: var(--business-muted);
+            font-size: var(--text-sm);
+        }
+        
+        .auth-footer a {
+            color: var(--business-accent);
+            text-decoration: none;
+        }
+        
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .success-message {
+            text-align: center;
+            padding: var(--space-8);
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-6);
+            color: #22c55e;
+        }
+        
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .auth-card {
+                padding: var(--space-6);
+            }
+        }
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="business-header">
+        <div class="business-header-inner">
+            <a href="/" class="business-logo">
+                <span class="business-logo-badge">STIF</span>
+                <span class="business-logo-text">Business Portal</span>
+            </a>
+            <div>
+                <a href="/business-login.html" style="color: var(--business-muted); text-decoration: none; font-size: var(--text-sm);">
+                    Already have an account? <span style="color: var(--business-accent);">Login</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="auth-page">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Create Business Account</h1>
+                <p class="auth-subtitle">Set up your SME sustainability reporting profile</p>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="register-form-container">
+                <form id="business-register-form">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Basic Information</h2>
+                                <p class="section-subtitle">Core identity and registration details.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="first_name">First Name <span class="required">*</span></label>
+                                <input type="text" id="first_name" name="first_name" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="last_name">Last Name <span class="required">*</span></label>
+                                <input type="text" id="last_name" name="last_name" class="form-input" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="company_name">Company Name <span class="required">*</span></label>
+                                <input type="text" id="company_name" name="company_name" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="registration_number">Company Registration Number</label>
+                                <input type="text" id="registration_number" name="registration_number" class="form-input">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="role">Role / Designation</label>
+                                <input type="text" id="role" name="role" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="industry">Industry</label>
+                                <select id="industry" name="industry" class="form-select">
+                                    <option value="">Select Industry</option>
+                                    <option value="agriculture">Agriculture, Forestry & Fishing</option>
+                                    <option value="automotive">Automotive & Transport</option>
+                                    <option value="banking">Banking & Financial Services</option>
+                                    <option value="construction">Construction & Real Estate</option>
+                                    <option value="education">Education & Training</option>
+                                    <option value="energy">Energy & Utilities</option>
+                                    <option value="engineering">Engineering & Manufacturing</option>
+                                    <option value="food">Food & Beverage</option>
+                                    <option value="healthcare">Healthcare & Pharmaceuticals</option>
+                                    <option value="it">Information Technology</option>
+                                    <option value="retail">Retail & E-commerce</option>
+                                    <option value="telecom">Telecommunications</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="reporting_year">Reporting Year</label>
+                            <select id="reporting_year" name="reporting_year" class="form-select">
+                                <option value="">Select reporting year</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026" selected>2026</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Contact Details</h2>
+                                <p class="section-subtitle">How we can reach you.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="email">Business Email <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="mobile">Mobile Number</label>
+                                <input type="tel" id="mobile" name="mobile" class="form-input">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="office_phone">Office Phone</label>
+                                <input type="tel" id="office_phone" name="office_phone" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="linkedin">LinkedIn</label>
+                                <input type="url" id="linkedin" name="linkedin" class="form-input" placeholder="https://linkedin.com/company/...">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="website">Website</label>
+                            <input type="url" id="website" name="website" class="form-input" placeholder="https://yourcompany.com">
+                        </div>
+                    </div>
+
+                    <!-- Business Profile -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Business Profile</h2>
+                                <p class="section-subtitle">Tell us about your organization.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="company_size">Company Size</label>
+                                <select id="company_size" name="company_size" class="form-select">
+                                    <option value="">Select size</option>
+                                    <option value="1-10">1-10 employees</option>
+                                    <option value="11-50">11-50 employees</option>
+                                    <option value="51-200">51-200 employees</option>
+                                    <option value="201-500">201-500 employees</option>
+                                    <option value="500+">500+ employees</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="country">Country</label>
+                                <input type="text" id="country" name="country" class="form-input">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="address">Business Address</label>
+                            <textarea id="address" name="address" class="form-textarea" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Sustainability Focus -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                    <path d="M2 17l10 5 10-5"></path>
+                                    <path d="M2 12l10 5 10-5"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Sustainability Focus</h2>
+                                <p class="section-subtitle">Your ESG priorities and initiatives.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="esg_focus">Primary ESG Focus</label>
+                            <select id="esg_focus" name="esg_focus" class="form-select">
+                                <option value="">Select focus</option>
+                                <option value="environmental">Environmental</option>
+                                <option value="social">Social</option>
+                                <option value="governance">Governance</option>
+                                <option value="all">All Areas</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="esg_initiatives">Ongoing ESG Initiatives</label>
+                            <textarea id="esg_initiatives" name="esg_initiatives" class="form-textarea" rows="3" placeholder="Describe any current sustainability projects or goals..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Account Security</h2>
+                                <p class="section-subtitle">Set your login credentials.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="password">Password <span class="required">*</span></label>
+                                <input type="password" id="password" name="password" class="form-input" required minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="confirm_password">Confirm Password <span class="required">*</span></label>
+                                <input type="password" id="confirm_password" name="confirm_password" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div style="display: flex; justify-content: flex-end; gap: var(--space-4);">
+                        <a href="/" class="btn btn-ghost" style="color: var(--business-muted);">Cancel</a>
+                        <button type="submit" class="btn-business" id="submit-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success Message (hidden by default) -->
+            <div id="success-message" class="success-message hidden">
+                <div class="success-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <h2 style="color: var(--business-text); margin-bottom: var(--space-2);">Account Created!</h2>
+                <p style="color: var(--business-muted); margin-bottom: var(--space-6);">Please check your email to verify your account, then login to access your dashboard.</p>
+                <a href="/business-login.html" class="btn-business">Go to Login</a>
+            </div>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="/business-login.html">Login here</a></p>
+                <p style="margin-top: var(--space-2);">Want to become a Champion instead? <a href="/champion-register.html">Register as Champion</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="supabase-service.js"></script>
+    <script>
+        document.getElementById('business-register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading-spinner-sm"></span> Creating...';
+            
+            try {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                
+                if (password !== confirmPassword) {
+                    throw new Error('Passwords do not match');
+                }
+                
+                if (password.length < 8) {
+                    throw new Error('Password must be at least 8 characters');
+                }
+                
+                const email = document.getElementById('email').value;
+                
+                // Create auth user
+                const supabase = window.getSupabase();
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            user_type: 'business'
+                        }
+                    }
+                });
+                
+                if (authError) throw authError;
+                
+                // Create business user profile
+                const { error: profileError } = await supabase
+                    .from('business_users')
+                    .insert({
+                        auth_user_id: authData.user.id,
+                        first_name: document.getElementById('first_name').value,
+                        last_name: document.getElementById('last_name').value,
+                        company_name: document.getElementById('company_name').value,
+                        company_registration_number: document.getElementById('registration_number').value || null,
+                        role_designation: document.getElementById('role').value || null,
+                        industry: document.getElementById('industry').value || null,
+                        reporting_year: parseInt(document.getElementById('reporting_year').value) || new Date().getFullYear(),
+                        business_email: email,
+                        mobile_number: document.getElementById('mobile').value || null,
+                        office_phone: document.getElementById('office_phone').value || null,
+                        linkedin_url: document.getElementById('linkedin').value || null,
+                        website: document.getElementById('website').value || null,
+                        company_size: document.getElementById('company_size').value || null,
+                        country: document.getElementById('country').value || null,
+                        business_address: document.getElementById('address').value || null,
+                        primary_esg_focus: document.getElementById('esg_focus').value || null,
+                        ongoing_esg_initiatives: document.getElementById('esg_initiatives').value || null,
+                        subscription_status: 'active',
+                        account_status: 'complete'
+                    });
+                
+                if (profileError) throw profileError;
+                
+                // Show success
+                document.getElementById('register-form-container').classList.add('hidden');
+                document.getElementById('success-message').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert(error.message || 'Registration failed. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Create Account
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
