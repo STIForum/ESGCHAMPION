@@ -240,115 +240,92 @@ class DynamicNavigation {
                     this.setupAuthModals();
                 }
             }
-                    </div>
-                `;
-                this.setupUserDropdown();
-            } else if (isAuthenticated && champion) {
-                // Champion user (original logic)
-                navActions.innerHTML = `
-                    <div class="nav-notifications">
-                        <button class="btn btn-icon btn-ghost" id="notifications-btn" title="Notifications">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                            </svg>
-                            <span class="notification-badge hidden" id="notification-count">0</span>
-                        </button>
-                        <div class="notifications-dropdown hidden" id="notifications-dropdown">
-                            <div class="notifications-header">
-                                <h4>Notifications</h4>
-                                <button class="btn btn-ghost btn-sm" id="mark-all-read-btn">Mark all read</button>
-                            </div>
-                            <div class="notifications-list" id="notifications-list">
-                                <div class="notifications-empty">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2">
-                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                    </svg>
-                                    <p>No new notifications</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="nav-user-menu">
-                        <button class="user-menu-trigger" id="user-menu-btn">
-                            <div class="avatar">
-                                ${champion.avatar_url 
-                                    ? `<img src="${champion.avatar_url}" alt="${champion.full_name}">`
-                                    : this.getInitials(champion.full_name || champion.email)
-                                }
-                            </div>
-                        </button>
-                        <div class="user-dropdown hidden" id="user-dropdown">
-                            <div class="user-dropdown-header">
-                                <strong>${champion.full_name || 'Champion'}</strong>
-                                <span class="text-muted">${champion.email}</span>
-                            </div>
-                            <div class="user-dropdown-divider"></div>
-                            <a href="/champion-profile.html" class="user-dropdown-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                                Profile Settings
-                            </a>
-                            <a href="/champion-dashboard.html" class="user-dropdown-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="14" width="7" height="7"></rect>
-                                    <rect x="3" y="14" width="7" height="7"></rect>
-                                </svg>
-                                Dashboard
-                            </a>
-                            <div class="user-dropdown-divider"></div>
-                            <a href="#" class="user-dropdown-item text-error" onclick="event.preventDefault(); window.championAuth.logout().then(() => window.location.href = '/')">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                    <polyline points="16 17 21 12 16 7"></polyline>
-                                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                                </svg>
-                                Logout
-                            </a>
-                        </div>
-                    </div>
-                `;
-                // Set up user dropdown
-                this.setupUserDropdown();
-                // Set up notifications dropdown
-                this.setupNotificationsDropdown();
-                setTimeout(() => { this.loadNotifications(); }, 100);
-            } else {
-                navActions.innerHTML = `
-                    <a href="#" class="btn btn-ghost" id="header-login-btn">Login</a>
-                    <a href="#" class="btn btn-primary" id="header-get-started-btn">Get Started</a>
-                `;
-                this.setupAuthModals();
-            }
-        });
 
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            if (!dropdown.contains(e.target) && e.target !== btn) {
-                dropdown.classList.add('hidden');
+            /**
+             * Set up auth modals for login/register selection
+             */
+            setupAuthModals() {
+                const loginBtn = document.getElementById('header-login-btn');
+                const getStartedBtn = document.getElementById('header-get-started-btn');
+                const userTypeModal = document.getElementById('user-type-modal');
+                const loginTypeModal = document.getElementById('login-type-modal');
+                
+                if (loginBtn && loginTypeModal) {
+                    loginBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        loginTypeModal.style.display = 'flex';
+                    });
+                }
+                
+                if (getStartedBtn && userTypeModal) {
+                    getStartedBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        userTypeModal.style.display = 'flex';
+                    });
+                }
             }
-        });
 
-        // Close on Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                dropdown.classList.add('hidden');
+            /**
+             * Set up user dropdown menu
+             */
+            setupUserDropdown() {
+                const btn = document.getElementById('user-menu-btn');
+                const dropdown = document.getElementById('user-dropdown');
+                
+                if (!btn || !dropdown) return;
+
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('hidden');
+                    // Close notifications dropdown when opening user menu
+                    document.getElementById('notifications-dropdown')?.classList.add('hidden');
+                });
+
+                // Close on outside click
+                document.addEventListener('click', () => {
+                    dropdown.classList.add('hidden');
+                });
             }
-        });
 
-        // Mark all as read
-        if (markAllReadBtn) {
-            markAllReadBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.markAllNotificationsRead();
-            });
-        }
-    }
+            /**
+             * Set up notifications dropdown
+             */
+            setupNotificationsDropdown() {
+                const btn = document.getElementById('notifications-btn');
+                const dropdown = document.getElementById('notifications-dropdown');
+                const markAllReadBtn = document.getElementById('mark-all-read-btn');
+                
+                if (!btn || !dropdown) return;
+
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('hidden');
+                    // Close user dropdown when opening notifications
+                    document.getElementById('user-dropdown')?.classList.add('hidden');
+                });
+
+                // Close on outside click
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && e.target !== btn) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+                // Close on Escape
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+                // Mark all as read
+                if (markAllReadBtn) {
+                    markAllReadBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.markAllNotificationsRead();
+                    });
+                }
+            }
 
     /**
      * Load notifications and count
