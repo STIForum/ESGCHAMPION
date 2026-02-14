@@ -45,14 +45,29 @@ class DynamicNavigation {
         const isAdmin = isAuthenticated ? await this.auth.isAdmin() : false;
         const champion = isAuthenticated ? this.auth.getChampion() : null;
 
+        // Detect business user
+        let isBusinessUser = false;
+        let businessUser = null;
+        if (window.getSupabase && isAuthenticated && !champion) {
+            const supabase = window.getSupabase();
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user) {
+                    const { data } = await supabase.from('business_users').select('*').eq('auth_user_id', session.user.id).single();
+                    if (data && data.id) {
+                        isBusinessUser = true;
+                        businessUser = data;
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }
+
         // Update desktop nav
-        this.updateDesktopNav(isAuthenticated, isAdmin, champion);
-        
+        this.updateDesktopNav(isAuthenticated, isAdmin, champion, isBusinessUser);
         // Update mobile nav
-        this.updateMobileNav(isAuthenticated, isAdmin, champion);
-        
+        this.updateMobileNav(isAuthenticated, isAdmin, champion, isBusinessUser);
         // Update nav actions (login/register buttons)
-        this.updateNavActions(isAuthenticated, champion);
+        this.updateNavActions(isAuthenticated, champion, isBusinessUser, businessUser);
     }
 
     /**
@@ -69,14 +84,17 @@ class DynamicNavigation {
         menuHTML += `<li><a href="/about.html" class="nav-link ${this.isActive('/about.html')}">About</a></li>`;
         
         if (isAuthenticated) {
-            // Authenticated user links
-            menuHTML += `<li><a href="/champion-dashboard.html" class="nav-link ${this.isActive('/champion-dashboard.html')}">Dashboard</a></li>`;
-            menuHTML += `<li><a href="/champion-panels.html" class="nav-link ${this.isActive('/champion-panels.html')}">Panels</a></li>`;
-            menuHTML += `<li><a href="/ranking.html" class="nav-link ${this.isActive('/ranking.html')}">Rankings</a></li>`;
-            
-            // Admin link
-            if (isAdmin) {
-                menuHTML += `<li><a href="/admin-review.html" class="nav-link ${this.isActive('/admin-review.html')}">Admin</a></li>`;
+            if (isBusinessUser) {
+                menuHTML += `<li><a href="/business-dashboard.html" class="nav-link ${this.isActive('/business-dashboard.html')}">Dashboard</a></li>`;
+                menuHTML += `<li><a href="/business-settings.html" class="nav-link ${this.isActive('/business-settings.html')}">Settings</a></li>`;
+            } else {
+                // Authenticated champion user links
+                menuHTML += `<li><a href="/champion-dashboard.html" class="nav-link ${this.isActive('/champion-dashboard.html')}">Dashboard</a></li>`;
+                menuHTML += `<li><a href="/champion-panels.html" class="nav-link ${this.isActive('/champion-panels.html')}">Panels</a></li>`;
+                menuHTML += `<li><a href="/ranking.html" class="nav-link ${this.isActive('/ranking.html')}">Rankings</a></li>`;
+                if (isAdmin) {
+                    menuHTML += `<li><a href="/admin-review.html" class="nav-link ${this.isActive('/admin-review.html')}">Admin</a></li>`;
+                }
             }
         } else {
             // Public links for non-authenticated users
@@ -100,16 +118,20 @@ class DynamicNavigation {
         menuHTML += `<li><a href="/about.html" class="mobile-nav-link">About</a></li>`;
         
         if (isAuthenticated) {
-            menuHTML += `<li><a href="/champion-dashboard.html" class="mobile-nav-link">Dashboard</a></li>`;
-            menuHTML += `<li><a href="/champion-panels.html" class="mobile-nav-link">Panels</a></li>`;
-            menuHTML += `<li><a href="/ranking.html" class="mobile-nav-link">Rankings</a></li>`;
-            menuHTML += `<li><a href="/champion-profile.html" class="mobile-nav-link">Profile</a></li>`;
-            
-            if (isAdmin) {
-                menuHTML += `<li><a href="/admin-review.html" class="mobile-nav-link">Admin Panel</a></li>`;
+            if (isBusinessUser) {
+                menuHTML += `<li><a href="/business-dashboard.html" class="mobile-nav-link">Dashboard</a></li>`;
+                menuHTML += `<li><a href="/business-settings.html" class="mobile-nav-link">Settings</a></li>`;
+                menuHTML += `<li><a href="#" class="mobile-nav-link" onclick="window.getSupabase().auth.signOut().then(() => window.location.href = '/')">Logout</a></li>`;
+            } else {
+                menuHTML += `<li><a href="/champion-dashboard.html" class="mobile-nav-link">Dashboard</a></li>`;
+                menuHTML += `<li><a href="/champion-panels.html" class="mobile-nav-link">Panels</a></li>`;
+                menuHTML += `<li><a href="/ranking.html" class="mobile-nav-link">Rankings</a></li>`;
+                menuHTML += `<li><a href="/champion-profile.html" class="mobile-nav-link">Profile</a></li>`;
+                if (isAdmin) {
+                    menuHTML += `<li><a href="/admin-review.html" class="mobile-nav-link">Admin Panel</a></li>`;
+                }
+                menuHTML += `<li><a href="#" class="mobile-nav-link" onclick="window.championAuth.logout().then(() => window.location.href = '/')">Logout</a></li>`;
             }
-            
-            menuHTML += `<li><a href="#" class="mobile-nav-link" onclick="window.championAuth.logout().then(() => window.location.href = '/')">Logout</a></li>`;
         } else {
             menuHTML += `<li><a href="/faq.html" class="mobile-nav-link">FAQ</a></li>`;
             menuHTML += `<li><a href="/champion-login.html" class="mobile-nav-link">Login</a></li>`;
@@ -197,87 +219,122 @@ class DynamicNavigation {
             `;
 
             // Set up user dropdown
-            this.setupUserDropdown();
-            
-            // Set up notifications dropdown
-            this.setupNotificationsDropdown();
-            
-            // Load notifications after a brief delay to ensure DOM is ready
-            setTimeout(() => {
-                this.loadNotifications();
-            }, 100);
-        } else {
-            navActions.innerHTML = `
-                <a href="#" class="btn btn-ghost" id="header-login-btn">Login</a>
-                <a href="#" class="btn btn-primary" id="header-get-started-btn">Get Started</a>
-            `;
-            
-            // Set up modal triggers for non-authenticated users
-            this.setupAuthModals();
-        }
-    }
-
-    /**
-     * Set up auth modals for login/register selection
-     */
-    setupAuthModals() {
-        const loginBtn = document.getElementById('header-login-btn');
-        const getStartedBtn = document.getElementById('header-get-started-btn');
-        const userTypeModal = document.getElementById('user-type-modal');
-        const loginTypeModal = document.getElementById('login-type-modal');
-        
-        if (loginBtn && loginTypeModal) {
-            loginBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                loginTypeModal.style.display = 'flex';
-            });
-        }
-        
-        if (getStartedBtn && userTypeModal) {
-            getStartedBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                userTypeModal.style.display = 'flex';
-            });
-        }
-    }
-
-    /**
-     * Set up user dropdown menu
-     */
-    setupUserDropdown() {
-        const btn = document.getElementById('user-menu-btn');
-        const dropdown = document.getElementById('user-dropdown');
-        
-        if (!btn || !dropdown) return;
-
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.classList.toggle('hidden');
-            // Close notifications dropdown when opening user menu
-            document.getElementById('notifications-dropdown')?.classList.add('hidden');
-        });
-
-        // Close on outside click
-        document.addEventListener('click', () => {
-            dropdown.classList.add('hidden');
-        });
-    }
-
-    /**
-     * Set up notifications dropdown
-     */
-    setupNotificationsDropdown() {
-        const btn = document.getElementById('notifications-btn');
-        const dropdown = document.getElementById('notifications-dropdown');
-        const markAllReadBtn = document.getElementById('mark-all-read-btn');
-        
-        if (!btn || !dropdown) return;
-
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.classList.toggle('hidden');
-            // Close user dropdown when opening notifications
-            document.getElementById('user-dropdown')?.classList.add('hidden');
+            if (isAuthenticated && arguments.length >= 4 && arguments[2]) {
+                // Business user
+                const isBusinessUser = arguments[2];
+                const businessUser = arguments[3];
+                navActions.innerHTML = `
+                    <div class="nav-user-menu">
+                        <button class="user-menu-trigger" id="user-menu-btn">
+                            <div class="avatar">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                            </div>
+                        </button>
+                        <div class="user-dropdown hidden" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <strong>${businessUser?.company_name || 'Business User'}</strong>
+                                <span class="text-muted">${businessUser?.business_email || ''}</span>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="/business-settings.html" class="user-dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                Account Settings
+                            </a>
+                            <a href="/business-dashboard.html" class="user-dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                Dashboard
+                            </a>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="#" class="user-dropdown-item text-error" onclick="event.preventDefault(); window.getSupabase().auth.signOut().then(() => window.location.href = '/')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                `;
+                this.setupUserDropdown();
+            } else if (isAuthenticated && champion) {
+                // Champion user (original logic)
+                navActions.innerHTML = `
+                    <div class="nav-notifications">
+                        <button class="btn btn-icon btn-ghost" id="notifications-btn" title="Notifications">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                            <span class="notification-badge hidden" id="notification-count">0</span>
+                        </button>
+                        <div class="notifications-dropdown hidden" id="notifications-dropdown">
+                            <div class="notifications-header">
+                                <h4>Notifications</h4>
+                                <button class="btn btn-ghost btn-sm" id="mark-all-read-btn">Mark all read</button>
+                            </div>
+                            <div class="notifications-list" id="notifications-list">
+                                <div class="notifications-empty">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2">
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                    </svg>
+                                    <p>No new notifications</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="nav-user-menu">
+                        <button class="user-menu-trigger" id="user-menu-btn">
+                            <div class="avatar">
+                                ${champion.avatar_url 
+                                    ? `<img src="${champion.avatar_url}" alt="${champion.full_name}">`
+                                    : this.getInitials(champion.full_name || champion.email)
+                                }
+                            </div>
+                        </button>
+                        <div class="user-dropdown hidden" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <strong>${champion.full_name || 'Champion'}</strong>
+                                <span class="text-muted">${champion.email}</span>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="/champion-profile.html" class="user-dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                Profile Settings
+                            </a>
+                            <a href="/champion-dashboard.html" class="user-dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                Dashboard
+                            </a>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="#" class="user-dropdown-item text-error" onclick="event.preventDefault(); window.championAuth.logout().then(() => window.location.href = '/')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                `;
+                // Set up user dropdown
+                this.setupUserDropdown();
+                // Set up notifications dropdown
+                this.setupNotificationsDropdown();
+                setTimeout(() => { this.loadNotifications(); }, 100);
+            } else {
+                navActions.innerHTML = `
+                    <a href="#" class="btn btn-ghost" id="header-login-btn">Login</a>
+                    <a href="#" class="btn btn-primary" id="header-get-started-btn">Get Started</a>
+                `;
+                this.setupAuthModals();
+            }
         });
 
         // Close on outside click
