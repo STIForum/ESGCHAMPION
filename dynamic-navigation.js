@@ -53,8 +53,12 @@ class DynamicNavigation {
                     try {
                         const { data: { session } } = await supabase.auth.getSession();
                         if (session && session.user) {
-                            const { data } = await supabase.from('business_users').select('*').eq('auth_user_id', session.user.id).single();
-                            if (data && data.id) {
+                            const { data, error } = await supabase
+                                .from('business_users')
+                                .select('*')
+                                .eq('auth_user_id', session.user.id)
+                                .maybeSingle();
+                            if (!error && data && data.id) {
                                 isBusinessUser = true;
                                 businessUser = data;
                             }

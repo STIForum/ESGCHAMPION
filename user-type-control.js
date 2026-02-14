@@ -40,8 +40,14 @@
             const { data: { session } } = await supabase.auth.getSession();
             if (session && session.user) {
                 // Check if business user exists
-                const { data: businessUser } = await supabase.from('business_users').select('id').eq('auth_user_id', session.user.id).single();
-                if (businessUser && businessUser.id) return 'business';
+                const { data: businessUser, error } = await supabase
+                    .from('business_users')
+                    .select('id')
+                    .eq('auth_user_id', session.user.id)
+                    .maybeSingle();
+
+                // No matching row is valid (user is not a business account)
+                if (!error && businessUser && businessUser.id) return 'business';
             }
         }
         return null;
