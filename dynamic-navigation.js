@@ -9,6 +9,8 @@ class DynamicNavigation {
     constructor() {
         this.auth = null;
         this.initialized = false;
+        this.userType = null;
+        this.userTypeGuardSetup = false;
     }
 
     /**
@@ -24,8 +26,10 @@ class DynamicNavigation {
         await this.updateNavigation();
 
         // Listen for auth changes
-        this.auth.addAuthListener(() => {
-            this.updateNavigation();
+        this.auth.addAuthListener(async () => {
+            await this.updateNavigation();
+            this.userType = await this.detectCurrentUserType();
+            await this.enforceCurrentPageByUserType();
         });
 
         // Set up mobile menu
@@ -33,6 +37,11 @@ class DynamicNavigation {
 
         // Set up header scroll effect
         this.setupHeaderScroll();
+
+        // Enforce user-type aware routing and dashboard links globally
+        this.userType = await this.detectCurrentUserType();
+        this.setupUserTypeLinkGuard();
+        await this.enforceCurrentPageByUserType();
 
         this.initialized = true;
     }
@@ -881,6 +890,200 @@ class DynamicNavigation {
             
             lastScroll = currentScroll;
         });
+    }
+
+    /**
+     * Detect signed-in user type
+     */
+    async detectCurrentUserType() {
+        try {
+            if (this.auth?.isAuthenticated?.()) {
+                const champion = this.auth.getChampion?.();
+                if (champion && champion.id) return 'champion';
+            }
+
+            if (!window.getSupabase) return null;
+
+            const supabase = window.getSupabase();
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user?.id) return null;
+
+            const { data, error } = await supabase
+                .from('business_users')
+                .select('id')
+                .eq('auth_user_id', session.user.id)
+                .maybeSingle();
+
+            if (!error && data?.id) return 'business';
+            return null;
+        } catch (err) {
+            return null;
+        }
+    }
+
+    /**
+     * Path rules by user type
+     */
+    getUserTypePathRules() {
+        return {
+            champion: {
+                dashboard: '/champion-dashboard.html',
+                blockedPaths: [
+                    '/business-dashboard.html',
+                    '/business-settings.html',
+                    '/business-login.html',
+                    '/business-register.html'
+                ]
+            },
+            business: {
+                dashboard: '/business-dashboard.html',
+                blockedPaths: [
+                    '/champion-dashboard.html',
+                    '/champion-panels.html',
+                    '/champion-profile.html',
+                    '/champion-indicators.html',
+                    '/ranking.html',
+                    '/admin-review.html',
+                    '/champion-login.html',
+                    '/champion-register.html'
+                ]
+            }
+        };
+    }
+
+    /**
+     * Normalize URL path
+     */
+    normalizePath(path) {
+        if (!path) return '/';
+        if (path === '/index.html') return '/';
+        return path;
+    }
+
+    /**
+     * Determine whether a path is any dashboard route
+     */
+    isDashboardPath(path) {
+        const normalized = this.normalizePath(path);
+        return normalized === '/champion-dashboard.html'
+            || normalized === '/business-dashboard.html'
+            || normalized === '/dashboard.html'
+            || normalized === '/dashboard';
+    }
+
+    /**
+     * Show modal and redirect user to correct dashboard for their account type
+     */
+    showUserTypeRedirectModal(message, redirectPath) {
+        if (!message || !redirectPath) return;
+
+        const existing = document.getElementById('user-type-guard-modal-backdrop');
+        if (existing) existing.remove();
+
+        const modalHtml = `
+            <div id="user-type-guard-modal-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100000;">
+                <div style="width:min(92vw,420px);background:#fff;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.2);padding:24px;">
+                    <h3 style="margin:0 0 8px;font-size:22px;color:#111827;">Dashboard Redirect</h3>
+                    <p style="margin:0 0 16px;color:#4b5563;line-height:1.5;">${message}</p>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;">
+                        <button id="user-type-guard-go-btn" style="border:none;background:#2563eb;color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;cursor:pointer;">Continue</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const goBtn = document.getElementById('user-type-guard-go-btn');
+        if (goBtn) {
+            goBtn.addEventListener('click', () => {
+                window.location.href = redirectPath;
+            });
+        }
+
+        setTimeout(() => {
+            if (window.location.pathname !== redirectPath) {
+                window.location.href = redirectPath;
+            }
+        }, 1000);
+    }
+
+    /**
+     * Enforce current page by user type
+     */
+    async enforceCurrentPageByUserType() {
+        const userType = this.userType || await this.detectCurrentUserType();
+        if (!userType) return;
+
+        const rules = this.getUserTypePathRules()[userType];
+        if (!rules) return;
+
+        const currentPath = this.normalizePath(window.location.pathname);
+
+        if (this.isDashboardPath(currentPath) && currentPath !== rules.dashboard) {
+            this.showUserTypeRedirectModal(
+                `You are logged in as a ${userType} user. Opening your dashboard.`,
+                rules.dashboard
+            );
+            return;
+        }
+
+        if (rules.blockedPaths.includes(currentPath)) {
+            this.showUserTypeRedirectModal(
+                `This page is not available for ${userType} accounts. Redirecting to your dashboard.`,
+                rules.dashboard
+            );
+        }
+    }
+
+    /**
+     * Guard links so clicking Dashboard anywhere routes to correct dashboard
+     */
+    setupUserTypeLinkGuard() {
+        if (this.userTypeGuardSetup) return;
+        this.userTypeGuardSetup = true;
+        window.__userTypeGuardInitialized = true;
+
+        document.addEventListener('click', async (e) => {
+            const link = e.target.closest('a[href]');
+            if (!link) return;
+            if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            if (link.target === '_blank') return;
+
+            const href = link.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+            let targetPath = '/';
+            try {
+                const url = new URL(href, window.location.origin);
+                targetPath = this.normalizePath(url.pathname);
+            } catch (err) {
+                return;
+            }
+
+            const userType = this.userType || await this.detectCurrentUserType();
+            this.userType = userType;
+            if (!userType) return;
+
+            const rules = this.getUserTypePathRules()[userType];
+            if (!rules) return;
+
+            if (this.isDashboardPath(targetPath) && targetPath !== rules.dashboard) {
+                e.preventDefault();
+                this.showUserTypeRedirectModal(
+                    `You are logged in as a ${userType} user. Opening your dashboard.`,
+                    rules.dashboard
+                );
+                return;
+            }
+
+            if (rules.blockedPaths.includes(targetPath)) {
+                e.preventDefault();
+                this.showUserTypeRedirectModal(
+                    `This page is not available for ${userType} accounts. Redirecting to your dashboard.`,
+                    rules.dashboard
+                );
+            }
+        }, true);
     }
 
     /**

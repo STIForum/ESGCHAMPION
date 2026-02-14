@@ -2,6 +2,9 @@
 // ESG Champions Platform
 
 (function() {
+    if (window.__userTypeGuardInitialized) return;
+    window.__userTypeGuardInitialized = true;
+
     // Utility: Show modal
     function showUserTypeModal(message, redirectUrl) {
         // Remove existing modal if any
