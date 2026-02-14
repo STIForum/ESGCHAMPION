@@ -184,7 +184,6 @@
 
     <script src="supabase-service.js"></script>
     <script src="mobile-menu.js"></script>
-        <script src="user-type-control.js"></script>
     <script>
         function getFriendlyAuthError(error) {
             const msg = (error?.message || '').toLowerCase();
@@ -202,23 +201,6 @@
             return error?.message || 'Login failed. Please try again.';
         }
 
-        // Check if already logged in
-        (async function() {
-            const supabase = window.getSupabase();
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-                const { data: businessUser, error } = await supabase
-                    .from('business_users')
-                    .select('id')
-                    .eq('auth_user_id', session.user.id)
-                    .maybeSingle();
-
-                if (!error && businessUser?.id) {
-                    window.location.href = '/business-dashboard.html';
-                }
-            }
-        })();
-        
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const loginBtn = document.getElementById('login-btn');
