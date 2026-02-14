@@ -52,12 +52,12 @@ class DynamicNavigation {
             async updateNavigation() {
                 const isAuthenticated = this.auth && this.auth.isAuthenticated();
                 const isAdmin = isAuthenticated ? await this.auth.isAdmin() : false;
-                const champion = isAuthenticated ? this.auth.getChampion() : null;
+                let champion = isAuthenticated ? this.auth.getChampion() : null;
 
                 // Detect business user
                 let isBusinessUser = false;
                 let businessUser = null;
-                if (window.getSupabase && isAuthenticated && !champion) {
+                if (window.getSupabase && isAuthenticated) {
                     const supabase = window.getSupabase();
                     try {
                         const { data: { session } } = await supabase.auth.getSession();
@@ -70,6 +70,8 @@ class DynamicNavigation {
                             if (!error && data && data.id) {
                                 isBusinessUser = true;
                                 businessUser = data;
+                                // Business role takes precedence for navigation rendering
+                                champion = null;
                             }
                         }
                     } catch (e) {
@@ -101,7 +103,7 @@ class DynamicNavigation {
                 if (isAuthenticated) {
                     if (isBusinessUser) {
                         menuHTML += `<li><a href="/business-dashboard.html" class="nav-link ${this.isActive('/business-dashboard.html')}">Dashboard</a></li>`;
-                        // Business nav: no Settings link per requirement; notification/profile shown in actions
+                        menuHTML += `<li><a href="/champion-panels.html" class="nav-link ${this.isActive('/champion-panels.html')}">Panels</a></li>`;
                     } else {
                         menuHTML += `<li><a href="/champion-dashboard.html" class="nav-link ${this.isActive('/champion-dashboard.html')}">Dashboard</a></li>`;
                         menuHTML += `<li><a href="/champion-panels.html" class="nav-link ${this.isActive('/champion-panels.html')}">Panels</a></li>`;
@@ -133,6 +135,8 @@ class DynamicNavigation {
                 if (isAuthenticated) {
                     if (isBusinessUser) {
                         menuHTML += `<li><a href="/business-dashboard.html" class="mobile-nav-link">Dashboard</a></li>`;
+                        menuHTML += `<li><a href="/champion-panels.html" class="mobile-nav-link">Panels</a></li>`;
+                        menuHTML += `<li><a href="/business-settings.html" class="mobile-nav-link">Profile</a></li>`;
                     } else {
                         menuHTML += `<li><a href="/champion-dashboard.html" class="mobile-nav-link">Dashboard</a></li>`;
                         menuHTML += `<li><a href="/champion-panels.html" class="mobile-nav-link">Panels</a></li>`;
@@ -166,6 +170,8 @@ class DynamicNavigation {
                     const userName = champion ? (champion.full_name || 'Champion') : (businessUser?.company_name || 'Business User');
                     const userEmail = champion ? champion.email : (businessUser?.business_email || '');
                     const dashboardLink = champion ? '/champion-dashboard.html' : '/business-dashboard.html';
+                    const profileLink = champion ? '/champion-profile.html' : '/business-settings.html';
+                    const profileLabel = champion ? 'Profile Settings' : 'Business Profile';
                     const logoutHandler = champion ? "window.championAuth.logout().then(() => window.location.href = '/')" : "window.getSupabase().auth.signOut().then(() => window.location.href = '/')";
 
                     const avatar = champion
@@ -213,6 +219,10 @@ class DynamicNavigation {
                                 <a href="${dashboardLink}" class="user-dropdown-item">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                                     Dashboard
+                                </a>
+                                <a href="${profileLink}" class="user-dropdown-item">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    ${profileLabel}
                                 </a>
                                 <div class="user-dropdown-divider"></div>
                                 <a href="#" class="user-dropdown-item text-error" onclick="event.preventDefault(); ${logoutHandler}">
@@ -897,12 +907,10 @@ class DynamicNavigation {
      */
     async detectCurrentUserType() {
         try {
-            if (this.auth?.isAuthenticated?.()) {
-                const champion = this.auth.getChampion?.();
-                if (champion && champion.id) return 'champion';
+            if (!window.getSupabase) {
+                if (this.auth?.isAuthenticated?.() && this.auth.getChampion?.()?.id) return 'champion';
+                return null;
             }
-
-            if (!window.getSupabase) return null;
 
             const supabase = window.getSupabase();
             const { data: { session } } = await supabase.auth.getSession();
@@ -915,6 +923,11 @@ class DynamicNavigation {
                 .maybeSingle();
 
             if (!error && data?.id) return 'business';
+
+            if (this.auth?.isAuthenticated?.()) {
+                const champion = this.auth.getChampion?.();
+                if (champion && champion.id) return 'champion';
+            }
             return null;
         } catch (err) {
             return null;
@@ -928,22 +941,16 @@ class DynamicNavigation {
         return {
             champion: {
                 dashboard: '/champion-dashboard.html',
+                profile: '/champion-profile.html',
                 blockedPaths: [
-                    '/business-dashboard.html',
-                    '/business-settings.html',
                     '/business-login.html',
                     '/business-register.html'
                 ]
             },
             business: {
                 dashboard: '/business-dashboard.html',
+                profile: '/business-settings.html',
                 blockedPaths: [
-                    '/champion-dashboard.html',
-                    '/champion-panels.html',
-                    '/champion-profile.html',
-                    '/champion-indicators.html',
-                    '/ranking.html',
-                    '/admin-review.html',
                     '/champion-login.html',
                     '/champion-register.html'
                 ]
@@ -1027,6 +1034,22 @@ class DynamicNavigation {
             return;
         }
 
+        if (currentPath === '/champion-profile.html' && userType === 'business') {
+            this.showUserTypeRedirectModal(
+                'You are logged in as a business user. Opening your business profile.',
+                rules.profile
+            );
+            return;
+        }
+
+        if (currentPath === '/business-settings.html' && userType === 'champion') {
+            this.showUserTypeRedirectModal(
+                'You are logged in as a champion user. Opening your profile.',
+                rules.profile
+            );
+            return;
+        }
+
         if (rules.blockedPaths.includes(currentPath)) {
             this.showUserTypeRedirectModal(
                 `This page is not available for ${userType} accounts. Redirecting to your dashboard.`,
@@ -1072,6 +1095,24 @@ class DynamicNavigation {
                 this.showUserTypeRedirectModal(
                     `You are logged in as a ${userType} user. Opening your dashboard.`,
                     rules.dashboard
+                );
+                return;
+            }
+
+            if (targetPath === '/champion-profile.html' && userType === 'business') {
+                e.preventDefault();
+                this.showUserTypeRedirectModal(
+                    'You are logged in as a business user. Opening your business profile.',
+                    rules.profile
+                );
+                return;
+            }
+
+            if (targetPath === '/business-settings.html' && userType === 'champion') {
+                e.preventDefault();
+                this.showUserTypeRedirectModal(
+                    'You are logged in as a champion user. Opening your profile.',
+                    rules.profile
                 );
                 return;
             }

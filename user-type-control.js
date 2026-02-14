@@ -31,13 +31,7 @@
 
     // Utility: Get user type (champion or business)
     async function getUserType() {
-        // Try champion first
-        if (window.championAuth && window.championAuth.isAuthenticated && window.championAuth.isAuthenticated()) {
-            // Check if champion profile exists
-            const champ = window.championAuth.getChampion && window.championAuth.getChampion();
-            if (champ && champ.id) return 'champion';
-        }
-        // Try business user
+        // Try business user first
         if (window.getSupabase) {
             const supabase = window.getSupabase();
             const { data: { session } } = await supabase.auth.getSession();
@@ -53,6 +47,11 @@
                 if (!error && businessUser && businessUser.id) return 'business';
             }
         }
+        // Then try champion
+        if (window.championAuth && window.championAuth.isAuthenticated && window.championAuth.isAuthenticated()) {
+            const champ = window.championAuth.getChampion && window.championAuth.getChampion();
+            if (champ && champ.id) return 'champion';
+        }
         return null;
     }
 
@@ -60,36 +59,52 @@
     async function enforceUserTypeAccess() {
         const userType = await getUserType();
         const path = window.location.pathname;
-        // Champion pages
-        const championPages = [
-            '/champion-dashboard.html', '/champion-panels.html', '/champion-profile.html', '/ranking.html', '/admin-review.html'
-        ];
-        // Business pages
-        const businessPages = [
-            '/business-dashboard.html', '/business-settings.html', '/business-register.html', '/business-login.html'
-        ];
-        // If champion, block business dashboard/settings
-        if (userType === 'champion' && businessPages.some(p => path.startsWith(p))) {
-            showUserTypeModal('You are logged in as a Champion. Only Champion pages are accessible.', '/champion-dashboard.html');
+        const isDashboardPath = (p) => p === '/business-dashboard.html' || p === '/champion-dashboard.html' || p === '/dashboard.html' || p === '/dashboard';
+
+        if (userType === 'champion' && isDashboardPath(path) && path !== '/champion-dashboard.html') {
+            showUserTypeModal('You are logged in as a Champion user. Opening your dashboard.', '/champion-dashboard.html');
             return false;
         }
-        // If business, block champion dashboard/panels/profile/ranking/admin
-        if (userType === 'business' && championPages.some(p => path.startsWith(p))) {
-            showUserTypeModal('You are logged in as a Business user. Only Business pages are accessible.', '/business-dashboard.html');
+
+        if (userType === 'business' && isDashboardPath(path) && path !== '/business-dashboard.html') {
+            showUserTypeModal('You are logged in as a Business user. Opening your dashboard.', '/business-dashboard.html');
             return false;
         }
+
+        if (userType === 'business' && path.startsWith('/champion-profile.html')) {
+            showUserTypeModal('You are logged in as a Business user. Opening your business profile.', '/business-settings.html');
+            return false;
+        }
+
+        if (userType === 'champion' && path.startsWith('/business-settings.html')) {
+            showUserTypeModal('You are logged in as a Champion user. Opening your profile.', '/champion-profile.html');
+            return false;
+        }
+
         // Intercept dashboard nav clicks
         document.querySelectorAll('a.nav-link, a.sidebar-link, a.mobile-nav-link').forEach(link => {
             link.addEventListener('click', async function(e) {
                 const href = link.getAttribute('href');
                 if (!href) return;
-                if (userType === 'champion' && businessPages.some(p => href.startsWith(p))) {
+
+                if (userType === 'champion' && isDashboardPath(href) && !href.startsWith('/champion-dashboard.html')) {
                     e.preventDefault();
-                    showUserTypeModal('You are logged in as a Champion. Only Champion pages are accessible.', '/champion-dashboard.html');
+                    showUserTypeModal('You are logged in as a Champion user. Opening your dashboard.', '/champion-dashboard.html');
                 }
-                if (userType === 'business' && championPages.some(p => href.startsWith(p))) {
+
+                if (userType === 'business' && isDashboardPath(href) && !href.startsWith('/business-dashboard.html')) {
                     e.preventDefault();
-                    showUserTypeModal('You are logged in as a Business user. Only Business pages are accessible.', '/business-dashboard.html');
+                    showUserTypeModal('You are logged in as a Business user. Opening your dashboard.', '/business-dashboard.html');
+                }
+
+                if (userType === 'business' && href.startsWith('/champion-profile.html')) {
+                    e.preventDefault();
+                    showUserTypeModal('You are logged in as a Business user. Opening your business profile.', '/business-settings.html');
+                }
+
+                if (userType === 'champion' && href.startsWith('/business-settings.html')) {
+                    e.preventDefault();
+                    showUserTypeModal('You are logged in as a Champion user. Opening your profile.', '/champion-profile.html');
                 }
             });
         });

@@ -172,12 +172,33 @@ class ChampionIndicators {
         };
     }
 
+    async isBusinessUserSession() {
+        try {
+            if (!window.getSupabase) return false;
+            const supabase = window.getSupabase();
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user?.id) return false;
+
+            const { data, error } = await supabase
+                .from('business_users')
+                .select('id')
+                .eq('auth_user_id', session.user.id)
+                .maybeSingle();
+
+            return !error && !!data?.id;
+        } catch (err) {
+            return false;
+        }
+    }
+
     async init() {
         // Wait for services to be ready
         await new Promise(resolve => setTimeout(resolve, 300));
+
+        const isBusinessUser = await this.isBusinessUserSession();
         
         // Check if profile is complete (especially important for LinkedIn users)
-        if (window.championAuth?.isAuthenticated?.() && 
+        if (!isBusinessUser && window.championAuth?.isAuthenticated?.() && 
             !window.championAuth.requireCompleteProfile(true)) {
             return; // Will redirect to profile page
         }
