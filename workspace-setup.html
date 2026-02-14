@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setting Up Workspace | STIF</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body>
+    <main class="flex-center" style="min-height:100vh;background:var(--gray-50);padding:24px;">
+        <div class="widget" style="max-width:560px;width:100%;">
+            <div class="widget-body" style="text-align:center;">
+                <h1 style="margin-bottom:12px;">Setting up your workspace</h1>
+                <p id="setup-message" class="text-secondary" style="margin-bottom:18px;">We are setting up your reporting workspace.</p>
+                <div id="setup-spinner" class="loading-spinner" style="margin:0 auto 18px;"></div>
+                <a id="go-workspace-btn" class="btn btn-primary hidden" href="#">Go to reporting workspace</a>
+                <div id="setup-error" class="alert alert-error hidden" style="margin-top:16px;">Workspace setup failed. Please contact support.</div>
+            </div>
+        </div>
+    </main>
+
+    <script src="supabase-service.js"></script>
+    <script src="business-reporting-flow.js"></script>
+    <script src="workspace-setup.js"></script>
+</body>
+</html>

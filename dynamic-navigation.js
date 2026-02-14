@@ -103,7 +103,7 @@ class DynamicNavigation {
                 if (isAuthenticated) {
                     if (isBusinessUser) {
                         menuHTML += `<li><a href="/business-dashboard.html" class="nav-link ${this.isActive('/business-dashboard.html')}">Dashboard</a></li>`;
-                        menuHTML += `<li><a href="/champion-panels.html" class="nav-link ${this.isActive('/champion-panels.html')}">Panels</a></li>`;
+                        menuHTML += `<li><a href="/business-reporting.html" class="nav-link ${this.isActive('/business-reporting.html')}">Panels</a></li>`;
                     } else {
                         menuHTML += `<li><a href="/champion-dashboard.html" class="nav-link ${this.isActive('/champion-dashboard.html')}">Dashboard</a></li>`;
                         menuHTML += `<li><a href="/champion-panels.html" class="nav-link ${this.isActive('/champion-panels.html')}">Panels</a></li>`;
@@ -135,7 +135,7 @@ class DynamicNavigation {
                 if (isAuthenticated) {
                     if (isBusinessUser) {
                         menuHTML += `<li><a href="/business-dashboard.html" class="mobile-nav-link">Dashboard</a></li>`;
-                        menuHTML += `<li><a href="/champion-panels.html" class="mobile-nav-link">Panels</a></li>`;
+                        menuHTML += `<li><a href="/business-reporting.html" class="mobile-nav-link">Panels</a></li>`;
                         menuHTML += `<li><a href="/business-settings.html" class="mobile-nav-link">Profile</a></li>`;
                     } else {
                         menuHTML += `<li><a href="/champion-dashboard.html" class="mobile-nav-link">Dashboard</a></li>`;

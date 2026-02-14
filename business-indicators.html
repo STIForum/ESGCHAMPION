@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel Indicators - STIF SME Portal">
+    <title>Panel Indicators | STIF</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <img src="assets/images/logo1.png" alt="STIF Logo" class="logo-img">
+                <span class="logo-text">Sustainability Technology and Innovation Forum</span>
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/business-dashboard.html" class="nav-link">Dashboard</a></li>
+                    <li><a href="/business-reporting.html" class="nav-link active">Sustainability Reporting</a></li>
+                </ul>
+            </nav>
+            <div class="nav-actions"></div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <ul class="mobile-nav-menu"></ul>
+    </div>
+
+    <main style="padding-top:100px;min-height:100vh;background:var(--gray-50);">
+        <div class="container">
+            <div class="mb-6">
+                <div id="breadcrumb" class="text-sm text-secondary mb-2">Business Dashboard / Sustainability Reporting / Panel</div>
+                <h1 id="panel-title">Panel Indicators</h1>
+                <p class="text-secondary">Select an indicator to continue to reporting guidance.</p>
+            </div>
+
+            <div id="loading-state" class="flex-center" style="height:220px;"><div class="loading-spinner"></div></div>
+            <div id="indicators-list" class="hidden"></div>
+        </div>
+    </main>
+
+    <script src="supabase-service.js"></script>
+    <script src="champion-auth-supabase.js"></script>
+    <script src="champion-db-supabase.js"></script>
+    <script src="business-reporting-flow.js"></script>
+    <script src="dynamic-navigation.js"></script>
+    <script src="mobile-menu.js"></script>
+    <script src="user-type-control.js"></script>
+    <script src="business-indicators.js"></script>
+</body>
+</html>
