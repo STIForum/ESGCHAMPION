@@ -86,11 +86,16 @@
         statusEl.textContent = formatStatus(currentStatus);
 
         if (currentStatus === 'active') {
-            setMessage('success', 'Your subscription is already active. You can continue reporting now.');
+            setMessage('success', 'Your subscription is already active. Continue to the next step below.');
             buttons.forEach((btn) => {
-                btn.disabled = true;
-                btn.textContent = 'Already Active';
+                btn.classList.add('hidden');
             });
+
+            messageEl.insertAdjacentHTML('beforeend', `
+                <div style="margin-top: var(--space-4);">
+                    <a href="/business-reporting.html" class="btn btn-primary">Continue to Sustainability Reporting</a>
+                </div>
+            `);
             return;
         }
 
