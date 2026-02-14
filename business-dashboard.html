@@ -123,7 +123,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="sidebar-link">
+                        <a href="/champion-panels.html" class="sidebar-link">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
                                 <path d="M2 17l10 5 10-5"></path>
@@ -293,7 +293,7 @@
                         </div>
 
                         <div class="right-action-cards">
-                            <a href="#" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
+                            <a href="/champion-panels.html" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
                                 <div class="widget-body">
                                     <div class="feature-icon" style="background: var(--environmental-bg); color: var(--environmental); margin-bottom: var(--space-4);">
                                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -379,7 +379,6 @@
             
             document.getElementById('subscription-status').textContent = capitalize(currentUser.subscription_status || 'Active');
             document.getElementById('reporting-year').textContent = currentUser.reporting_year || new Date().getFullYear();
-            document.getElementById('account-status').textContent = capitalize(currentUser.account_status || 'Complete');
             
             calculateProfileCompletion();
             calculateDaysActive();
@@ -390,7 +389,9 @@
         function calculateProfileCompletion() {
             const fields = ['first_name', 'last_name', 'company_name', 'business_email', 'mobile_number', 'office_phone', 'linkedin_url', 'website', 'company_size', 'country', 'business_address', 'industry', 'primary_esg_focus', 'ongoing_esg_initiatives'];
             const completed = fields.filter(f => currentUser[f] && currentUser[f].toString().trim()).length;
-            document.getElementById('stat-completed').textContent = Math.round((completed / fields.length) * 100) + '%';
+            const completion = Math.round((completed / fields.length) * 100);
+            document.getElementById('stat-completed').textContent = completion + '%';
+            document.getElementById('account-status').textContent = completion === 100 ? 'Complete' : 'Incomplete';
         }
         
         function calculateDaysActive() {
