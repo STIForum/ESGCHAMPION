@@ -186,13 +186,36 @@
     <script src="mobile-menu.js"></script>
         <script src="user-type-control.js"></script>
     <script>
+        function getFriendlyAuthError(error) {
+            const msg = (error?.message || '').toLowerCase();
+            const code = error?.code || error?.status || '';
+
+            if (msg.includes('invalid login credentials') || code === 'invalid_credentials') {
+                return 'Invalid email or password. Please check your details and try again.';
+            }
+            if (msg.includes('email not confirmed')) {
+                return 'Please verify your email address before signing in.';
+            }
+            if (msg.includes('too many requests')) {
+                return 'Too many attempts. Please wait a minute and try again.';
+            }
+            return error?.message || 'Login failed. Please try again.';
+        }
+
         // Check if already logged in
         (async function() {
             const supabase = window.getSupabase();
             const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const { data: businessUser } = await supabase.from('business_users').select('id').eq('auth_user_id', session.user.id).single();
-                if (businessUser) window.location.href = '/business-dashboard.html';
+            if (session?.user?.id) {
+                const { data: businessUser, error } = await supabase
+                    .from('business_users')
+                    .select('id')
+                    .eq('auth_user_id', session.user.id)
+                    .maybeSingle();
+
+                if (!error && businessUser?.id) {
+                    window.location.href = '/business-dashboard.html';
+                }
             }
         })();
         
@@ -206,14 +229,22 @@
             errorEl.classList.remove('show');
             
             try {
-                const email = document.getElementById('email').value;
+                const email = document.getElementById('email').value.trim().toLowerCase();
                 const password = document.getElementById('password').value;
                 const supabase = window.getSupabase();
+
+                if (!email || !password) {
+                    throw new Error('Please enter both email and password.');
+                }
                 
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 
-                const { data: businessUser, error: bizError } = await supabase.from('business_users').select('id').eq('auth_user_id', data.user.id).single();
+                const { data: businessUser, error: bizError } = await supabase
+                    .from('business_users')
+                    .select('id')
+                    .eq('auth_user_id', data.user.id)
+                    .maybeSingle();
                 
                 if (bizError || !businessUser) {
                     await supabase.auth.signOut();
@@ -222,8 +253,7 @@
                 
                 window.location.href = '/business-dashboard.html';
             } catch (error) {
-                console.error('Login error:', error);
-                errorEl.textContent = error.message || 'Login failed. Please try again.';
+                errorEl.textContent = getFriendlyAuthError(error);
                 errorEl.classList.add('show');
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> Sign In`;
