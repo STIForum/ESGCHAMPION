@@ -54,6 +54,15 @@
 
             if (error) throw error;
 
+            await window.supabaseService?.createBusinessNotification?.(
+                businessUser.id,
+                'subscription',
+                'Subscription activated',
+                'Your subscription is now active. You can continue with sustainability reporting.',
+                '/business-reporting.html',
+                { plan }
+            );
+
             statusEl.textContent = 'Active';
             setMessage('success', `Subscription activated (${plan}). Redirecting to your dashboard...`);
 

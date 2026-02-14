@@ -336,34 +336,27 @@ class DynamicNavigation {
     async loadNotifications() {
         try {
             let notifications = [];
-            let dbNotifications = null;
-            let dbError = null;
-            
-            // Try to get notifications from database
-            try {
-                if (window.championDB && window.championDB.getNotifications && window.championAuth?.isAuthenticated()) {
-                    dbNotifications = await window.championDB.getNotifications();
-                    console.log('DB Notifications loaded:', dbNotifications?.length || 0, dbNotifications);
-                }
-            } catch (err) {
-                dbError = err;
-                console.warn('Could not load notifications from DB:', err.message);
+            const role = this.userType || await this.detectCurrentUserType();
+            this.userType = role;
+
+            let dbNotifications = [];
+
+            if (role === 'business') {
+                dbNotifications = await this.getBusinessNotificationsFromDb();
+            } else {
+                dbNotifications = await this.getChampionNotificationsFromDb();
             }
 
-            // Use DB notifications if we have them, otherwise use mock data
-            if (dbNotifications && Array.isArray(dbNotifications) && dbNotifications.length > 0) {
-                // Normalize DB notification format (is_read -> read)
+            if (Array.isArray(dbNotifications) && dbNotifications.length > 0) {
                 notifications = dbNotifications.map(n => ({
                     ...n,
                     read: n.is_read || n.read || false
                 }));
-                console.log('Using DB notifications');
             } else {
-                // No DB notifications, use mock data for demo
-                console.log('Using mock notifications (DB returned:', dbNotifications?.length || 0, ')');
-                notifications = this.getMockNotifications();
-                // Apply saved read states from localStorage for mock notifications
-                notifications = this.applyStoredReadStates(notifications);
+                notifications = role === 'business'
+                    ? this.getBusinessMockNotifications()
+                    : this.getChampionMockNotifications();
+                notifications = this.applyStoredReadStates(notifications, role);
             }
 
             this.notifications = notifications;
@@ -375,19 +368,49 @@ class DynamicNavigation {
         } catch (error) {
             console.error('Error loading notifications:', error);
             // Fallback to mock data even on complete failure
-            const notifications = this.getMockNotifications();
+            const role = this.userType || 'champion';
+            const notifications = role === 'business'
+                ? this.getBusinessMockNotifications()
+                : this.getChampionMockNotifications();
             this.notifications = notifications;
             this.renderNotifications(notifications);
             this.updateNotificationBadge(notifications);
         }
     }
 
+    async getChampionNotificationsFromDb() {
+        try {
+            if (window.championDB?.getNotifications && window.championAuth?.isAuthenticated()) {
+                return await window.championDB.getNotifications();
+            }
+        } catch (err) {
+            console.warn('Could not load champion notifications from DB:', err.message);
+        }
+        return [];
+    }
+
+    async getBusinessNotificationsFromDb() {
+        try {
+            const supabase = window.getSupabase?.();
+            if (!supabase || !window.supabaseService?.getBusinessNotifications) return [];
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user?.id) return [];
+
+            return await window.supabaseService.getBusinessNotifications(session.user.id);
+        } catch (err) {
+            console.warn('Could not load business notifications from DB:', err.message);
+            return [];
+        }
+    }
+
     /**
      * Apply stored read states from localStorage to notifications
      */
-    applyStoredReadStates(notifications) {
+    applyStoredReadStates(notifications, role = this.userType || 'champion') {
         try {
-            const readStates = JSON.parse(localStorage.getItem('notificationReadStates') || '{}');
+            const key = this.getNotificationStorageKey(role);
+            const readStates = JSON.parse(localStorage.getItem(key) || '{}');
             return notifications.map(n => {
                 if (readStates[n.id]) {
                     return { ...n, read: true, is_read: true };
@@ -402,20 +425,25 @@ class DynamicNavigation {
     /**
      * Save notification read state to localStorage
      */
-    saveReadState(notificationId) {
+    saveReadState(notificationId, role = this.userType || 'champion') {
         try {
-            const readStates = JSON.parse(localStorage.getItem('notificationReadStates') || '{}');
+            const key = this.getNotificationStorageKey(role);
+            const readStates = JSON.parse(localStorage.getItem(key) || '{}');
             readStates[notificationId] = true;
-            localStorage.setItem('notificationReadStates', JSON.stringify(readStates));
+            localStorage.setItem(key, JSON.stringify(readStates));
         } catch (err) {
             console.warn('Could not save notification read state:', err);
         }
     }
 
+    getNotificationStorageKey(role = this.userType || 'champion') {
+        return `notificationReadStates:${role}`;
+    }
+
     /**
-     * Get mock notifications for demo
+     * Get mock notifications for champion demo
      */
-    getMockNotifications() {
+    getChampionMockNotifications() {
         // Use stable IDs so read states can persist in localStorage
         return [
             {
@@ -467,6 +495,44 @@ class DynamicNavigation {
                 data: {
                     panel_name: 'Data Privacy & Cybersecurity'
                 }
+            }
+        ];
+    }
+
+    /**
+     * Get mock notifications for business demo
+     */
+    getBusinessMockNotifications() {
+        return [
+            {
+                id: 'biz-subscription-001',
+                type: 'subscription',
+                title: 'Subscription active',
+                message: 'Your business subscription is active. You can continue reporting.',
+                read: false,
+                is_read: false,
+                created_at: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
+                link: '/business-dashboard.html'
+            },
+            {
+                id: 'biz-workspace-001',
+                type: 'workspace_ready',
+                title: 'Workspace status update',
+                message: 'Your reporting workspace setup is in progress. We will notify you once it is ready.',
+                read: false,
+                is_read: false,
+                created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+                link: '/workspace-setup.html'
+            },
+            {
+                id: 'biz-reporting-001',
+                type: 'reporting',
+                title: 'New reporting panels available',
+                message: 'New indicators are available in Sustainability Reporting.',
+                read: true,
+                is_read: true,
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+                link: '/business-reporting.html'
             }
         ];
     }
@@ -540,8 +606,11 @@ class DynamicNavigation {
         this.markNotificationRead(notificationId);
 
         // Check notification type and handle accordingly
+        const isBusiness = this.userType === 'business';
         const reviewNotifications = ['review_accepted', 'review_rejected', 'review_approved'];
-        const detailNotifications = ['credits_awarded', 'peer_joined', 'new_panel'];
+        const detailNotifications = isBusiness
+            ? ['subscription', 'workspace_ready', 'reporting']
+            : ['credits_awarded', 'peer_joined', 'new_panel'];
 
         if (reviewNotifications.includes(notification.type)) {
             // Show detailed modal for review notifications
@@ -729,13 +798,17 @@ class DynamicNavigation {
             this.updateNotificationBadge(this.notifications);
             
             // Save read state to localStorage for persistence
-            this.saveReadState(notificationId);
+            this.saveReadState(notificationId, this.userType);
             
             // Only update in database if it's a real UUID (not a mock/demo notification)
             const isMockNotification = notificationId.startsWith('mock-') || notificationId.startsWith('demo-');
             if (!isMockNotification) {
                 try {
-                    window.championDB?.markAsRead?.(notificationId);
+                    if (this.userType === 'business') {
+                        window.supabaseService?.markBusinessNotificationRead?.(notificationId);
+                    } else {
+                        window.championDB?.markAsRead?.(notificationId);
+                    }
                 } catch (err) {
                     console.warn('Could not update notification in DB:', err);
                 }
@@ -752,7 +825,7 @@ class DynamicNavigation {
                 n.read = true;
                 n.is_read = true;
                 // Save each read state to localStorage
-                this.saveReadState(n.id);
+                this.saveReadState(n.id, this.userType);
             });
             this.renderNotifications(this.notifications);
             this.updateNotificationBadge(this.notifications);
@@ -763,7 +836,16 @@ class DynamicNavigation {
             );
             if (hasRealNotifications) {
                 try {
-                    window.championDB?.markAllAsRead?.();
+                    if (this.userType === 'business') {
+                        window.getSupabase?.().auth.getSession().then(({ data }) => {
+                            const authUserId = data?.session?.user?.id;
+                            if (authUserId) {
+                                window.supabaseService?.markAllBusinessNotificationsRead?.(authUserId);
+                            }
+                        });
+                    } else {
+                        window.championDB?.markAllAsRead?.();
+                    }
                 } catch (err) {
                     console.warn('Could not update notifications in DB:', err);
                 }
@@ -785,6 +867,9 @@ class DynamicNavigation {
             credits_awarded: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="6"></line></svg>',
             peer_joined: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
             new_panel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
+            reporting: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
+            subscription: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="6"></line></svg>',
+            workspace_ready: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
             admin_message: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>',
             system: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
             default: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path></svg>'
@@ -804,6 +889,9 @@ class DynamicNavigation {
             credits_awarded: 'icon-warning',
             peer_joined: 'icon-primary',
             new_panel: 'icon-info',
+            reporting: 'icon-primary',
+            subscription: 'icon-warning',
+            workspace_ready: 'icon-success',
             admin_message: 'icon-primary',
             system: 'icon-info'
         };

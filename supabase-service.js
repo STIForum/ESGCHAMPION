@@ -854,6 +854,128 @@ class SupabaseService {
         }
     }
 
+    /**
+     * Get notifications for a business user by auth user id
+     */
+    async getBusinessNotifications(authUserId, limit = 20) {
+        try {
+            const { data: businessUser, error: businessError } = await this.client
+                .from('business_users')
+                .select('id')
+                .eq('auth_user_id', authUserId)
+                .maybeSingle();
+
+            if (businessError || !businessUser?.id) {
+                return [];
+            }
+
+            const { data, error } = await this.client
+                .from('business_notifications')
+                .select('*')
+                .eq('business_user_id', businessUser.id)
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                // Table may not exist yet - return empty and let UI fallback
+                console.warn('Business notifications not available:', error.message);
+                return [];
+            }
+
+            return data || [];
+        } catch (err) {
+            console.warn('Failed to load business notifications:', err.message);
+            return [];
+        }
+    }
+
+    /**
+     * Mark business notification as read
+     */
+    async markBusinessNotificationRead(notificationId) {
+        try {
+            const { error } = await this.client
+                .from('business_notifications')
+                .update({ is_read: true, updated_at: new Date().toISOString() })
+                .eq('id', notificationId);
+
+            if (error) {
+                console.warn('Could not mark business notification as read:', error.message);
+                return false;
+            }
+
+            return true;
+        } catch (err) {
+            console.warn('markBusinessNotificationRead failed:', err.message);
+            return false;
+        }
+    }
+
+    /**
+     * Mark all business notifications as read for auth user
+     */
+    async markAllBusinessNotificationsRead(authUserId) {
+        try {
+            const { data: businessUser, error: businessError } = await this.client
+                .from('business_users')
+                .select('id')
+                .eq('auth_user_id', authUserId)
+                .maybeSingle();
+
+            if (businessError || !businessUser?.id) {
+                return 0;
+            }
+
+            const { data, error } = await this.client
+                .from('business_notifications')
+                .update({ is_read: true, updated_at: new Date().toISOString() })
+                .eq('business_user_id', businessUser.id)
+                .eq('is_read', false)
+                .select('id');
+
+            if (error) {
+                console.warn('Could not mark all business notifications as read:', error.message);
+                return 0;
+            }
+
+            return (data || []).length;
+        } catch (err) {
+            console.warn('markAllBusinessNotificationsRead failed:', err.message);
+            return 0;
+        }
+    }
+
+    /**
+     * Create notification for business user
+     */
+    async createBusinessNotification(businessUserId, type, title, message, link = null, data = null) {
+        try {
+            const { data: result, error } = await this.client
+                .from('business_notifications')
+                .insert({
+                    business_user_id: businessUserId,
+                    type,
+                    title,
+                    message,
+                    link,
+                    data,
+                    is_read: false
+                })
+                .select()
+                .single();
+
+            if (error) {
+                console.warn('Could not create business notification:', error.message);
+                return null;
+            }
+
+            return result;
+        } catch (err) {
+            console.warn('createBusinessNotification failed:', err.message);
+            return null;
+        }
+    }
+
     // =====================================================
     // PROGRESS TRACKING
     // =====================================================
