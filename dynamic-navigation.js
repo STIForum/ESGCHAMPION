@@ -19,54 +19,6 @@ class DynamicNavigation {
         
         // Wait for auth to be ready
         this.auth = window.championAuth;
-            navActions.innerHTML = `
-                <div class="nav-notifications">
-                    <button class="btn btn-icon btn-ghost" id="notifications-btn" title="Notifications">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                        </svg>
-                        <span class="notification-badge hidden" id="notification-count">0</span>
-                    </button>
-                    <div class="notifications-dropdown hidden" id="notifications-dropdown">
-                        <div class="notifications-header">
-                            <h4>Notifications</h4>
-                        </div>
-                        <div class="notifications-list" id="notifications-list">
-                            <div class="notifications-empty">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2">
-                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                </svg>
-                                <p>No new notifications</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="nav-user-menu">
-                    <button class="user-menu-trigger" id="user-menu-btn">
-                        <div class="avatar">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                        </div>
-                    </button>
-                    <div class="user-dropdown hidden" id="user-dropdown">
-                        <div class="user-dropdown-header">
-                            <strong>${businessUser?.company_name || 'Business User'}</strong>
-                            <span class="text-muted">${businessUser?.business_email || ''}</span>
-                        </div>
-                        <div class="user-dropdown-divider"></div>
-                        <a href="/business-dashboard.html" class="user-dropdown-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                            Dashboard
-                        </a>
-                        <div class="user-dropdown-divider"></div>
-                        <a href="#" class="user-dropdown-item text-error" onclick="event.preventDefault(); window.getSupabase().auth.signOut().then(() => window.location.href = '/')">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                            Logout
-                        </a>
-                    </div>
-                </div>
-            `;
             this.setupUserDropdown();
             this.setupNotificationsDropdown();
             setTimeout(() => { this.loadNotifications(); }, 100);
