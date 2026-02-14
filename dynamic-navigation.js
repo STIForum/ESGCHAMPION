@@ -18,44 +18,24 @@ class DynamicNavigation {
         if (this.initialized) return;
         
         // Wait for auth to be ready
-        /**
-         * Dynamic Navigation System
-         * ESG Champions Platform
-         * 
-         * Handles role-based navigation and menu state
-         */
+        this.auth = window.championAuth;
 
-        class DynamicNavigation {
-            constructor() {
-                this.auth = null;
-                this.initialized = false;
-            }
+        // Initial render
+        await this.updateNavigation();
 
-            /**
-             * Initialize navigation
-             */
-            async init() {
-                if (this.initialized) return;
-        
-                // Wait for auth to be ready
-                this.auth = window.championAuth;
+        // Listen for auth changes
+        this.auth.addAuthListener(() => {
+            this.updateNavigation();
+        });
 
-                // Initial render
-                await this.updateNavigation();
-        
-                // Listen for auth changes
-                this.auth.addAuthListener(() => {
-                    this.updateNavigation();
-                });
+        // Set up mobile menu
+        this.setupMobileMenu();
 
-                // Set up mobile menu
-                this.setupMobileMenu();
-        
-                // Set up header scroll effect
-                this.setupHeaderScroll();
-        
-                this.initialized = true;
-            }
+        // Set up header scroll effect
+        this.setupHeaderScroll();
+
+        this.initialized = true;
+    }
 
             /**
              * Update navigation based on auth state
