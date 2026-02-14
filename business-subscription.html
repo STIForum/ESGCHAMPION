@@ -3,18 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subscription Required | STIF</title>
+    <meta name="description" content="Business Subscription - STIF SME Portal">
+    <title>Subscription | STIF</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 </head>
 <body>
-    <main class="flex-center" style="min-height:100vh;background:var(--gray-50);padding:24px;">
-        <div class="widget" style="max-width:560px;width:100%;">
-            <div class="widget-body" style="text-align:center;">
-                <h1 style="margin-bottom:12px;">Subscription required</h1>
-                <p class="text-secondary" style="margin-bottom:18px;">Your subscription is not active. Please contact support or complete checkout to continue reporting.</p>
-                <a href="/business-dashboard.html" class="btn btn-primary">Back to dashboard</a>
+    <main style="min-height:100vh;background:var(--gray-50);padding:24px;">
+        <div class="container" style="max-width: 980px;">
+            <div class="mb-6">
+                <h1>Choose Your Subscription</h1>
+                <p class="text-secondary">Activate your business subscription to continue reporting and access your SharePoint workspace.</p>
             </div>
+
+            <div class="widget mb-6">
+                <div class="widget-body" style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);flex-wrap:wrap;">
+                    <div>
+                        <div class="text-secondary" style="font-size:var(--text-sm);">Current status</div>
+                        <strong id="current-subscription-status" style="font-size:var(--text-lg);">Checking...</strong>
+                    </div>
+                    <a href="/business-dashboard.html" class="btn btn-ghost">Back to dashboard</a>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card" style="display:flex;flex-direction:column;gap:var(--space-3);">
+                    <div class="badge badge-primary" style="width:fit-content;">Monthly</div>
+                    <h3>SME Reporting Monthly</h3>
+                    <p class="text-secondary">Flexible monthly access for ESG indicator reporting and workspace support.</p>
+                    <div style="font-size:var(--text-2xl);font-weight:700;">$49<span style="font-size:var(--text-sm);font-weight:500;color:var(--gray-500);"> / month</span></div>
+                    <button class="btn btn-primary subscribe-btn" data-plan="monthly">Subscribe Monthly</button>
+                </div>
+
+                <div class="feature-card" style="display:flex;flex-direction:column;gap:var(--space-3);border:2px solid var(--primary-500);">
+                    <div class="badge badge-success" style="width:fit-content;">Recommended</div>
+                    <h3>SME Reporting Annual</h3>
+                    <p class="text-secondary">Best value annual plan with full reporting access and onboarding support.</p>
+                    <div style="font-size:var(--text-2xl);font-weight:700;">$499<span style="font-size:var(--text-sm);font-weight:500;color:var(--gray-500);"> / year</span></div>
+                    <button class="btn btn-primary subscribe-btn" data-plan="annual">Subscribe Annual</button>
+                </div>
+            </div>
+
+            <div id="subscription-message" class="mt-6"></div>
         </div>
     </main>
+
+    <script src="supabase-service.js"></script>
+    <script src="business-subscription.js"></script>
 </body>
 </html>
