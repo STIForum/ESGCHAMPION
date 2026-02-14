@@ -70,7 +70,6 @@ class DynamicNavigation {
             this.setupUserDropdown();
             this.setupNotificationsDropdown();
             setTimeout(() => { this.loadNotifications(); }, 100);
-                menuHTML += `<li><a href="/business-settings.html" class="nav-link ${this.isActive('/business-settings.html')}">Settings</a></li>`;
             } else {
                 // Authenticated champion user links
                 menuHTML += `<li><a href="/champion-dashboard.html" class="nav-link ${this.isActive('/champion-dashboard.html')}">Dashboard</a></li>`;
