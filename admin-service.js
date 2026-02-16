@@ -277,6 +277,20 @@ class AdminService {
     }
 
     /**
+     * Get all business users
+     */
+    async getAllBusinessUsers() {
+        const client = window.getSupabase();
+        const { data, error } = await client
+            .from('business_users')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    }
+
+    /**
      * Update champion (admin privileges)
      */
     async updateChampion(championId, updates) {

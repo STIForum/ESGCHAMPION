@@ -41,6 +41,7 @@ class AdminReviewPage {
         this.panelsList = [];
         this.indicatorsList = [];
         this.championsList = [];
+        this.businessUsersList = [];
         this.frameworksList = [];
         this.itemsPerPage = 20;
 
@@ -49,7 +50,8 @@ class AdminReviewPage {
             frameworks: { search: '', status: 'all', page: 1 },
             panels: { search: '', framework: 'all', page: 1 },
             indicators: { search: '', framework: 'all', page: 1 },
-            champions: { search: '', role: 'all', page: 1 }
+            champions: { search: '', role: 'all', page: 1 },
+            'business-users': { search: '', subscription: 'all', page: 1 }
         };
 
         this.labelMaps = {
@@ -1021,6 +1023,9 @@ class AdminReviewPage {
 
         bindInput('champion-search', 'champions', 'search');
         bindSelect('champion-filter-role', 'champions', 'role');
+
+        bindInput('business-user-search', 'business-users', 'search');
+        bindSelect('business-user-filter-subscription', 'business-users', 'subscription');
     }
 
     renderTabData(tabKey = this.currentTab) {
@@ -1040,6 +1045,9 @@ class AdminReviewPage {
             case 'champions':
                 this.renderChampionsList();
                 break;
+            case 'business-users':
+                this.renderBusinessUsersList();
+                break;
         }
     }
 
@@ -1057,6 +1065,7 @@ class AdminReviewPage {
             case 'panels': return this.getFilteredPanels().length;
             case 'indicators': return this.getFilteredIndicators().length;
             case 'champions': return this.getFilteredChampions().length;
+            case 'business-users': return this.getFilteredBusinessUsers().length;
             default: return 0;
         }
     }
@@ -1158,6 +1167,21 @@ class AdminReviewPage {
         });
     }
 
+    getFilteredBusinessUsers() {
+        const { search = '', subscription = 'all' } = this.tabFilters['business-users'] || {};
+        const q = search.toLowerCase();
+        return (this.businessUsersList || []).filter((user) => {
+            const subscriptionStatus = String(user.subscription_status || 'inactive').toLowerCase();
+            const subscriptionMatch = subscription === 'all' || subscriptionStatus === subscription;
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase();
+            const searchMatch = !q ||
+                fullName.includes(q) ||
+                String(user.business_email || '').toLowerCase().includes(q) ||
+                String(user.company_name || '').toLowerCase().includes(q);
+            return subscriptionMatch && searchMatch;
+        });
+    }
+
     populateFrameworkFilterSelects() {
         const frameworkSelectIds = [
             'panel-filter-framework',
@@ -1219,6 +1243,9 @@ class AdminReviewPage {
                 break;
             case 'champions':
                 await this.loadChampions();
+                break;
+            case 'business-users':
+                await this.loadBusinessUsers();
                 break;
         }
     }
@@ -1478,6 +1505,20 @@ class AdminReviewPage {
         }
     }
 
+    async loadBusinessUsers() {
+        const container = document.getElementById('business-users-list');
+        if (!container) return;
+        container.innerHTML = '<div class="loading-spinner" style="margin: var(--space-8) auto;"></div>';
+
+        try {
+            this.businessUsersList = await window.adminService.getAllBusinessUsers();
+            this.renderBusinessUsersList();
+        } catch (error) {
+            console.error('Error loading business users:', error);
+            container.innerHTML = '<p class="text-error">Failed to load business users.</p>';
+        }
+    }
+
     renderChampionsList() {
         const container = document.getElementById('champions-list');
         if (!container) return;
@@ -1537,6 +1578,58 @@ class AdminReviewPage {
                 </table>
             </div>
             ${this.renderPagination('champions', pageMeta)}
+        `;
+    }
+
+    renderBusinessUsersList() {
+        const container = document.getElementById('business-users-list');
+        if (!container) return;
+
+        const filtered = this.getFilteredBusinessUsers();
+        const pageMeta = this.paginateItems(filtered, 'business-users');
+        const pageItems = pageMeta.pagedItems;
+
+        if (!filtered.length) {
+            container.innerHTML = '<p class="text-secondary">No business users match your filters.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Company</th>
+                            <th>Industry</th>
+                            <th>Subscription</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pageItems.map((user) => {
+                            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || '—';
+                            const subscriptionStatus = String(user.subscription_status || 'inactive').toLowerCase();
+                            const accountStatus = String(user.account_status || 'incomplete').toLowerCase();
+                            const subscriptionBadge = subscriptionStatus === 'active' ? 'success' : (subscriptionStatus === 'trial' ? 'warning' : 'error');
+                            const accountBadge = accountStatus === 'complete' ? 'success' : 'warning';
+
+                            return `
+                                <tr>
+                                    <td><strong>${fullName}</strong></td>
+                                    <td>${user.business_email || '—'}</td>
+                                    <td>${user.company_name || '—'}</td>
+                                    <td>${user.industry || '—'}</td>
+                                    <td><span class="badge badge-${subscriptionBadge}">${subscriptionStatus.charAt(0).toUpperCase() + subscriptionStatus.slice(1)}</span></td>
+                                    <td><span class="badge badge-${accountBadge}">${accountStatus.charAt(0).toUpperCase() + accountStatus.slice(1)}</span></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${this.renderPagination('business-users', pageMeta)}
         `;
     }
 

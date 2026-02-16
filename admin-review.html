@@ -173,6 +173,7 @@
                 <button class="admin-tab" data-tab="panels">Panels</button>
                 <button class="admin-tab" data-tab="indicators">Indicators</button>
                 <button class="admin-tab" data-tab="champions">Champions</button>
+                <button class="admin-tab" data-tab="business-users">Business Users</button>
             </div>
 
             <!-- Loading State -->
@@ -319,6 +320,31 @@
                         </div>
                     </div>
                     <div id="champions-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Business Users Tab -->
+                <div id="tab-business-users" class="tab-content hidden">
+                    <h3 class="mb-4">Business Users</h3>
+                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-input" id="business-user-search" placeholder="Search by name, email or company">
+                            </div>
+                            <div style="min-width: 200px;">
+                                <label class="form-label">Subscription</label>
+                                <select class="form-select" id="business-user-filter-subscription">
+                                    <option value="all">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="trial">Trial</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="business-users-list">
                         <!-- Populated by JS -->
                     </div>
                 </div>
