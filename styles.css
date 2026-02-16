@@ -1157,10 +1157,10 @@ p {
    ===================================================== */
 .hero {
     position: relative;
-    min-height: 100vh;
+    min-height: 90vh;
     display: flex;
     align-items: center;
-    padding-top: 100px; /* Adjusted for 80px logo */
+    padding-top: 70px; /* Shift hero content up */
     overflow: hidden;
 }
 
@@ -1215,6 +1215,13 @@ p {
     font-size: var(--text-xl);
     color: var(--gray-600);
     max-width: 600px;
+    margin-bottom: var(--space-4);
+}
+
+.hero-support-text {
+    font-size: var(--text-base);
+    color: var(--gray-600);
+    max-width: 760px;
     margin-bottom: var(--space-8);
 }
 
