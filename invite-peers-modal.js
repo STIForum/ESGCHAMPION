@@ -245,17 +245,17 @@ Thanks!`;
 
         try {
             // Get current user ID
-            const currentUser = window.supabaseService?.currentUser;
-            const championId = currentUser?.id;
+            const championId = window.championAuth?.getUser?.()?.id;
+            const client = window.getSupabase?.();
 
-            if (championId && window.supabaseService?.supabase) {
+            if (championId && client) {
                 // Save invitations to database
                 const invitationPromises = validation.emails.map(async (email) => {
                     const token = this.generateInviteToken();
                     const expiresAt = new Date();
                     expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 
-                    return window.supabaseService.supabase
+                    return client
                         .from('invitations')
                         .insert({
                             email: email.toLowerCase(),

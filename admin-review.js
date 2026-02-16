@@ -433,7 +433,7 @@ class AdminReviewPage {
 
             // Get submission details for notification
             const submission = this.selectedPanelReview;
-            const championId = submission?.reviewer_user_id || submission?.championId;
+            const championId = submission?.champion_id || submission?.reviewer_user_id || submission?.championId;
             const panelName = submission?.panels?.name || submission?.panelName || 'Panel';
 
             // Update submission and indicator reviews in database
@@ -523,7 +523,7 @@ class AdminReviewPage {
             
             // Get submission details for notification
             const submission = this.selectedPanelReview;
-            const championId = submission?.reviewer_user_id || submission?.championId;
+            const championId = submission?.champion_id || submission?.reviewer_user_id || submission?.championId;
             const panelName = submission?.panels?.name || submission?.panelName || 'Panel';
 
             // Update in database with rejection comment
@@ -3378,14 +3378,15 @@ class AdminReviewPage {
      * Send notification to all champions about a new panel
      */
     async sendNewPanelNotifications(savedPanel, panelTitle) {
-        if (!window.supabaseService || !window.supabaseService.supabase) {
+        const client = window.getSupabase?.();
+        if (!window.supabaseService || !client) {
             console.warn('Supabase service not available for notifications');
             return;
         }
 
         try {
             // Get all active champions
-            const { data: champions, error } = await window.supabaseService.supabase
+            const { data: champions, error } = await client
                 .from('champions')
                 .select('id')
                 .eq('is_active', true);

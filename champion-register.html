@@ -620,10 +620,11 @@
          */
         async function handleInvitationAcceptance(token, newUserId, newUserName) {
             try {
-                if (!window.supabaseService?.supabase) return;
+                const client = window.getSupabase?.();
+                if (!client) return;
 
                 // Find the invitation
-                const { data: invitation, error } = await window.supabaseService.supabase
+                const { data: invitation, error } = await client
                     .from('invitations')
                     .select('id, invited_by, email')
                     .eq('token', token)
@@ -636,14 +637,14 @@
                 }
 
                 // Update invitation status
-                await window.supabaseService.supabase
+                await client
                     .from('invitations')
                     .update({ status: 'accepted' })
                     .eq('id', invitation.id);
 
                 // Send notification to the inviter
-                if (invitation.invited_by && window.championDB?.createNotification) {
-                    await window.championDB.createNotification(
+                if (invitation.invited_by && window.supabaseService?.createNotification) {
+                    await window.supabaseService.createNotification(
                         invitation.invited_by,
                         'peer_joined',
                         'Your Peer Joined! 🎉',
