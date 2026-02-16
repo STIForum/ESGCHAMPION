@@ -3418,8 +3418,34 @@ class AdminReviewPage {
                 })
             );
 
-            await Promise.allSettled(notificationPromises);
-            console.log(`Sent new panel notifications to ${champions.length} champions`);
+            // Notify business users as well (reporting updates)
+            const { data: businessUsers, error: businessError } = await client
+                .from('business_users')
+                .select('id');
+
+            if (businessError) {
+                console.warn('Failed to fetch business users for notification:', businessError);
+            }
+
+            const businessNotificationPromises = (businessUsers || []).map((businessUser) =>
+                window.supabaseService?.createBusinessNotification?.(
+                    businessUser.id,
+                    'reporting',
+                    'New reporting panel available',
+                    `A new reporting panel "${panelTitle}" has been added. Open Sustainability Reporting to review the latest requirements.`,
+                    '/business-reporting.html',
+                    {
+                        panel_id: savedPanel?.id,
+                        panel_name: panelTitle
+                    }
+                ).catch(err => {
+                    console.warn(`Failed to notify business user ${businessUser.id}:`, err);
+                    return null;
+                })
+            );
+
+            await Promise.allSettled([...notificationPromises, ...businessNotificationPromises]);
+            console.log(`Sent new panel notifications to ${champions.length} champions and ${(businessUsers || []).length} business users`);
         } catch (err) {
             console.warn('Error sending new panel notifications:', err);
         }
