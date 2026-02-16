@@ -983,8 +983,13 @@ class AdminReviewPage {
 
         // Load tab-specific content
         switch (tabName) {
-            case 'panels':
+            case 'frameworks':
                 await this.loadFrameworks();
+                break;
+            case 'panels':
+                if (!this.frameworksList || this.frameworksList.length === 0) {
+                    await this.loadFrameworks();
+                }
                 await this.loadPanels();
                 break;
             case 'indicators':

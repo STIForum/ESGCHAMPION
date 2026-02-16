@@ -169,6 +169,7 @@
                     Panel Reviews
                     <span class="badge badge-warning" id="panel-pending-count" style="margin-left: var(--space-2);">0</span>
                 </button>
+                <button class="admin-tab" data-tab="frameworks">Frameworks</button>
                 <button class="admin-tab" data-tab="panels">Panels</button>
                 <button class="admin-tab" data-tab="indicators">Indicators</button>
                 <button class="admin-tab" data-tab="champions">Champions</button>
@@ -188,29 +189,34 @@
                     </div>
                 </div>
 
+                <!-- Frameworks Tab -->
+                <div id="tab-frameworks" class="tab-content hidden">
+                    <div class="flex-between mb-4">
+                        <h3>Frameworks</h3>
+                        <button class="btn btn-secondary" id="add-framework-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Framework
+                        </button>
+                    </div>
+                    <div id="frameworks-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
                 <!-- Panels Tab -->
                 <div id="tab-panels" class="tab-content hidden">
                     <div class="flex-between mb-4">
                         <h3>ESG Panels</h3>
-                        <div style="display: flex; gap: var(--space-2);">
-                            <button class="btn btn-secondary" id="add-framework-btn">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                                Add Framework
-                            </button>
-                            <button class="btn btn-primary" id="add-panel-btn">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                                Add Panel
-                            </button>
-                        </div>
-                    </div>
-                    <div id="frameworks-list" class="mb-6">
-                        <!-- Populated by JS -->
+                        <button class="btn btn-primary" id="add-panel-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Panel
+                        </button>
                     </div>
                     <div id="panels-list">
                         <!-- Populated by JS -->
