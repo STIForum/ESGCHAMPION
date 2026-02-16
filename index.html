@@ -65,32 +65,51 @@
     <section class="hero">
         <div class="hero-bg"></div>
         <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title animate-fade-in">
-                    Democratizing sustainability for every business.
-                </h1>
-                <p class="hero-subtitle animate-fade-in" style="animation-delay: 0.2s">
-                    Accelerate your green journey with STIF's essential tools.
-                </p>
-                <p class="hero-support-text animate-fade-in" style="animation-delay: 0.3s">
-                    At STIF — the Sustainability Technology and Innovation Forum, we help both ESG Champions and SMEs accelerate meaningful sustainability outcomes through practical tools and expert support.
-                </p>
-                <div class="hero-actions animate-fade-in" style="animation-delay: 0.4s">
-                    <a href="#" class="btn btn-primary btn-lg" id="hero-get-started-btn">
-                        Explore Tools
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </a>
-                    <a href="/about.html" class="btn btn-secondary btn-lg">Learn More</a>
+            <div class="hero-layout">
+                <div class="hero-content">
+                    <h1 class="hero-title animate-fade-in">
+                        Democratizing sustainability for every business.
+                    </h1>
+                    <p class="hero-subtitle animate-fade-in" style="animation-delay: 0.2s">
+                        Accelerate your green journey with STIF's essential tools.
+                    </p>
+                    <p class="hero-support-text animate-fade-in" style="animation-delay: 0.3s">
+                        At STIF — the Sustainability Technology and Innovation Forum, we help both ESG Champions and SMEs accelerate meaningful sustainability outcomes through practical tools and expert support.
+                    </p>
+                    <div class="hero-actions animate-fade-in" style="animation-delay: 0.4s">
+                        <a href="#" class="btn btn-primary btn-lg" id="hero-get-started-btn">
+                            Get Started
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </a>
+                        <a href="#" class="btn btn-secondary btn-lg">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Schedule a Call
+                        </a>
+                    </div>
+                    <div class="hero-trust-row animate-fade-in" style="animation-delay: 0.5s">
+                        <span>For ESG Champions</span>
+                        <span>For SMEs & Businesses</span>
+                        <span>Aligned to GRI • ESRS • IFRS</span>
+                    </div>
+                </div>
+                <div class="hero-visual-card animate-fade-in" style="animation-delay: 0.35s">
+                    <img src="assets/images/Group 1244831370.png" alt="STIF sustainability ecosystem visual" loading="lazy">
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 0;">
+    <section class="section landing-section-muted" style="padding-top: var(--space-8);">
         <div class="container text-center">
+            <p class="section-eyebrow">Business Enablement</p>
             <h2 style="margin-bottom: var(--space-6);">Elevate your path to sustainability</h2>
             <div class="landing-pill-tabs">
                 <span class="active">Level Up Green</span>
@@ -120,6 +139,7 @@
 
     <section class="section" style="padding-top: 0;">
         <div class="container text-center">
+            <p class="section-eyebrow">Community & Collaboration</p>
             <div class="landing-pill-tabs" style="margin-bottom: var(--space-5);">
                 <span>Level Up Green</span>
                 <span class="active">Impact Collective</span>
@@ -173,6 +193,7 @@
 
     <section class="section" style="background: white;">
         <div class="container text-center">
+            <p class="section-eyebrow">Platform Tools</p>
             <div class="landing-pill-tabs" style="margin-bottom: var(--space-5);">
                 <span>Level Up Green</span>
                 <span>Impact Collective</span>
@@ -228,6 +249,7 @@
     <section class="section" style="padding-top: 0;">
         <div class="container">
             <div class="text-center mb-8">
+                <p class="section-eyebrow">Champion Impact</p>
                 <h2>For ESG Champions</h2>
                 <p class="text-secondary" style="max-width: 700px; margin: var(--space-4) auto 0;">
                     Champion contributions remain central to STIF. Review indicators, validate panel content, and grow your profile through expert collaboration.
@@ -479,6 +501,53 @@
     </div>
 
     <style>
+        .hero-layout {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: var(--space-8);
+            align-items: center;
+        }
+        .hero-visual-card {
+            background: linear-gradient(180deg, #eef7ff 0%, #f8fcff 100%);
+            border: 1px solid #deecf8;
+            border-radius: var(--radius-2xl);
+            padding: var(--space-5);
+            box-shadow: var(--shadow-sm);
+        }
+        .hero-visual-card img {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+        .hero-trust-row {
+            margin-top: var(--space-5);
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+            color: var(--gray-500);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+        .hero-trust-row span {
+            background: #f3f8fc;
+            border: 1px solid #e2edf6;
+            border-radius: var(--radius-full);
+            padding: 6px 12px;
+        }
+        .section-eyebrow {
+            margin-bottom: var(--space-2);
+            color: var(--primary-700);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 12px;
+        }
+        .landing-section-muted {
+            background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
+            border-top: 1px solid #eef3f8;
+            border-bottom: 1px solid #eef3f8;
+        }
         .landing-pill-tabs {
             display: inline-flex;
             align-items: center;
@@ -509,8 +578,8 @@
             background: white;
             border-radius: var(--radius-2xl);
             padding: clamp(1.25rem, 3vw, 2rem);
-            box-shadow: var(--shadow);
-            border: 1px solid var(--gray-100);
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e7f0f7;
             display: grid;
             gap: var(--space-8);
             grid-template-columns: 0.9fr 1.1fr;
@@ -564,11 +633,16 @@
         .landing-info-card {
             background: white;
             border-radius: var(--radius-xl);
-            border: 1px solid var(--gray-100);
+            border: 1px solid #e6edf4;
             padding: var(--space-6);
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow);
             text-align: left;
             min-height: 240px;
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .landing-info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
         }
         .landing-info-card h4 {
             margin-bottom: var(--space-2);
@@ -586,6 +660,9 @@
         .landing-tool-card {
             text-align: center;
             padding: var(--space-3);
+            background: #fbfdff;
+            border-radius: var(--radius-xl);
+            border: 1px solid #eaf1f7;
         }
         .landing-tool-orb {
             width: 190px;
@@ -614,6 +691,7 @@
             font-size: var(--text-lg);
         }
         @media (max-width: 1024px) {
+            .hero-layout,
             .business-focus-card {
                 grid-template-columns: 1fr;
             }
@@ -623,6 +701,13 @@
             }
         }
         @media (max-width: 640px) {
+            .hero-trust-row {
+                gap: var(--space-2);
+            }
+            .hero-trust-row span {
+                width: 100%;
+                text-align: center;
+            }
             .landing-card-grid,
             .landing-tools-grid {
                 grid-template-columns: 1fr;
