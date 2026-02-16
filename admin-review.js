@@ -39,6 +39,7 @@ class AdminReviewPage {
         this.currentEditingPanel = null;
         this.currentEditingIndicator = null;
         this.panelsList = [];
+        this.frameworksList = [];
 
         this.labelMaps = {
             sme_size_band: {
@@ -674,13 +675,22 @@ class AdminReviewPage {
 
         // Add Panel Modal
         const addPanelBtn = document.getElementById('add-panel-btn');
+        const addFrameworkBtn = document.getElementById('add-framework-btn');
         const addPanelModalClose = document.getElementById('add-panel-modal-close');
         const addPanelModalBackdrop = document.getElementById('add-panel-modal-backdrop');
         const savePanelBtn = document.getElementById('save-panel-btn');
         const cancelPanelBtn = document.getElementById('cancel-panel-btn');
 
+        const addFrameworkModalClose = document.getElementById('add-framework-modal-close');
+        const addFrameworkModalBackdrop = document.getElementById('add-framework-modal-backdrop');
+        const saveFrameworkBtn = document.getElementById('save-framework-btn');
+        const cancelFrameworkBtn = document.getElementById('cancel-framework-btn');
+
         if (addPanelBtn) {
             addPanelBtn.addEventListener('click', () => this.openAddPanelModal());
+        }
+        if (addFrameworkBtn) {
+            addFrameworkBtn.addEventListener('click', () => this.openAddFrameworkModal());
         }
         if (addPanelModalClose) {
             addPanelModalClose.addEventListener('click', () => this.closeAddPanelModal());
@@ -699,11 +709,29 @@ class AdminReviewPage {
             cancelPanelBtn.addEventListener('click', () => this.closeAddPanelModal());
         }
 
+        if (addFrameworkModalClose) {
+            addFrameworkModalClose.addEventListener('click', () => this.closeAddFrameworkModal());
+        }
+        if (addFrameworkModalBackdrop) {
+            addFrameworkModalBackdrop.addEventListener('click', (e) => {
+                if (e.target === addFrameworkModalBackdrop) {
+                    this.closeAddFrameworkModal();
+                }
+            });
+        }
+        if (saveFrameworkBtn) {
+            saveFrameworkBtn.addEventListener('click', () => this.saveFramework());
+        }
+        if (cancelFrameworkBtn) {
+            cancelFrameworkBtn.addEventListener('click', () => this.closeAddFrameworkModal());
+        }
+
         // Escape key to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closePanelReviewModal();
                 this.closeAddPanelModal();
+                this.closeAddFrameworkModal();
                 this.closeEditPanelModal();
                 this.closeDeleteConfirmModal();
                 this.closeAddIndicatorModal();
@@ -716,6 +744,14 @@ class AdminReviewPage {
         const addPanelForm = document.getElementById('add-panel-form');
         if (addPanelForm) {
             addPanelForm.querySelectorAll('input, select, textarea').forEach(field => {
+                field.addEventListener('input', () => this.clearFieldError(field));
+                field.addEventListener('change', () => this.clearFieldError(field));
+            });
+        }
+
+        const addFrameworkForm = document.getElementById('add-framework-form');
+        if (addFrameworkForm) {
+            addFrameworkForm.querySelectorAll('input, select').forEach(field => {
                 field.addEventListener('input', () => this.clearFieldError(field));
                 field.addEventListener('change', () => this.clearFieldError(field));
             });
@@ -948,6 +984,7 @@ class AdminReviewPage {
         // Load tab-specific content
         switch (tabName) {
             case 'panels':
+                await this.loadFrameworks();
                 await this.loadPanels();
                 break;
             case 'indicators':
@@ -969,7 +1006,8 @@ class AdminReviewPage {
             // Helper to get framework display
             const getFramework = (panel) => {
                 const fw = (panel.primary_framework || panel.framework || '').toLowerCase();
-                return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || 'N/A';
+                const fromList = (this.frameworksList || []).find(f => String(f.code || '').toLowerCase() === fw);
+                return fromList?.name || window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || 'N/A';
             };
             
             container.innerHTML = `
@@ -1009,6 +1047,102 @@ class AdminReviewPage {
             console.error('Error loading panels:', error);
             container.innerHTML = '<p class="text-error">Failed to load panels.</p>';
         }
+    }
+
+    async loadFrameworks() {
+        const container = document.getElementById('frameworks-list');
+        if (container) {
+            container.innerHTML = '<div class="loading-spinner" style="margin: var(--space-4) auto;"></div>';
+        }
+
+        try {
+            const frameworks = await window.adminService.getAllFrameworks();
+            this.frameworksList = frameworks || [];
+
+            // Keep global labels in sync for other pages/components
+            if (!window.FRAMEWORK_LABELS) window.FRAMEWORK_LABELS = {};
+            this.frameworksList.forEach((fw) => {
+                if (fw?.code) {
+                    window.FRAMEWORK_LABELS[String(fw.code).toLowerCase()] = fw.name || String(fw.code).toUpperCase();
+                }
+            });
+
+            this.renderFrameworksList();
+            this.populateFrameworkSelects();
+        } catch (error) {
+            console.error('Error loading frameworks:', error);
+            if (container) {
+                container.innerHTML = '<p class="text-error">Failed to load frameworks.</p>';
+            }
+        }
+    }
+
+    renderFrameworksList() {
+        const container = document.getElementById('frameworks-list');
+        if (!container) return;
+
+        if (!this.frameworksList || this.frameworksList.length === 0) {
+            container.innerHTML = '<p class="text-secondary">No frameworks created yet.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <h4 class="mb-3">Frameworks</h4>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Code</th>
+                            <th>Version</th>
+                            <th>Owner / Publisher</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${this.frameworksList.map((fw) => `
+                            <tr>
+                                <td><strong>${fw.name || '-'}</strong></td>
+                                <td><span class="badge badge-primary">${String(fw.code || '').toUpperCase()}</span></td>
+                                <td>${fw.version || '-'}</td>
+                                <td>${fw.owner_publisher || '-'}</td>
+                                <td><span class="badge badge-${fw.status === 'active' ? 'success' : fw.status === 'draft' ? 'warning' : 'error'}">${fw.status || '-'}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    populateFrameworkSelects() {
+        const selects = [
+            document.getElementById('panel-framework'),
+            document.getElementById('edit-panel-framework')
+        ].filter(Boolean);
+
+        if (!selects.length) return;
+
+        const activeFrameworks = (this.frameworksList || []).filter(fw => fw.status === 'active' || fw.status === 'draft');
+        const fallbackFrameworks = [
+            { code: 'gri', name: 'GRI' },
+            { code: 'esrs', name: 'ESRS' },
+            { code: 'ifrs', name: 'IFRS' }
+        ];
+        const source = activeFrameworks.length ? activeFrameworks : fallbackFrameworks;
+
+        selects.forEach((select) => {
+            const current = select.value;
+            select.innerHTML = '<option value="">Select framework</option>' + source.map(fw => {
+                const code = String(fw.code || '').toLowerCase();
+                const label = fw.name || code.toUpperCase();
+                return `<option value="${code}">${label} (${code.toUpperCase()})</option>`;
+            }).join('');
+
+            if (current) {
+                select.value = String(current).toLowerCase();
+            }
+        });
     }
 
     async loadIndicators() {
@@ -1661,12 +1795,124 @@ class AdminReviewPage {
     }
 
     // =====================================================
+    // ADD FRAMEWORK MODAL
+    // =====================================================
+
+    openAddFrameworkModal() {
+        const backdrop = document.getElementById('add-framework-modal-backdrop');
+        const modal = document.getElementById('add-framework-modal');
+
+        if (backdrop && modal) {
+            backdrop.classList.add('active');
+            modal.classList.add('active');
+            const firstInput = document.getElementById('framework-name');
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+        }
+    }
+
+    closeAddFrameworkModal() {
+        const backdrop = document.getElementById('add-framework-modal-backdrop');
+        const modal = document.getElementById('add-framework-modal');
+
+        if (backdrop && modal) {
+            backdrop.classList.remove('active');
+            modal.classList.remove('active');
+            this.resetAddFrameworkForm();
+        }
+    }
+
+    resetAddFrameworkForm() {
+        const form = document.getElementById('add-framework-form');
+        if (form) {
+            form.reset();
+            form.querySelectorAll('.form-input, .form-select').forEach(field => field.classList.remove('error'));
+            form.querySelectorAll('.form-error').forEach(error => { error.textContent = ''; });
+        }
+    }
+
+    validateAddFrameworkForm() {
+        const requiredFields = [
+            { id: 'framework-name', label: 'Framework Name' },
+            { id: 'framework-code', label: 'Framework Code' },
+            { id: 'framework-version', label: 'Version / Edition' },
+            { id: 'framework-owner', label: 'Owner / Publisher' },
+            { id: 'framework-status', label: 'Status' }
+        ];
+
+        let isValid = true;
+        requiredFields.forEach(({ id, label }) => {
+            const field = document.getElementById(id);
+            if (!field || !String(field.value || '').trim()) {
+                this.showFieldError(id, `${label} is required`);
+                isValid = false;
+            } else {
+                this.clearFieldError(field);
+            }
+        });
+
+        return isValid;
+    }
+
+    async saveFramework() {
+        if (!this.validateAddFrameworkForm()) return;
+
+        const saveBtn = document.getElementById('save-framework-btn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="loading-spinner-sm" style="width: 16px; height: 16px; margin-right: var(--space-2);"></span> Saving...';
+        }
+
+        try {
+            const name = document.getElementById('framework-name').value.trim();
+            const code = document.getElementById('framework-code').value.trim().toLowerCase().replace(/\s+/g, '_');
+            const version = document.getElementById('framework-version').value.trim();
+            const owner = document.getElementById('framework-owner').value.trim();
+            const status = document.getElementById('framework-status').value;
+
+            await window.adminService.createFramework({
+                name,
+                code,
+                version,
+                owner_publisher: owner,
+                status,
+                is_active: status === 'active',
+                order_index: (this.frameworksList?.length || 0) + 1
+            });
+
+            window.showToast?.('Framework created successfully!', 'success');
+            this.closeAddFrameworkModal();
+            await this.loadFrameworks();
+            if (this.currentTab === 'panels') {
+                await this.loadPanels();
+            }
+        } catch (error) {
+            console.error('Error creating framework:', error);
+            if (String(error.message || '').toLowerCase().includes('duplicate')) {
+                this.showFieldError('framework-code', 'Framework Code already exists');
+            }
+            window.showToast?.('Failed to create framework. Please try again.', 'error');
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Save Framework';
+            }
+        }
+    }
+
+    // =====================================================
     // ADD PANEL MODAL
     // =====================================================
 
-    openAddPanelModal() {
+    async openAddPanelModal() {
         const backdrop = document.getElementById('add-panel-modal-backdrop');
         const modal = document.getElementById('add-panel-modal');
+
+        // Ensure framework options are up to date
+        if (!this.frameworksList?.length) {
+            await this.loadFrameworks();
+        } else {
+            this.populateFrameworkSelects();
+        }
         
         if (backdrop && modal) {
             backdrop.classList.add('active');

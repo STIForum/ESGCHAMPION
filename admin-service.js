@@ -159,6 +159,41 @@ class AdminService {
     }
 
     // =====================================================
+    // FRAMEWORKS
+    // =====================================================
+
+    /**
+     * Get all frameworks
+     */
+    async getAllFrameworks() {
+        const client = window.getSupabase();
+        const { data, error } = await client
+            .from('frameworks')
+            .select('*')
+            .order('order_index', { ascending: true })
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+    }
+
+    /**
+     * Create a framework
+     */
+    async createFramework(frameworkData) {
+        const client = window.getSupabase();
+        const { data, error } = await client
+            .from('frameworks')
+            .insert(frameworkData)
+            .select()
+            .single();
+
+        if (error) throw error;
+        await this.logAction('create_framework', 'framework', data.id, { code: frameworkData.code, name: frameworkData.name });
+        return data;
+    }
+
+    // =====================================================
     // INDICATORS
     // =====================================================
 

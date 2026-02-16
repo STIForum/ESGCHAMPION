@@ -192,13 +192,25 @@
                 <div id="tab-panels" class="tab-content hidden">
                     <div class="flex-between mb-4">
                         <h3>ESG Panels</h3>
-                        <button class="btn btn-primary" id="add-panel-btn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Panel
-                        </button>
+                        <div style="display: flex; gap: var(--space-2);">
+                            <button class="btn btn-secondary" id="add-framework-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Add Framework
+                            </button>
+                            <button class="btn btn-primary" id="add-panel-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Add Panel
+                            </button>
+                        </div>
+                    </div>
+                    <div id="frameworks-list" class="mb-6">
+                        <!-- Populated by JS -->
                     </div>
                     <div id="panels-list">
                         <!-- Populated by JS -->
@@ -323,9 +335,6 @@
                             <label class="form-label">Primary Framework <span style="color: var(--error);">*</span></label>
                             <select class="form-select" id="panel-framework" name="primaryFramework" required>
                                 <option value="">Select framework</option>
-                                <option value="gri">GRI</option>
-                                <option value="esrs">ESRS</option>
-                                <option value="ifrs">IFRS</option>
                             </select>
                             <span class="form-error" id="panel-framework-error"></span>
                         </div>
@@ -378,6 +387,59 @@
             <div class="modal-footer" style="display: flex; justify-content: flex-start; gap: var(--space-3);">
                 <button type="button" class="btn btn-primary" id="save-panel-btn">Save Panel</button>
                 <button type="button" class="btn btn-secondary" id="cancel-panel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Framework Modal -->
+    <div class="modal-backdrop" id="add-framework-modal-backdrop">
+        <div class="modal" id="add-framework-modal" style="max-width: 640px; max-height: 90vh;">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Framework</h3>
+                <button class="modal-close" id="add-framework-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <form id="add-framework-form">
+                    <div class="form-group">
+                        <label class="form-label">Framework Name <span style="color: var(--error);">*</span></label>
+                        <input type="text" class="form-input" id="framework-name" placeholder="e.g., GRI Standards" required>
+                        <span class="form-error" id="framework-name-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Framework Code <span style="color: var(--error);">*</span></label>
+                        <input type="text" class="form-input" id="framework-code" placeholder="e.g., GRI, VSME, ISSB_S1" required>
+                        <span class="form-error" id="framework-code-error"></span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label">Version / Edition <span style="color: var(--error);">*</span></label>
+                            <input type="text" class="form-input" id="framework-version" placeholder="e.g., 2024, 1.1.1" required>
+                            <span class="form-error" id="framework-version-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status <span style="color: var(--error);">*</span></label>
+                            <select class="form-select" id="framework-status" required>
+                                <option value="">Select status</option>
+                                <option value="draft">Draft</option>
+                                <option value="active">Active</option>
+                                <option value="deprecated">Deprecated</option>
+                            </select>
+                            <span class="form-error" id="framework-status-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Owner / Publisher <span style="color: var(--error);">*</span></label>
+                        <input type="text" class="form-input" id="framework-owner" placeholder="e.g., GRI, EFRAG, ISSB" required>
+                        <span class="form-error" id="framework-owner-error"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-start; gap: var(--space-3);">
+                <button type="button" class="btn btn-primary" id="save-framework-btn">Save Framework</button>
+                <button type="button" class="btn btn-secondary" id="cancel-framework-btn">Cancel</button>
             </div>
         </div>
     </div>
@@ -462,9 +524,6 @@
                             <label class="form-label">Primary Framework <span style="color: var(--error);">*</span></label>
                             <select class="form-select" id="edit-panel-framework" name="primaryFramework" required>
                                 <option value="">Select framework</option>
-                                <option value="gri">GRI</option>
-                                <option value="esrs">ESRS</option>
-                                <option value="ifrs">IFRS</option>
                             </select>
                             <span class="form-error" id="edit-panel-framework-error"></span>
                         </div>

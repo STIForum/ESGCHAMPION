@@ -26,10 +26,12 @@ function _showErrorState(elementId, message, onRetry) {
 class ChampionPanels {
     constructor() {
         this.panels = [];
+        this.frameworks = [];
         this.allIndicators = [];
         this.selectedIndicators = new Set();
         this.currentFilter = 'all';
         this.currentPanelId = null;
+        this.filterHandlerBound = false;
     }
 
     async isBusinessUserSession() {
@@ -83,28 +85,18 @@ class ChampionPanels {
 
     async loadPanels() {
         try {
+            await this.loadFrameworks();
             const panels = await window.championDB.getPanelsWithCounts();
             this.panels = panels;
-            
-            // Helper to normalize framework value
-            const normalizeFramework = (panel) => {
-                const fw = (panel.primary_framework || panel.framework || '').toLowerCase();
-                if (fw === 'gri') return 'gri';
-                if (fw === 'esrs') return 'esrs';
-                if (fw === 'ifrs') return 'ifrs';
-                // Default to GRI for legacy panels without framework
-                return 'gri';
-            };
-            
-            // Group by framework
-            const gri = panels.filter(p => normalizeFramework(p) === 'gri');
-            const esrs = panels.filter(p => normalizeFramework(p) === 'esrs');
-            const ifrs = panels.filter(p => normalizeFramework(p) === 'ifrs');
-            
-            // Render each framework section
-            this.renderPanelSection('gri-panels', gri, 'gri');
-            this.renderPanelSection('esrs-panels', esrs, 'esrs');
-            this.renderPanelSection('ifrs-panels', ifrs, 'ifrs');
+
+            this.renderFrameworkFilters();
+            this.renderFrameworkSections();
+
+            const availableFrameworkCodes = this.frameworks.map(f => f.code);
+            for (const frameworkCode of availableFrameworkCodes) {
+                const frameworkPanels = panels.filter(p => this.normalizeFramework(p) === frameworkCode);
+                this.renderPanelSection(`${frameworkCode}-panels`, frameworkPanels, frameworkCode);
+            }
             
             // Show content using centralized utility
             _hideLoading('loading-state');
@@ -116,11 +108,114 @@ class ChampionPanels {
         }
     }
 
+    async loadFrameworks() {
+        try {
+            const supabase = window.getSupabase?.();
+            if (!supabase) throw new Error('Supabase client not available');
+
+            const { data, error } = await supabase
+                .from('frameworks')
+                .select('name, code, status, is_active, order_index')
+                .eq('is_active', true)
+                .order('order_index', { ascending: true })
+                .order('name', { ascending: true });
+
+            if (error) throw error;
+
+            this.frameworks = (data || []).map(f => ({
+                ...f,
+                code: String(f.code || '').toLowerCase()
+            })).filter(f => f.code);
+        } catch (error) {
+            console.warn('Could not load frameworks from database, using defaults:', error);
+            this.frameworks = [
+                { name: 'GRI', code: 'gri' },
+                { name: 'ESRS', code: 'esrs' },
+                { name: 'IFRS', code: 'ifrs' }
+            ];
+        }
+
+        if (!this.frameworks.length) {
+            this.frameworks = [
+                { name: 'GRI', code: 'gri' },
+                { name: 'ESRS', code: 'esrs' },
+                { name: 'IFRS', code: 'ifrs' }
+            ];
+        }
+    }
+
+    normalizeFramework(panel) {
+        const framework = String(panel?.primary_framework || panel?.framework || '').toLowerCase();
+        if (this.frameworks.some(f => f.code === framework)) {
+            return framework;
+        }
+        return this.frameworks[0]?.code || 'gri';
+    }
+
+    getFrameworkMeta(frameworkCode) {
+        const fallbackName = frameworkCode ? frameworkCode.toUpperCase() : 'Framework';
+        return this.frameworks.find(f => f.code === frameworkCode) || { code: frameworkCode, name: fallbackName };
+    }
+
+    renderFrameworkFilters() {
+        const container = document.getElementById('framework-filters');
+        if (!container) return;
+
+        const buttonsHtml = [
+            '<button class="btn btn-ghost filter-btn active" data-filter="all">All Frameworks</button>',
+            ...this.frameworks.map(framework =>
+                `<button class="btn btn-ghost filter-btn" data-filter="${framework.code}">${framework.name}</button>`
+            )
+        ];
+
+        container.innerHTML = buttonsHtml.join('');
+    }
+
+    renderFrameworkSections() {
+        const container = document.getElementById('framework-sections');
+        if (!container) return;
+
+        container.innerHTML = this.frameworks.map(framework => {
+            const color = this.getSectionColor(framework.code);
+            const iconPath = this.getSectionIconPath(framework.code);
+            return `
+                <section id="${framework.code}-section" class="mb-8" data-framework-section="${framework.code}">
+                    <h2 class="mb-4" style="color: ${color};">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                            ${iconPath}
+                        </svg>
+                        ${framework.name}
+                    </h2>
+                    <div class="features-grid" id="${framework.code}-panels"></div>
+                </section>
+            `;
+        }).join('');
+    }
+
+    getSectionColor(frameworkCode) {
+        const colors = {
+            gri: 'var(--primary-600)',
+            esrs: 'var(--secondary-600)',
+            ifrs: 'var(--accent-600)'
+        };
+        return colors[frameworkCode] || 'var(--primary-600)';
+    }
+
+    getSectionIconPath(frameworkCode) {
+        const icons = {
+            gri: '<path d="M12 22c4-4 8-7.5 8-12a8 8 0 1 0-16 0c0 4.5 4 8 8 12z"></path>',
+            esrs: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>',
+            ifrs: '<path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path>'
+        };
+        return icons[frameworkCode] || '<circle cx="12" cy="12" r="9"></circle>';
+    }
+
     renderPanelSection(containerId, panels, framework) {
         const container = document.getElementById(containerId);
+        const frameworkMeta = this.getFrameworkMeta(framework);
         
         if (!panels || panels.length === 0) {
-            container.innerHTML = `<p class="text-secondary">No panels available in ${(window.FRAMEWORK_LABELS && window.FRAMEWORK_LABELS[framework]) || framework.toUpperCase()} framework.</p>`;
+            container.innerHTML = `<p class="text-secondary">No panels available in ${frameworkMeta.name} framework.</p>`;
             return;
         }
 
@@ -256,15 +351,18 @@ class ChampionPanels {
     }
 
     setupFilters() {
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const filter = btn.dataset.filter;
-                this.filterPanels(filter);
-                this.updateFilterButtons(filter);
-            });
+        if (this.filterHandlerBound) return;
+
+        document.addEventListener('click', (event) => {
+            const btn = event.target.closest('.filter-btn');
+            if (!btn) return;
+
+            const filter = btn.dataset.filter;
+            this.filterPanels(filter);
+            this.updateFilterButtons(filter);
         });
+
+        this.filterHandlerBound = true;
     }
 
     setupModal() {
@@ -520,28 +618,13 @@ class ChampionPanels {
 
     filterPanels(filter) {
         this.currentFilter = filter;
-        
-        const sections = {
-            gri: document.getElementById('gri-section'),
-            esrs: document.getElementById('esrs-section'),
-            ifrs: document.getElementById('ifrs-section')
-        };
 
-        if (filter === 'all') {
-            Object.values(sections).forEach(section => {
-                if (section) section.classList.remove('hidden');
-            });
-        } else {
-            Object.entries(sections).forEach(([framework, section]) => {
-                if (section) {
-                    if (framework === filter) {
-                        section.classList.remove('hidden');
-                    } else {
-                        section.classList.add('hidden');
-                    }
-                }
-            });
-        }
+        const sections = document.querySelectorAll('[data-framework-section]');
+        sections.forEach(section => {
+            const frameworkCode = section.getAttribute('data-framework-section');
+            const shouldShow = filter === 'all' || frameworkCode === filter;
+            section.classList.toggle('hidden', !shouldShow);
+        });
 
         // Update URL without reload
         const url = new URL(window.location);
