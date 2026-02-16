@@ -39,7 +39,18 @@ class AdminReviewPage {
         this.currentEditingPanel = null;
         this.currentEditingIndicator = null;
         this.panelsList = [];
+        this.indicatorsList = [];
+        this.championsList = [];
         this.frameworksList = [];
+        this.itemsPerPage = 20;
+
+        this.tabFilters = {
+            'panel-reviews': { search: '', framework: 'all', page: 1 },
+            frameworks: { search: '', status: 'all', page: 1 },
+            panels: { search: '', framework: 'all', page: 1 },
+            indicators: { search: '', framework: 'all', page: 1 },
+            champions: { search: '', role: 'all', page: 1 }
+        };
 
         this.labelMaps = {
             sme_size_band: {
@@ -112,6 +123,7 @@ class AdminReviewPage {
         
         // Setup event listeners
         this.setupEventListeners();
+        this.populateFrameworkFilterSelects();
         
         // Show content using centralized utility
         _hideLoading('loading-state');
@@ -146,21 +158,26 @@ class AdminReviewPage {
     renderPanelReviewQueue(reviews) {
         const container = document.getElementById('panel-reviews-queue');
         if (!container) return;
+
+        this.panelReviews = reviews || this.panelReviews || [];
+        const filtered = this.getFilteredPanelReviews();
+        const pageMeta = this.paginateItems(filtered, 'panel-reviews');
+        const pageItems = pageMeta.pagedItems;
         
-        if (reviews.length === 0) {
+        if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="text-center p-8">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2" style="margin: 0 auto var(--space-4);">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    <h3 style="color: var(--gray-600);">All caught up!</h3>
-                    <p class="text-secondary">No pending panel reviews to moderate.</p>
+                    <h3 style="color: var(--gray-600);">No matching panel reviews</h3>
+                    <p class="text-secondary">Try adjusting your search or framework filter.</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = reviews.map(review => {
+        container.innerHTML = pageItems.map(review => {
             // Handle both database schema and legacy localStorage format
             const panelName = review.panels?.name || review.panelName || 'Unknown Panel';
             const panelFramework = (review.panels?.primary_framework || review.panels?.framework || '').toLowerCase();
@@ -194,7 +211,7 @@ class AdminReviewPage {
                     <button class="btn btn-primary btn-sm">View Details</button>
                 </div>
             </div>
-        `}).join('');
+        `}).join('') + this.renderPagination('panel-reviews', pageMeta);
     }
 
     async openPanelReviewModal(submissionId) {
@@ -965,6 +982,211 @@ class AdminReviewPage {
                 field.addEventListener('change', () => this.clearFieldError(field));
             });
         }
+
+        this.setupFilterEventListeners();
+    }
+
+    setupFilterEventListeners() {
+        const bindInput = (id, tabKey, filterKey) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', () => {
+                this.tabFilters[tabKey][filterKey] = String(el.value || '').trim();
+                this.tabFilters[tabKey].page = 1;
+                this.renderTabData(tabKey);
+            });
+        };
+
+        const bindSelect = (id, tabKey, filterKey) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('change', () => {
+                this.tabFilters[tabKey][filterKey] = String(el.value || '').trim();
+                this.tabFilters[tabKey].page = 1;
+                this.renderTabData(tabKey);
+            });
+        };
+
+        bindInput('panel-review-search', 'panel-reviews', 'search');
+        bindSelect('panel-review-filter-framework', 'panel-reviews', 'framework');
+
+        bindInput('framework-search', 'frameworks', 'search');
+        bindSelect('framework-filter-status', 'frameworks', 'status');
+
+        bindInput('panel-search', 'panels', 'search');
+        bindSelect('panel-filter-framework', 'panels', 'framework');
+
+        bindInput('indicator-search-filter', 'indicators', 'search');
+        bindSelect('indicator-filter-framework', 'indicators', 'framework');
+
+        bindInput('champion-search', 'champions', 'search');
+        bindSelect('champion-filter-role', 'champions', 'role');
+    }
+
+    renderTabData(tabKey = this.currentTab) {
+        switch (tabKey) {
+            case 'panel-reviews':
+                this.renderPanelReviewQueue(this.panelReviews || []);
+                break;
+            case 'frameworks':
+                this.renderFrameworksList();
+                break;
+            case 'panels':
+                this.renderPanelsList();
+                break;
+            case 'indicators':
+                this.renderIndicatorsList();
+                break;
+            case 'champions':
+                this.renderChampionsList();
+                break;
+        }
+    }
+
+    setTabPage(tabKey, page) {
+        const total = this.getFilteredCount(tabKey);
+        const maxPage = Math.max(1, Math.ceil(total / this.itemsPerPage));
+        this.tabFilters[tabKey].page = Math.min(Math.max(1, page), maxPage);
+        this.renderTabData(tabKey);
+    }
+
+    getFilteredCount(tabKey) {
+        switch (tabKey) {
+            case 'panel-reviews': return this.getFilteredPanelReviews().length;
+            case 'frameworks': return this.getFilteredFrameworks().length;
+            case 'panels': return this.getFilteredPanels().length;
+            case 'indicators': return this.getFilteredIndicators().length;
+            case 'champions': return this.getFilteredChampions().length;
+            default: return 0;
+        }
+    }
+
+    paginateItems(items, tabKey) {
+        const maxPage = Math.max(1, Math.ceil(items.length / this.itemsPerPage));
+        const requestedPage = this.tabFilters[tabKey]?.page || 1;
+        const page = Math.min(Math.max(1, requestedPage), maxPage);
+        if (this.tabFilters[tabKey]) {
+            this.tabFilters[tabKey].page = page;
+        }
+        const start = (page - 1) * this.itemsPerPage;
+        return {
+            page,
+            start,
+            end: start + this.itemsPerPage,
+            pagedItems: items.slice(start, start + this.itemsPerPage),
+            total: items.length,
+            maxPage
+        };
+    }
+
+    renderPagination(tabKey, pageMeta) {
+        if (!pageMeta.total) return '';
+        const hasNext = pageMeta.page < pageMeta.maxPage;
+        const hasPrev = pageMeta.page > 1;
+        return `
+            <div class="flex-between" style="margin-top: var(--space-4);">
+                <div class="text-secondary" style="font-size: var(--text-sm);">
+                    Showing ${pageMeta.start + 1}-${Math.min(pageMeta.end, pageMeta.total)} of ${pageMeta.total}
+                </div>
+                <div style="display: flex; gap: var(--space-2);">
+                    <button class="btn btn-ghost btn-sm" ${hasPrev ? '' : 'disabled'} onclick="adminPage.setTabPage('${tabKey}', ${pageMeta.page - 1})">Previous</button>
+                    <button class="btn btn-primary btn-sm" ${hasNext ? '' : 'disabled'} onclick="adminPage.setTabPage('${tabKey}', ${pageMeta.page + 1})">Next</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getFilteredPanelReviews() {
+        const { search = '', framework = 'all' } = this.tabFilters['panel-reviews'] || {};
+        const q = search.toLowerCase();
+        return (this.panelReviews || []).filter((review) => {
+            const fw = String(review.panels?.primary_framework || review.panels?.framework || '').toLowerCase();
+            const panelName = String(review.panels?.name || review.panelName || '').toLowerCase();
+            const championName = String(review.champions?.full_name || review.championName || '').toLowerCase();
+            const frameworkMatch = framework === 'all' || fw === framework;
+            const searchMatch = !q || panelName.includes(q) || championName.includes(q);
+            return frameworkMatch && searchMatch;
+        });
+    }
+
+    getFilteredFrameworks() {
+        const { search = '', status = 'all' } = this.tabFilters.frameworks || {};
+        const q = search.toLowerCase();
+        return (this.frameworksList || []).filter((fw) => {
+            const fwStatus = String(fw.status || '').toLowerCase();
+            const statusMatch = status === 'all' || fwStatus === status;
+            const searchMatch = !q ||
+                String(fw.name || '').toLowerCase().includes(q) ||
+                String(fw.code || '').toLowerCase().includes(q) ||
+                String(fw.owner_publisher || '').toLowerCase().includes(q);
+            return statusMatch && searchMatch;
+        });
+    }
+
+    getFilteredPanels() {
+        const { search = '', framework = 'all' } = this.tabFilters.panels || {};
+        const q = search.toLowerCase();
+        return (this.panelsList || []).filter((panel) => {
+            const fw = String(panel.primary_framework || panel.framework || '').toLowerCase();
+            const frameworkMatch = framework === 'all' || fw === framework;
+            const searchMatch = !q || String(panel.name || '').toLowerCase().includes(q);
+            return frameworkMatch && searchMatch;
+        });
+    }
+
+    getFilteredIndicators() {
+        const { search = '', framework = 'all' } = this.tabFilters.indicators || {};
+        const q = search.toLowerCase();
+        return (this.indicatorsList || []).filter((indicator) => {
+            const fw = String(indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
+            const frameworkMatch = framework === 'all' || fw === framework;
+            const searchMatch = !q || String(indicator.name || '').toLowerCase().includes(q);
+            return frameworkMatch && searchMatch;
+        });
+    }
+
+    getFilteredChampions() {
+        const { search = '', role = 'all' } = this.tabFilters.champions || {};
+        const q = search.toLowerCase();
+        return (this.championsList || []).filter((champion) => {
+            const roleValue = champion.is_admin ? 'admin' : 'champion';
+            const roleMatch = role === 'all' || roleValue === role;
+            const searchMatch = !q ||
+                String(champion.full_name || '').toLowerCase().includes(q) ||
+                String(champion.email || '').toLowerCase().includes(q);
+            return roleMatch && searchMatch;
+        });
+    }
+
+    populateFrameworkFilterSelects() {
+        const frameworkSelectIds = [
+            'panel-filter-framework',
+            'indicator-filter-framework',
+            'panel-review-filter-framework'
+        ];
+
+        const options = (this.frameworksList || []).map((fw) => {
+            const code = String(fw.code || '').toLowerCase();
+            const name = fw.name || code.toUpperCase();
+            return { code, name };
+        }).filter((x) => x.code);
+
+        if (!options.length) {
+            options.push(
+                { code: 'gri', name: 'GRI' },
+                { code: 'esrs', name: 'ESRS' },
+                { code: 'ifrs', name: 'IFRS' }
+            );
+        }
+
+        frameworkSelectIds.forEach((id) => {
+            const select = document.getElementById(id);
+            if (!select) return;
+            const selected = select.value || 'all';
+            select.innerHTML = '<option value="all">All Frameworks</option>' +
+                options.map((o) => `<option value="${o.code}">${o.name}</option>`).join('');
+            select.value = options.some((o) => o.code === selected) || selected === 'all' ? selected : 'all';
+        });
     }
 
     async switchTab(tabName) {
@@ -1006,52 +1228,69 @@ class AdminReviewPage {
         container.innerHTML = '<div class="loading-spinner" style="margin: var(--space-8) auto;"></div>';
 
         try {
-            const panels = await window.adminService.getAllPanels();
-            
-            // Helper to get framework display
-            const getFramework = (panel) => {
-                const fw = (panel.primary_framework || panel.framework || '').toLowerCase();
-                const fromList = (this.frameworksList || []).find(f => String(f.code || '').toLowerCase() === fw);
-                return fromList?.name || window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || 'N/A';
-            };
-            
-            container.innerHTML = `
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Framework</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${panels.map(panel => {
-                                const framework = getFramework(panel);
-                                const fwLower = (panel.primary_framework || panel.framework || '').toLowerCase();
-                                return `
-                                <tr>
-                                    <td><strong>${panel.name}</strong></td>
-                                    <td><span class="badge badge-${fwLower || 'primary'}">${framework}</span></td>
-                                    <td>
-                                        <span class="badge badge-${panel.is_active ? 'success' : 'error'}">
-                                            ${panel.is_active ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-ghost btn-sm" onclick="adminPage.editPanel('${panel.id}')">Edit</button>
-                                    </td>
-                                </tr>
-                            `}).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            this.panelsList = await window.adminService.getAllPanels();
+            this.populateFrameworkFilterSelects();
+            this.renderPanelsList();
         } catch (error) {
             console.error('Error loading panels:', error);
             container.innerHTML = '<p class="text-error">Failed to load panels.</p>';
         }
+    }
+
+    renderPanelsList() {
+        const container = document.getElementById('panels-list');
+        if (!container) return;
+
+        const filtered = this.getFilteredPanels();
+        const pageMeta = this.paginateItems(filtered, 'panels');
+        const pageItems = pageMeta.pagedItems;
+
+        // Helper to get framework display
+        const getFramework = (panel) => {
+            const fw = (panel.primary_framework || panel.framework || '').toLowerCase();
+            const fromList = (this.frameworksList || []).find(f => String(f.code || '').toLowerCase() === fw);
+            return fromList?.name || window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || 'N/A';
+        };
+
+        if (!filtered.length) {
+            container.innerHTML = '<p class="text-secondary">No panels match your filters.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Framework</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pageItems.map(panel => {
+                            const framework = getFramework(panel);
+                            const fwLower = (panel.primary_framework || panel.framework || '').toLowerCase();
+                            return `
+                            <tr>
+                                <td><strong>${panel.name}</strong></td>
+                                <td><span class="badge badge-${fwLower || 'primary'}">${framework}</span></td>
+                                <td>
+                                    <span class="badge badge-${panel.is_active ? 'success' : 'error'}">
+                                        ${panel.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-ghost btn-sm" onclick="adminPage.editPanel('${panel.id}')">Edit</button>
+                                </td>
+                            </tr>
+                        `}).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${this.renderPagination('panels', pageMeta)}
+        `;
     }
 
     async loadFrameworks() {
@@ -1074,6 +1313,7 @@ class AdminReviewPage {
 
             this.renderFrameworksList();
             this.populateFrameworkSelects();
+            this.populateFrameworkFilterSelects();
         } catch (error) {
             console.error('Error loading frameworks:', error);
             if (container) {
@@ -1086,13 +1326,16 @@ class AdminReviewPage {
         const container = document.getElementById('frameworks-list');
         if (!container) return;
 
-        if (!this.frameworksList || this.frameworksList.length === 0) {
-            container.innerHTML = '<p class="text-secondary">No frameworks created yet.</p>';
+        const filtered = this.getFilteredFrameworks();
+        const pageMeta = this.paginateItems(filtered, 'frameworks');
+        const pageItems = pageMeta.pagedItems;
+
+        if (!filtered.length) {
+            container.innerHTML = '<p class="text-secondary">No frameworks match your filters.</p>';
             return;
         }
 
         container.innerHTML = `
-            <h4 class="mb-3">Frameworks</h4>
             <div class="table-container">
                 <table class="table">
                     <thead>
@@ -1105,7 +1348,7 @@ class AdminReviewPage {
                         </tr>
                     </thead>
                     <tbody>
-                        ${this.frameworksList.map((fw) => `
+                        ${pageItems.map((fw) => `
                             <tr>
                                 <td><strong>${fw.name || '-'}</strong></td>
                                 <td><span class="badge badge-primary">${String(fw.code || '').toUpperCase()}</span></td>
@@ -1117,6 +1360,7 @@ class AdminReviewPage {
                     </tbody>
                 </table>
             </div>
+            ${this.renderPagination('frameworks', pageMeta)}
         `;
     }
 
@@ -1155,53 +1399,70 @@ class AdminReviewPage {
         container.innerHTML = '<div class="loading-spinner" style="margin: var(--space-8) auto;"></div>';
 
         try {
-            const indicators = await window.adminService.getAllIndicators();
-            
-            // Helper to get framework display
-            const getFramework = (indicator) => {
-                const fw = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
-                return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || '';
-            };
-            
-            container.innerHTML = `
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Panel</th>
-                                <th>Framework</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${indicators.map(indicator => {
-                                const framework = getFramework(indicator);
-                                const fwLower = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
-                                return `
-                                <tr>
-                                    <td><strong>${indicator.name}</strong></td>
-                                    <td>${indicator.panels?.name || 'Unknown'}</td>
-                                    <td><span class="badge badge-${fwLower || 'primary'}">${framework || 'N/A'}</span></td>
-                                    <td>
-                                        <span class="badge badge-${indicator.is_active ? 'success' : 'error'}">
-                                            ${indicator.is_active ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-ghost btn-sm" onclick="adminPage.editIndicator('${indicator.id}')">Edit</button>
-                                    </td>
-                                </tr>
-                            `}).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            this.indicatorsList = await window.adminService.getAllIndicators();
+            this.populateFrameworkFilterSelects();
+            this.renderIndicatorsList();
         } catch (error) {
             console.error('Error loading indicators:', error);
             container.innerHTML = '<p class="text-error">Failed to load indicators.</p>';
         }
+    }
+
+    renderIndicatorsList() {
+        const container = document.getElementById('indicators-list');
+        if (!container) return;
+
+        const filtered = this.getFilteredIndicators();
+        const pageMeta = this.paginateItems(filtered, 'indicators');
+        const pageItems = pageMeta.pagedItems;
+
+        // Helper to get framework display
+        const getFramework = (indicator) => {
+            const fw = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
+            return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || '';
+        };
+
+        if (!filtered.length) {
+            container.innerHTML = '<p class="text-secondary">No indicators match your filters.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Panel</th>
+                            <th>Framework</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pageItems.map(indicator => {
+                            const framework = getFramework(indicator);
+                            const fwLower = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
+                            return `
+                            <tr>
+                                <td><strong>${indicator.name}</strong></td>
+                                <td>${indicator.panels?.name || 'Unknown'}</td>
+                                <td><span class="badge badge-${fwLower || 'primary'}">${framework || 'N/A'}</span></td>
+                                <td>
+                                    <span class="badge badge-${indicator.is_active ? 'success' : 'error'}">
+                                        ${indicator.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-ghost btn-sm" onclick="adminPage.editIndicator('${indicator.id}')">Edit</button>
+                                </td>
+                            </tr>
+                        `}).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${this.renderPagination('indicators', pageMeta)}
+        `;
     }
 
     async loadChampions() {
@@ -1209,58 +1470,74 @@ class AdminReviewPage {
         container.innerHTML = '<div class="loading-spinner" style="margin: var(--space-8) auto;"></div>';
 
         try {
-            const champions = await window.adminService.getAllChampions();
-            
-            container.innerHTML = `
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Company</th>
-                                <th>Credits</th>
-                                <th>Admin</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${champions.map(champion => `
-                                <tr>
-                                    <td>
-                                        <div class="flex" style="gap: var(--space-2); align-items: center;">
-                                            <div class="avatar" style="width: 32px; height: 32px; font-size: var(--text-xs);">
-                                                ${champion.avatar_url 
-                                                    ? `<img src="${champion.avatar_url}" alt="${champion.full_name}">`
-                                                    : this.getInitials(champion.full_name)
-                                                }
-                                            </div>
-                                            <strong>${champion.full_name || 'Anonymous'}</strong>
-                                        </div>
-                                    </td>
-                                    <td>${champion.email}</td>
-                                    <td>${champion.company || '-'}</td>
-                                    <td>${champion.credits || 0}</td>
-                                    <td>
-                                        <span class="badge badge-${champion.is_admin ? 'primary' : 'secondary'}">
-                                            ${champion.is_admin ? 'Admin' : 'Champion'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-ghost btn-sm" onclick="adminPage.toggleAdminStatus('${champion.id}', ${!champion.is_admin})">
-                                            ${champion.is_admin ? 'Remove Admin' : 'Make Admin'}
-                                        </button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            this.championsList = await window.adminService.getAllChampions();
+            this.renderChampionsList();
         } catch (error) {
             console.error('Error loading champions:', error);
             container.innerHTML = '<p class="text-error">Failed to load champions.</p>';
         }
+    }
+
+    renderChampionsList() {
+        const container = document.getElementById('champions-list');
+        if (!container) return;
+
+        const filtered = this.getFilteredChampions();
+        const pageMeta = this.paginateItems(filtered, 'champions');
+        const pageItems = pageMeta.pagedItems;
+
+        if (!filtered.length) {
+            container.innerHTML = '<p class="text-secondary">No champions match your filters.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Company</th>
+                            <th>Credits</th>
+                            <th>Admin</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pageItems.map(champion => `
+                            <tr>
+                                <td>
+                                    <div class="flex" style="gap: var(--space-2); align-items: center;">
+                                        <div class="avatar" style="width: 32px; height: 32px; font-size: var(--text-xs);">
+                                            ${champion.avatar_url 
+                                                ? `<img src="${champion.avatar_url}" alt="${champion.full_name}">`
+                                                : this.getInitials(champion.full_name)
+                                            }
+                                        </div>
+                                        <strong>${champion.full_name || 'Anonymous'}</strong>
+                                    </div>
+                                </td>
+                                <td>${champion.email}</td>
+                                <td>${champion.company || '-'}</td>
+                                <td>${champion.credits || 0}</td>
+                                <td>
+                                    <span class="badge badge-${champion.is_admin ? 'primary' : 'secondary'}">
+                                        ${champion.is_admin ? 'Admin' : 'Champion'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-ghost btn-sm" onclick="adminPage.toggleAdminStatus('${champion.id}', ${!champion.is_admin})">
+                                        ${champion.is_admin ? 'Remove Admin' : 'Make Admin'}
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${this.renderPagination('champions', pageMeta)}
+        `;
     }
 
     openReviewModal(reviewId) {

@@ -184,6 +184,20 @@
             <div id="admin-content" class="hidden">
                 <!-- Panel Reviews Tab -->
                 <div id="tab-panel-reviews" class="tab-content">
+                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-input" id="panel-review-search" placeholder="Search by panel or champion">
+                            </div>
+                            <div style="min-width: 200px;">
+                                <label class="form-label">Framework</label>
+                                <select class="form-select" id="panel-review-filter-framework">
+                                    <option value="all">All Frameworks</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div id="panel-reviews-queue">
                         <!-- Populated by JS -->
                     </div>
@@ -200,6 +214,23 @@
                             </svg>
                             Add Framework
                         </button>
+                    </div>
+                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-input" id="framework-search" placeholder="Search by name, code, owner">
+                            </div>
+                            <div style="min-width: 200px;">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="framework-filter-status">
+                                    <option value="all">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="deprecated">Deprecated</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div id="frameworks-list">
                         <!-- Populated by JS -->
@@ -218,6 +249,20 @@
                             Add Panel
                         </button>
                     </div>
+                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-input" id="panel-search" placeholder="Search panel by name">
+                            </div>
+                            <div style="min-width: 200px;">
+                                <label class="form-label">Framework</label>
+                                <select class="form-select" id="panel-filter-framework">
+                                    <option value="all">All Frameworks</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div id="panels-list">
                         <!-- Populated by JS -->
                     </div>
@@ -235,6 +280,20 @@
                             Add Indicator
                         </button>
                     </div>
+                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-input" id="indicator-search-filter" placeholder="Search indicator by name">
+                            </div>
+                            <div style="min-width: 200px;">
+                                <label class="form-label">Framework</label>
+                                <select class="form-select" id="indicator-filter-framework">
+                                    <option value="all">All Frameworks</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div id="indicators-list">
                         <!-- Populated by JS -->
                     </div>
@@ -243,6 +302,22 @@
                 <!-- Champions Tab -->
                 <div id="tab-champions" class="tab-content hidden">
                     <h3 class="mb-4">Champions</h3>
+                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
+                            <div style="min-width: 240px; flex: 1;">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-input" id="champion-search" placeholder="Search by name or email">
+                            </div>
+                            <div style="min-width: 200px;">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" id="champion-filter-role">
+                                    <option value="all">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="champion">Champion</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div id="champions-list">
                         <!-- Populated by JS -->
                     </div>
