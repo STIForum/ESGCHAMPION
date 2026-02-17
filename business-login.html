@@ -161,7 +161,7 @@
                     <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
                 </div>
                 
-                <a href="#" class="forgot-link" id="forgot-password">Forgot password?</a>
+                <a href="/forgot-password.html" class="forgot-link">Forgot password?</a>
                 
                 <button type="submit" class="btn btn-primary w-full" id="login-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -240,18 +240,6 @@
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> Sign In`;
             }
-        });
-        
-        document.getElementById('forgot-password').addEventListener('click', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            if (!email) { alert('Please enter your email address first'); return; }
-            try {
-                const supabase = window.getSupabase();
-                const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' });
-                if (error) throw error;
-                alert('Password reset email sent. Please check your inbox.');
-            } catch (error) { alert(error.message || 'Failed to send reset email'); }
         });
     </script>
 </body>
