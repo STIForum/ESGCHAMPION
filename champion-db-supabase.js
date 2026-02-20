@@ -301,6 +301,8 @@ class ChampionDB {
                             // Map panel reviews to match the format expected by the dashboard
                             const mappedReviews = fullSubmission.indicatorReviews.map(review => ({
                                 id: review.id,
+                                indicator_id: review.indicator_id || review.indicators?.id,
+                                panel_id: submission.panel_id || fullSubmission.panel_id,
                                 status: submission.status, // Use submission status
                                 created_at: review.created_at || submission.created_at,
                                 indicators: review.indicators,
