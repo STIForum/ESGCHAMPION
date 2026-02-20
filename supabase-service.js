@@ -1275,7 +1275,7 @@ class SupabaseService {
         // Get indicator reviews
         const { data: indicatorReviews, error: revError } = await this.client
             .from('panel_review_indicator_reviews')
-            .select('*, indicators(id, name, description)')
+            .select('id, indicator_id, submission_id, clarity_rating, analysis, status, created_at, indicators(id, name, description)')
             .eq('submission_id', submissionId);
         if (revError) throw revError;
 
@@ -1377,7 +1377,7 @@ class SupabaseService {
         const { data, error } = await this.client
             .from('panel_review_submissions')
             .select('*, panels(name, category)')
-            .eq('champion_id', userId)
+            .or(`champion_id.eq.${userId},reviewer_user_id.eq.${userId}`)
             .order('created_at', { ascending: false });
         if (error) throw error;
         return data || [];
