@@ -40,6 +40,7 @@ class ChampionIndicators {
         this.currentPanelName = null;
         this.reviewsData = {}; // Store reviews for each indicator
         this.currentIndicatorIndex = 0;
+        this.isResubmitMode = false; // Track if user is resubmitting a rejected review
 
         // Option sets for the assessment form
         this.smeSizeOptions = [
@@ -210,26 +211,38 @@ class ChampionIndicators {
         // Get panel ID from URL or sessionStorage
         const panelParam = params.get('panel');
         
-        if (selectedParam) {
+        // Check for resubmit flow (from rejected review)
+        const indicatorParam = params.get('indicator');
+        const resubmitParam = params.get('resubmit');
+        
+        if (resubmitParam === 'true' && indicatorParam) {
+            // Resubmit flow: single indicator being resubmitted
+            this.selectedIndicatorIds = [indicatorParam];
+            this.currentPanelId = panelParam || null;
+            this.isResubmitMode = true;
+            this.currentPanelName = 'Resubmit Review';
+        } else if (selectedParam) {
             this.selectedIndicatorIds = selectedParam.split(',').filter(id => id.trim());
         }
         
-        // Get panel context from sessionStorage
-        const stored = sessionStorage.getItem('selectedIndicators');
-        if (stored) {
-            try {
-                const data = JSON.parse(stored);
-                if (!this.selectedIndicatorIds.length) {
-                    this.selectedIndicatorIds = data.indicatorIds || [];
+        // Get panel context from sessionStorage (only if not in resubmit mode)
+        if (!this.isResubmitMode) {
+            const stored = sessionStorage.getItem('selectedIndicators');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    if (!this.selectedIndicatorIds.length) {
+                        this.selectedIndicatorIds = data.indicatorIds || [];
+                    }
+                    // Set the panel ID and name from stored data
+                    this.currentPanelId = data.panelId || panelParam || null;
+                    this.currentPanelName = data.panelName || 'Panel Review';
+                } catch (e) {
+                    console.error('Error parsing stored indicators:', e);
                 }
-                // Set the panel ID and name from stored data
-                this.currentPanelId = data.panelId || panelParam || null;
-                this.currentPanelName = data.panelName || 'Panel Review';
-            } catch (e) {
-                console.error('Error parsing stored indicators:', e);
+            } else if (panelParam) {
+                this.currentPanelId = panelParam;
             }
-        } else if (panelParam) {
-            this.currentPanelId = panelParam;
         }
 
         if (this.selectedIndicatorIds.length === 0) {
@@ -306,24 +319,39 @@ class ChampionIndicators {
         // Update breadcrumb
         const breadcrumb = document.getElementById('breadcrumb-panel');
         if (breadcrumb) {
-            breadcrumb.textContent = this.currentPanelName || 'Panel Review';
+            breadcrumb.textContent = this.isResubmitMode ? 'Resubmit Review' : (this.currentPanelName || 'Panel Review');
         }
         
         // Update panel name to show panel being reviewed
         const panelName = document.getElementById('panel-name');
         if (panelName) {
-            panelName.textContent = this.currentPanelName || `Reviewing ${this.indicators.length} Indicator${this.indicators.length > 1 ? 's' : ''}`;
+            if (this.isResubmitMode && this.indicators.length > 0) {
+                // Get panel name from the indicator's panels relation
+                const indicatorPanelName = this.indicators[0]?.panels?.name;
+                panelName.textContent = indicatorPanelName ? `Resubmit: ${indicatorPanelName}` : 'Resubmit Review';
+            } else {
+                panelName.textContent = this.currentPanelName || `Reviewing ${this.indicators.length} Indicator${this.indicators.length > 1 ? 's' : ''}`;
+            }
         }
         
         const panelDesc = document.getElementById('panel-description');
         if (panelDesc) {
-            panelDesc.textContent = `Review ${this.indicators.length} indicator${this.indicators.length > 1 ? 's' : ''} in this panel. Complete all reviews and submit.`;
+            if (this.isResubmitMode) {
+                panelDesc.textContent = 'Your previous review was rejected. Please update and resubmit your validation.';
+            } else {
+                panelDesc.textContent = `Review ${this.indicators.length} indicator${this.indicators.length > 1 ? 's' : ''} in this panel. Complete all reviews and submit.`;
+            }
         }
 
         const categoryBadge = document.getElementById('panel-category-badge');
         if (categoryBadge) {
-            categoryBadge.textContent = 'Panel Review';
-            categoryBadge.className = 'badge badge-primary';
+            if (this.isResubmitMode) {
+                categoryBadge.textContent = 'Resubmit';
+                categoryBadge.className = 'badge badge-warning';
+            } else {
+                categoryBadge.textContent = 'Panel Review';
+                categoryBadge.className = 'badge badge-primary';
+            }
         }
     }
 
