@@ -158,17 +158,18 @@ class ChampionPanels {
     }
 
     renderFrameworkFilters() {
-        const container = document.getElementById('framework-filters');
-        if (!container) return;
+        const dropdown = document.getElementById('framework-dropdown');
+        if (!dropdown) return;
 
-        const buttonsHtml = [
-            '<button class="btn btn-ghost filter-btn active" data-filter="all">All Frameworks</button>',
+        // Populate dropdown with framework options
+        const optionsHtml = [
+            '<option value="" disabled selected>Select Framework</option>',
             ...this.frameworks.map(framework =>
-                `<button class="btn btn-ghost filter-btn" data-filter="${framework.code}">${framework.name}</button>`
+                `<option value="${framework.code}">${framework.name}</option>`
             )
         ];
 
-        container.innerHTML = buttonsHtml.join('');
+        dropdown.innerHTML = optionsHtml.join('');
     }
 
     renderFrameworkSections() {
@@ -353,14 +354,26 @@ class ChampionPanels {
     setupFilters() {
         if (this.filterHandlerBound) return;
 
-        document.addEventListener('click', (event) => {
-            const btn = event.target.closest('.filter-btn');
-            if (!btn) return;
+        // Handle "All Frameworks" button click
+        const allBtn = document.getElementById('all-frameworks-btn');
+        if (allBtn) {
+            allBtn.addEventListener('click', () => {
+                this.filterPanels('all');
+                this.updateFilterButtons('all');
+            });
+        }
 
-            const filter = btn.dataset.filter;
-            this.filterPanels(filter);
-            this.updateFilterButtons(filter);
-        });
+        // Handle framework dropdown change
+        const dropdown = document.getElementById('framework-dropdown');
+        if (dropdown) {
+            dropdown.addEventListener('change', (event) => {
+                const filter = event.target.value;
+                if (filter) {
+                    this.filterPanels(filter);
+                    this.updateFilterButtons(filter);
+                }
+            });
+        }
 
         this.filterHandlerBound = true;
     }
@@ -648,17 +661,31 @@ class ChampionPanels {
     }
 
     updateFilterButtons(activeFilter) {
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            if (btn.dataset.filter === activeFilter) {
-                btn.classList.add('active');
-                btn.classList.remove('btn-ghost');
-                btn.classList.add('btn-primary');
-            } else {
-                btn.classList.remove('active');
-                btn.classList.add('btn-ghost');
-                btn.classList.remove('btn-primary');
+        const allBtn = document.getElementById('all-frameworks-btn');
+        const dropdown = document.getElementById('framework-dropdown');
+
+        if (activeFilter === 'all') {
+            // Activate "All Frameworks" button
+            if (allBtn) {
+                allBtn.classList.add('active', 'btn-primary');
+                allBtn.classList.remove('btn-ghost');
             }
-        });
+            // Reset dropdown selection
+            if (dropdown) {
+                dropdown.value = '';
+                dropdown.selectedIndex = 0;
+            }
+        } else {
+            // Deactivate "All Frameworks" button
+            if (allBtn) {
+                allBtn.classList.remove('active', 'btn-primary');
+                allBtn.classList.add('btn-ghost');
+            }
+            // Set dropdown to selected framework
+            if (dropdown) {
+                dropdown.value = activeFilter;
+            }
+        }
     }
 
     showError(message) {

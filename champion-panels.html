@@ -57,8 +57,12 @@
 
             <!-- Framework Filter -->
             <div class="flex-center mb-8">
-                <div id="framework-filters" class="btn-group" style="display: flex; gap: var(--space-2); background: white; padding: var(--space-2); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
-                    <button class="btn btn-ghost filter-btn active" data-filter="all">All Frameworks</button>
+                <div id="framework-filters" style="display: flex; align-items: center; gap: var(--space-3); background: white; padding: var(--space-2) var(--space-4); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
+                    <button class="btn btn-primary filter-btn active" data-filter="all" id="all-frameworks-btn">All Frameworks</button>
+                    <span style="color: var(--gray-400); font-size: var(--text-sm);">or</span>
+                    <select id="framework-dropdown" class="form-select" style="min-width: 180px; padding: var(--space-2) var(--space-3); border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: var(--text-sm); cursor: pointer;">
+                        <option value="" disabled selected>Select Framework</option>
+                    </select>
                 </div>
             </div>
 
