@@ -553,13 +553,11 @@ class ChampionIndicators {
                             ${this.renderInfo('sdgs', indicator.id)}
                         </div>
                         ${this.renderSdgChips(state.sdgs)}
-                        <span class="inline-helper">Multi-select chips</span>
                     </div>
                 </div>
 
                 <div class="section-block">
                     <div class="section-title">C. Five-Dimension Scoring (For This SME Size & Industry)</div>
-                    <p class="inline-helper" style="margin-bottom: var(--space-3);">Use 3-level chips per row; one click each.</p>
 
                     <div class="field-row">
                         <div class="field-header">
@@ -674,8 +672,7 @@ class ChampionIndicators {
                     </details>
                 </div>
 
-                <div class="flex-between" style="margin-top: var(--space-4); gap: var(--space-3);">
-                    <div class="pill-muted">Save takes ~1–2 minutes per indicator</div>
+                <div class="flex-end" style="margin-top: var(--space-4); gap: var(--space-3);">
                     <button type="submit" class="btn btn-primary" id="save-review-btn">Save Indicator Assessment</button>
                 </div>
             </form>

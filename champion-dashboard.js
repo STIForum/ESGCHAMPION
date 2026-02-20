@@ -157,14 +157,22 @@ class ChampionDashboard {
 
         container.innerHTML = `
             <ul class="activity-feed">
-                ${reviews.map(review => `
-                    <li class="activity-item">
+                ${reviews.map(review => {
+                    const isRejected = review.status === 'rejected';
+                    const clickableClass = isRejected ? 'clickable-review' : '';
+                    const clickHandler = isRejected ? `onclick="window.location.href='/champion-indicators.html?panel=${review.panel_id}&indicator=${review.indicator_id}&resubmit=true'"` : '';
+                    const cursorStyle = isRejected ? 'cursor: pointer;' : '';
+                    const titleSuffix = isRejected ? ' (Click to resubmit)' : '';
+                    
+                    return `
+                    <li class="activity-item ${clickableClass}" ${clickHandler} style="${cursorStyle}" title="${review.indicators?.name || 'Indicator'}${titleSuffix}">
                         <div class="activity-icon" style="background: var(--${statusColors[review.status] || 'primary'}-bg); color: var(--${statusColors[review.status] || 'primary'});">
                             ${this.getStatusIcon(review.status)}
                         </div>
                         <div class="activity-content">
                             <div class="activity-title">
                                 ${review.indicators?.name || 'Unknown Indicator'}
+                                ${isRejected ? '<span class="resubmit-hint">Click to resubmit</span>' : ''}
                             </div>
                             <div class="activity-time">
                                 <span class="badge badge-${review.panels?.category || 'primary'}" style="font-size: 10px;">
@@ -177,7 +185,7 @@ class ChampionDashboard {
                             ${review.status}
                         </span>
                     </li>
-                `).join('')}
+                `}).join('')}
             </ul>
         `;
     }

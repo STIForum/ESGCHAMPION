@@ -1410,10 +1410,26 @@ p {
     gap: var(--space-4);
     padding: var(--space-4) 0;
     border-bottom: 1px solid var(--gray-100);
+    transition: background var(--transition);
+    border-radius: var(--radius-md);
+    margin: 0 calc(var(--space-2) * -1);
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
 }
 
 .activity-item:last-child {
     border-bottom: none;
+}
+
+.activity-item.clickable-review:hover {
+    background: var(--gray-50);
+}
+
+.resubmit-hint {
+    font-size: var(--text-xs);
+    color: var(--error);
+    font-weight: 500;
+    margin-left: var(--space-2);
 }
 
 .activity-icon {

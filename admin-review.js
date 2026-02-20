@@ -1959,6 +1959,9 @@ class AdminReviewPage {
             const sdgsSelect = document.getElementById('edit-panel-sdgs');
             const relatedSdgs = Array.from(sdgsSelect.selectedOptions).map(opt => opt.value);
 
+            // Normalize framework to uppercase for database constraint
+            const normalizedFramework = primaryFramework ? primaryFramework.toUpperCase() : null;
+
             // Build update object
             const updates = {
                 name: title,
@@ -1966,7 +1969,7 @@ class AdminReviewPage {
                 impact: impact,
                 description: description || null,
                 esg_classification: esgClassification,
-                primary_framework: primaryFramework,
+                primary_framework: normalizedFramework,
                 related_sdgs: relatedSdgs.length > 0 ? relatedSdgs : null,
                 purpose: purpose || null,
                 unicode: unicode || null,
@@ -2397,6 +2400,9 @@ class AdminReviewPage {
             const sdgsSelect = document.getElementById('panel-sdgs');
             const relatedSdgs = Array.from(sdgsSelect.selectedOptions).map(opt => opt.value);
 
+            // Normalize framework to uppercase for database constraint
+            const normalizedFramework = primaryFramework ? primaryFramework.toUpperCase() : null;
+
             // Build panel data object for API
             const panelData = {
                 name: title,
@@ -2404,7 +2410,7 @@ class AdminReviewPage {
                 impact: impact,
                 description: description || null,
                 esg_classification: esgClassification,
-                primary_framework: primaryFramework,
+                primary_framework: normalizedFramework,
                 related_sdgs: relatedSdgs.length > 0 ? relatedSdgs : null,
                 purpose: purpose || null,
                 unicode: unicode || null,
@@ -2667,7 +2673,7 @@ class AdminReviewPage {
             'GRI 305-1',
             'Direct GHG emissions from owned or controlled sources',
             'tCO2e',
-            'gri',
+            'GRI',
             '2021',
             'Environment',
             'High',
@@ -2857,6 +2863,9 @@ class AdminReviewPage {
                         indicator[field] = value.split(';').map(s => s.trim()).filter(s => s);
                     } else if (field === 'formula_required') {
                         indicator[field] = value.toLowerCase() === 'true' || value === '1';
+                    } else if (field === 'primary_framework' && value) {
+                        // Normalize framework to uppercase for database constraint
+                        indicator[field] = value.toUpperCase();
                     } else if (value) {
                         indicator[field] = value;
                     }

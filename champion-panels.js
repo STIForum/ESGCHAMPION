@@ -426,14 +426,16 @@ class ChampionPanels {
         document.body.style.overflow = 'hidden';
         
         try {
-            // Fetch indicators and accepted indicator IDs in parallel
-            const [panelData, acceptedIds] = await Promise.all([
+            // Fetch indicators, accepted IDs, and rejected IDs in parallel
+            const [panelData, acceptedIds, rejectedIds] = await Promise.all([
                 window.championDB.getPanelWithIndicators(panelId),
-                window.championDB.getUserAcceptedIndicatorIds(panelId)
+                window.championDB.getUserAcceptedIndicatorIds(panelId),
+                window.championDB.getUserRejectedIndicatorIds(panelId)
             ]);
             
             this.allIndicators = panelData.indicators || [];
             this.acceptedIndicatorIds = acceptedIds || [];
+            this.rejectedIndicatorIds = rejectedIds || [];
             
             if (this.allIndicators.length === 0) {
                 indicatorsList.innerHTML = `
@@ -478,16 +480,25 @@ class ChampionPanels {
             
             // Check if this indicator has been submitted (pending or accepted)
             const isSubmitted = this.acceptedIndicatorIds?.includes(indicator.id);
-            const disabledClass = isSubmitted ? 'indicator-submitted' : '';
+            // Check if this indicator was rejected (can be resubmitted)
+            const isRejected = this.rejectedIndicatorIds?.includes(indicator.id);
+            const disabledClass = isSubmitted ? 'indicator-submitted' : (isRejected ? 'indicator-rejected' : '');
             const disabledAttr = isSubmitted ? 'disabled' : '';
             
+            let statusBadge = '';
+            if (isSubmitted) {
+                statusBadge = '<span class="submitted-badge">✓ Submitted</span>';
+            } else if (isRejected) {
+                statusBadge = '<span class="rejected-badge">↻ Resubmit</span>';
+            }
+            
             return `
-            <label class="indicator-checkbox-item ${disabledClass}" data-id="${indicator.id}" ${isSubmitted ? 'title="Already submitted for review"' : ''}>
+            <label class="indicator-checkbox-item ${disabledClass}" data-id="${indicator.id}" ${isSubmitted ? 'title="Already submitted for review"' : (isRejected ? 'title="Previously rejected - select to resubmit"' : '')}>
                 <input type="checkbox" value="${indicator.id}" ${this.selectedIndicators.has(indicator.id) ? 'checked' : ''} ${disabledAttr} onchange="panelsPage.toggleIndicator('${indicator.id}')">
                 <div class="indicator-info">
                     <div class="indicator-name">
                         ${indicator.name}
-                        ${isSubmitted ? '<span class="submitted-badge">✓ Submitted</span>' : ''}
+                        ${statusBadge}
                     </div>
                     <div class="indicator-desc">${indicator.description || 'No description'}</div>
                     

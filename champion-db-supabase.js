@@ -663,6 +663,23 @@ class ChampionDB {
             return [];
         }
     }
+
+    /**
+     * Get user's rejected indicator IDs for a specific panel
+     */
+    async getUserRejectedIndicatorIds(panelId) {
+        const auth = window.championAuth;
+        if (!auth.isAuthenticated()) {
+            return [];
+        }
+
+        try {
+            return await this.service.getUserRejectedIndicatorIds(auth.getUser().id, panelId);
+        } catch (error) {
+            console.error('Error getting user rejected indicators:', error);
+            return [];
+        }
+    }
 }
 
 // Create and export singleton instance

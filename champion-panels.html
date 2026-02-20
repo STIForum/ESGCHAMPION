@@ -178,9 +178,26 @@
         .indicator-checkbox-item.indicator-accepted .indicator-name {
             color: var(--gray-500);
         }
+        .indicator-checkbox-item.indicator-rejected {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+        .indicator-checkbox-item.indicator-rejected .indicator-name {
+            color: var(--error);
+        }
         .submitted-badge {
             display: inline-block;
             background: var(--warning);
+            color: white;
+            font-size: var(--text-xs);
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            margin-left: var(--space-2);
+        }
+        .rejected-badge {
+            display: inline-block;
+            background: var(--error);
             color: white;
             font-size: var(--text-xs);
             font-weight: 500;

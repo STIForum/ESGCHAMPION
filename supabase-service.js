@@ -56,7 +56,11 @@ const PANEL_FIELDS = [
 const INDICATOR_FIELDS = [
     'id', 'panel_id', 'name', 'description', 'methodology', 'data_source',
     'category', 'order_index', 'is_active', 'difficulty_level', 'weight',
-    'source_url', 'example_data', 'framework', 'primary_framework', 'esg_class'
+    'source_url', 'example_data', 'framework', 'primary_framework', 'esg_class',
+    // Additional fields from database schema
+    'unit', 'frequency', 'code', 'framework_version', 'why_it_matters',
+    'impact_level', 'estimated_time', 'related_sdgs', 'validation_question',
+    'response_type', 'tags', 'icon', 'formula_required'
 ];
 
 const REVIEW_FIELDS = [
@@ -1415,6 +1419,43 @@ class SupabaseService {
         }
         
         // Return unique indicator IDs with their status
+        const indicatorIds = [...new Set((indicatorReviews || []).map(r => r.indicator_id))];
+        return indicatorIds;
+    }
+
+    /**
+     * Get user's rejected indicator IDs for a specific panel
+     * Returns indicator IDs that have been rejected by admin and can be resubmitted
+     */
+    async getUserRejectedIndicatorIds(userId, panelId) {
+        // Get all rejected submissions for this user and panel
+        const { data: submissions, error: subError } = await this.client
+            .from('panel_review_submissions')
+            .select('id, status, admin_notes')
+            .eq('panel_id', panelId)
+            .eq('status', 'rejected')
+            .or(`champion_id.eq.${userId},reviewer_user_id.eq.${userId}`);
+        
+        if (subError) {
+            console.error('Error fetching rejected submissions:', subError);
+            return [];
+        }
+        if (!submissions || submissions.length === 0) return [];
+
+        const submissionIds = submissions.map(s => s.id);
+
+        // Get all indicator reviews for these rejected submissions
+        const { data: indicatorReviews, error: indError } = await this.client
+            .from('panel_review_indicator_reviews')
+            .select('indicator_id, submission_id')
+            .in('submission_id', submissionIds);
+        
+        if (indError) {
+            console.error('Error fetching rejected indicator reviews:', indError);
+            return [];
+        }
+        
+        // Return unique indicator IDs
         const indicatorIds = [...new Set((indicatorReviews || []).map(r => r.indicator_id))];
         return indicatorIds;
     }
