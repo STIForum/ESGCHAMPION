@@ -504,12 +504,29 @@ class SupabaseService {
      */
     async createIndicator(indicatorData) {
         const safeData = buildSafeDbPayload(indicatorData, INDICATOR_FIELDS);
+        
+        // Ensure related_sdgs is properly formatted as an array for PostgreSQL
+        if (safeData.related_sdgs && !Array.isArray(safeData.related_sdgs)) {
+            safeData.related_sdgs = [safeData.related_sdgs];
+        }
+        
+        console.log('Creating indicator with data:', JSON.stringify(safeData, null, 2));
+        
         const { data, error } = await this.client
             .from('indicators')
             .insert(safeData)
             .select()
             .single();
-        if (error) throw error;
+        
+        if (error) {
+            console.error('Supabase createIndicator error:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+            throw error;
+        }
         return data;
     }
 

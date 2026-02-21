@@ -2729,6 +2729,8 @@ class AdminReviewPage {
             </div>
         `;
 
+        console.log('CSV Import - Panel ID:', panelId);
+
         try {
             const text = await file.text();
             const indicators = this.parseCsv(text);
@@ -2744,6 +2746,7 @@ class AdminReviewPage {
 
             for (const indicator of indicators) {
                 try {
+                    console.log('Importing indicator:', JSON.stringify(indicator), 'to panel:', panelId);
                     await window.adminService.createIndicator({
                         ...indicator,
                         panel_id: panelId,
@@ -2752,8 +2755,18 @@ class AdminReviewPage {
                     });
                     successCount++;
                 } catch (err) {
+                    // Capture full Supabase error details
+                    const errorDetails = err.details || err.hint || err.code || '';
+                    const fullError = errorDetails ? `${err.message} (${errorDetails})` : err.message;
+                    console.error('Failed to import indicator:', indicator.name, 'Full error:', {
+                        message: err.message,
+                        details: err.details,
+                        hint: err.hint,
+                        code: err.code,
+                        error: err
+                    });
                     errorCount++;
-                    errors.push(`${indicator.name || 'Unknown'}: ${err.message}`);
+                    errors.push(`${indicator.name || 'Unknown'}: ${fullError}`);
                 }
             }
 
@@ -2786,7 +2799,22 @@ class AdminReviewPage {
                     </div>
                 `;
             } else {
-                throw new Error(`All ${errorCount} indicators failed to import`);
+                // Show all errors with details
+                statusDiv.innerHTML = `
+                    <div style="padding: var(--space-3); background: var(--error-light); border-radius: var(--radius-md); color: var(--error-dark);">
+                        <strong>❌ Import Failed</strong>
+                        <p style="margin-top: var(--space-1); font-size: var(--text-sm);">All ${errorCount} indicator(s) failed to import.</p>
+                        <details style="margin-top: var(--space-2);" open>
+                            <summary style="cursor: pointer;">Error details</summary>
+                            <ul style="margin-top: var(--space-2); font-size: var(--text-xs);">
+                                ${errors.map(e => `<li>${e}</li>`).join('')}
+                            </ul>
+                        </details>
+                    </div>
+                `;
+                console.error('CSV import errors:', errors);
+                event.target.value = '';
+                return;
             }
 
         } catch (error) {
@@ -2845,6 +2873,23 @@ class AdminReviewPage {
             'icon': 'icon'
         };
 
+        // Valid values for constrained fields (case-insensitive lookup)
+        const validValues = {
+            primary_framework: ['GRI', 'ESRS', 'SASB', 'SME Hub', 'Other'],
+            impact_level: ['High', 'Medium', 'Foundational'],
+            difficulty_level: ['Easy', 'Moderate', 'Complex'],
+            esg_class: ['Environment', 'Social', 'Governance'],
+            response_type: ['Multiple Choice', 'Yes-No', 'Short Text', 'Long Text']
+        };
+
+        // Normalize value to match database constraint
+        const normalizeConstrainedValue = (field, value) => {
+            if (!value || !validValues[field]) return value;
+            const lowerValue = value.toLowerCase().trim();
+            const match = validValues[field].find(v => v.toLowerCase() === lowerValue);
+            return match || null; // Return null if invalid (will be skipped)
+        };
+
         const indicators = [];
 
         for (let i = 1; i < lines.length; i++) {
@@ -2863,9 +2908,12 @@ class AdminReviewPage {
                         indicator[field] = value.split(';').map(s => s.trim()).filter(s => s);
                     } else if (field === 'formula_required') {
                         indicator[field] = value.toLowerCase() === 'true' || value === '1';
-                    } else if (field === 'primary_framework' && value) {
-                        // Normalize framework to uppercase for database constraint
-                        indicator[field] = value.toUpperCase();
+                    } else if (validValues[field] && value) {
+                        // Normalize constrained field values
+                        const normalized = normalizeConstrainedValue(field, value);
+                        if (normalized) {
+                            indicator[field] = normalized;
+                        }
                     } else if (value) {
                         indicator[field] = value;
                     }
@@ -2954,6 +3002,7 @@ class AdminReviewPage {
 
             for (const indicator of indicators) {
                 try {
+                    console.log('Importing indicator (edit panel):', JSON.stringify(indicator), 'to panel:', panelId);
                     await window.adminService.createIndicator({
                         ...indicator,
                         panel_id: panelId,
@@ -2962,8 +3011,17 @@ class AdminReviewPage {
                     });
                     successCount++;
                 } catch (err) {
+                    const errorDetails = err.details || err.hint || err.code || '';
+                    const fullError = errorDetails ? `${err.message} (${errorDetails})` : err.message;
+                    console.error('Failed to import indicator (edit panel):', indicator.name, 'Full error:', {
+                        message: err.message,
+                        details: err.details,
+                        hint: err.hint,
+                        code: err.code,
+                        error: err
+                    });
                     errorCount++;
-                    errors.push(`${indicator.name || 'Unknown'}: ${err.message}`);
+                    errors.push(`${indicator.name || 'Unknown'}: ${fullError}`);
                 }
             }
 
