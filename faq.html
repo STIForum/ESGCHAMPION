@@ -373,9 +373,10 @@
                                 <circle cx="4" cy="4" r="2"></circle>
                             </svg>
                         </a>
-                        <a href="#" aria-label="Twitter">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                        <a href="#" aria-label="X">
+                            <!-- X (formerly Twitter) icon -->
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
                             </svg>
                         </a>
                     </div>
@@ -472,7 +473,7 @@
                     </div>
                     <h3 style="margin-bottom: var(--space-2);">ESG Champion</h3>
                     <p style="color: var(--neutral-500); font-size: var(--text-sm); margin-bottom: var(--space-4); flex: 1;">Join as an individual sustainability professional. Review indicators, contribute to panels, and earn recognition.</p>
-                    <span class="btn btn-primary btn-sm" style="width: 100%;">Register as Champion</span>
+                    <span class="btn btn-primary btn-sm" style="width: 100%; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">REGISTER AS CHAMPION</span>
                 </div>
                 <div class="user-type-card" id="select-business" style="flex: 1; min-width: 220px; max-width: 260px; padding: var(--space-6); border: 2px solid var(--neutral-200); border-radius: var(--radius-xl); cursor: pointer; transition: all var(--transition); text-align: center; display: flex; flex-direction: column;">
                     <div class="business-badge-icon" style="width: 64px; height: 64px; margin: 0 auto var(--space-4); background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -483,7 +484,7 @@
                     </div>
                     <h3 style="margin-bottom: var(--space-2);">SME / Business</h3>
                     <p style="color: var(--neutral-500); font-size: var(--text-sm); margin-bottom: var(--space-4); flex: 1;">Register your business for sustainability reporting. Track ESG metrics and generate reports.</p>
-                    <span class="btn btn-business btn-sm" style="width: 100%;">Register as Business</span>
+                    <span class="btn btn-business btn-sm" style="width: 100%; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">REGISTER AS BUSINESS</span>
                 </div>
             </div>
         </div>
@@ -516,6 +517,34 @@
         // Modal handlers
         const userTypeModal = document.getElementById('user-type-modal');
         const loginTypeModal = document.getElementById('login-type-modal');
+        
+        // Setup auth button handlers - wait for dynamic-navigation to create them
+        function setupAuthButtons() {
+            const getStartedBtn = document.getElementById('header-get-started-btn');
+            const loginBtn = document.getElementById('header-login-btn');
+            
+            if (getStartedBtn) {
+                getStartedBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    userTypeModal.style.display = 'flex';
+                });
+            }
+            
+            if (loginBtn) {
+                loginBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loginTypeModal.style.display = 'flex';
+                });
+            }
+            
+            // If buttons not found yet, try again
+            if (!getStartedBtn || !loginBtn) {
+                setTimeout(setupAuthButtons, 100);
+            }
+        }
+        
+        // Start checking for buttons after a short delay
+        setTimeout(setupAuthButtons, 200);
         
         // Close modals
         document.getElementById('close-user-type-modal')?.addEventListener('click', () => {
