@@ -248,27 +248,36 @@ class DynamicNavigation {
              * Set up auth modals for login/register selection
              */
             setupAuthModals() {
-                const loginBtn = document.getElementById('header-login-btn');
-                const getStartedBtn = document.getElementById('header-get-started-btn');
                 const userTypeModal = document.getElementById('user-type-modal');
                 const loginTypeModal = document.getElementById('login-type-modal');
                 
-                if (loginBtn && loginTypeModal) {
-                    loginBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        loginTypeModal.style.display = 'flex';
-                    });
-                }
-                
-                if (getStartedBtn && userTypeModal) {
-                    getStartedBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        userTypeModal.style.display = 'flex';
+                // Use event delegation on nav-actions to handle button clicks
+                // This ensures handlers work even if buttons are replaced
+                const navActions = document.querySelector('.nav-actions');
+                if (navActions && !navActions.hasAttribute('data-modal-handlers-attached')) {
+                    navActions.setAttribute('data-modal-handlers-attached', 'true');
+                    navActions.addEventListener('click', (e) => {
+                        const target = e.target.closest('a');
+                        if (!target) return;
+                        
+                        if (target.id === 'header-login-btn' || target.textContent.trim() === 'Login') {
+                            e.preventDefault();
+                            if (loginTypeModal) {
+                                loginTypeModal.style.display = 'flex';
+                            }
+                        }
+                        
+                        if (target.id === 'header-get-started-btn' || target.textContent.trim() === 'Get Started') {
+                            e.preventDefault();
+                            if (userTypeModal) {
+                                userTypeModal.style.display = 'flex';
+                            }
+                        }
                     });
                 }
                 
                 // If modals not found, retry after a short delay (they may be defined later in DOM)
-                if ((!loginTypeModal || !userTypeModal) && (loginBtn || getStartedBtn)) {
+                if (!loginTypeModal || !userTypeModal) {
                     setTimeout(() => this.setupAuthModals(), 100);
                 }
             }
