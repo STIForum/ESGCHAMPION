@@ -266,6 +266,11 @@ class DynamicNavigation {
                         userTypeModal.style.display = 'flex';
                     });
                 }
+                
+                // If modals not found, retry after a short delay (they may be defined later in DOM)
+                if ((!loginTypeModal || !userTypeModal) && (loginBtn || getStartedBtn)) {
+                    setTimeout(() => this.setupAuthModals(), 100);
+                }
             }
 
             /**
