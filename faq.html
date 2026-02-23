@@ -419,6 +419,76 @@
         </div>
     </footer>
 
+    <!-- Login Type Selection Modal -->
+    <div id="login-type-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-container" style="max-width: 500px;">
+            <button class="modal-close" id="close-login-type-modal">&times;</button>
+            <div class="modal-header" style="text-align: center; padding-bottom: var(--space-4);">
+                <h2 style="margin-bottom: var(--space-2);">Login to STIF</h2>
+                <p style="color: var(--neutral-500);">Select your account type</p>
+            </div>
+            <div class="modal-body" style="display: flex; gap: var(--space-4); flex-wrap: wrap; justify-content: center;">
+                <a href="/champion-login.html" class="login-type-card" style="flex: 1; min-width: 180px; max-width: 200px; padding: var(--space-5); border: 2px solid var(--neutral-200); border-radius: var(--radius-xl); cursor: pointer; transition: all var(--transition); text-align: center; text-decoration: none; color: inherit;">
+                    <div class="champion-badge-icon" style="width: 48px; height: 48px; margin: 0 auto var(--space-3); background: rgba(34, 197, 94, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5">
+                            <circle cx="12" cy="9" r="6"></circle>
+                            <path d="M9 14.5L7 22l5-3 5 3-2-7.5"></path>
+                            <circle cx="12" cy="9" r="2" fill="#22c55e" stroke="none"></circle>
+                        </svg>
+                    </div>
+                    <h4 style="margin-bottom: var(--space-1);">Champion</h4>
+                    <p style="color: var(--neutral-500); font-size: var(--text-xs);">Individual accounts</p>
+                </a>
+                <a href="/business-login.html" class="login-type-card" style="flex: 1; min-width: 180px; max-width: 200px; padding: var(--space-5); border: 2px solid var(--neutral-200); border-radius: var(--radius-xl); cursor: pointer; transition: all var(--transition); text-align: center; text-decoration: none; color: inherit;">
+                    <div class="business-badge-icon" style="width: 48px; height: 48px; margin: 0 auto var(--space-3); background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                    </div>
+                    <h4 style="margin-bottom: var(--space-1);">Business</h4>
+                    <p style="color: var(--neutral-500); font-size: var(--text-xs);">SME accounts</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Type Selection Modal -->
+    <div id="user-type-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <button class="modal-close" id="close-user-type-modal">&times;</button>
+            <div class="modal-header" style="text-align: center; padding-bottom: var(--space-4);">
+                <h2 style="margin-bottom: var(--space-2);">How would you like to join STIF?</h2>
+                <p style="color: var(--neutral-500);">Choose the option that best describes you</p>
+            </div>
+            <div class="modal-body" style="display: flex; gap: var(--space-4); flex-wrap: wrap; justify-content: center; align-items: stretch;">
+                <div class="user-type-card" id="select-champion" style="flex: 1; min-width: 220px; max-width: 260px; padding: var(--space-6); border: 2px solid var(--neutral-200); border-radius: var(--radius-xl); cursor: pointer; transition: all var(--transition); text-align: center; display: flex; flex-direction: column;">
+                    <div class="champion-badge-icon" style="width: 64px; height: 64px; margin: 0 auto var(--space-4); background: rgba(34, 197, 94, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5">
+                            <circle cx="12" cy="9" r="6"></circle>
+                            <path d="M9 14.5L7 22l5-3 5 3-2-7.5"></path>
+                            <circle cx="12" cy="9" r="2" fill="#22c55e" stroke="none"></circle>
+                        </svg>
+                    </div>
+                    <h3 style="margin-bottom: var(--space-2);">ESG Champion</h3>
+                    <p style="color: var(--neutral-500); font-size: var(--text-sm); margin-bottom: var(--space-4); flex: 1;">Join as an individual sustainability professional. Review indicators, contribute to panels, and earn recognition.</p>
+                    <span class="btn btn-primary btn-sm" style="width: 100%;">Register as Champion</span>
+                </div>
+                <div class="user-type-card" id="select-business" style="flex: 1; min-width: 220px; max-width: 260px; padding: var(--space-6); border: 2px solid var(--neutral-200); border-radius: var(--radius-xl); cursor: pointer; transition: all var(--transition); text-align: center; display: flex; flex-direction: column;">
+                    <div class="business-badge-icon" style="width: 64px; height: 64px; margin: 0 auto var(--space-4); background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                    </div>
+                    <h3 style="margin-bottom: var(--space-2);">SME / Business</h3>
+                    <p style="color: var(--neutral-500); font-size: var(--text-sm); margin-bottom: var(--space-4); flex: 1;">Register your business for sustainability reporting. Track ESG metrics and generate reports.</p>
+                    <span class="btn btn-business btn-sm" style="width: 100%;">Register as Business</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="supabase-service.js"></script>
     <script src="champion-auth-supabase.js"></script>
     <script src="champion-db-supabase.js"></script>
@@ -441,6 +511,45 @@
                     item.classList.add('active');
                 }
             });
+        });
+        
+        // Modal handlers
+        const userTypeModal = document.getElementById('user-type-modal');
+        const loginTypeModal = document.getElementById('login-type-modal');
+        
+        // Close modals
+        document.getElementById('close-user-type-modal')?.addEventListener('click', () => {
+            userTypeModal.style.display = 'none';
+        });
+        
+        document.getElementById('close-login-type-modal')?.addEventListener('click', () => {
+            loginTypeModal.style.display = 'none';
+        });
+        
+        // Close on overlay click
+        userTypeModal?.addEventListener('click', (e) => {
+            if (e.target === userTypeModal) userTypeModal.style.display = 'none';
+        });
+        
+        loginTypeModal?.addEventListener('click', (e) => {
+            if (e.target === loginTypeModal) loginTypeModal.style.display = 'none';
+        });
+        
+        // Selection handlers
+        document.getElementById('select-champion')?.addEventListener('click', () => {
+            window.location.href = '/champion-register.html';
+        });
+        
+        document.getElementById('select-business')?.addEventListener('click', () => {
+            window.location.href = '/business-register.html';
+        });
+        
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                userTypeModal.style.display = 'none';
+                loginTypeModal.style.display = 'none';
+            }
         });
     </script>
 </body>
