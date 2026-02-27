@@ -246,11 +246,27 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="first_name">First Name <span class="required">*</span></label>
-                                <input type="text" id="first_name" name="first_name" class="form-input" placeholder="John" required>
+                                <input
+                                    type="text"
+                                    id="first_name"
+                                    name="first_name"
+                                    class="form-input"
+                                    placeholder="John"
+                                    required
+                                    maxlength="256"
+                                >
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="last_name">Last Name <span class="required">*</span></label>
-                                <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe" required>
+                                <input
+                                    type="text"
+                                    id="last_name"
+                                    name="last_name"
+                                    class="form-input"
+                                    placeholder="Doe"
+                                    required
+                                    maxlength="256"
+                                >
                             </div>
                         </div>
                         
@@ -271,17 +287,48 @@
                         
                         <div class="form-group">
                             <label class="form-label" for="email">Business Email <span class="required">*</span></label>
-                            <input type="email" id="email" name="email" class="form-input" placeholder="champion@example.com" required autocomplete="email">
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="form-input"
+                                placeholder="champion@example.com"
+                                required
+                                autocomplete="email"
+                                pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+                                title="Please enter a valid email address (letters, numbers, and . _ % + - only before @)."
+                            />
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="form-label" for="mobile_number">Mobile Number <span class="required">*</span></label>
-                            <input type="tel" id="mobile_number" name="mobile_number" class="form-input" placeholder="+44 123 456 7890" required>
+                            <input
+                                type="tel"
+                                id="mobile_number"
+                                name="mobile_number"
+                                class="form-input"
+                                placeholder="+44 123 456 7890"
+                                required
+                                inputmode="numeric"
+                                pattern="^[0-9]{7,15}$"
+                                oninput="this.value = this.value.replace(/\D+/g, ''); this.setCustomValidity('');"
+                                oninvalid="this.setCustomValidity('Please enter a valid mobile number using digits only (no spaces or letters), between 7 and 15 digits long.')"
+                            >
                         </div>
                         
                         <div class="form-group">
                             <label class="form-label" for="office_phone">Office Phone Number</label>
-                            <input type="tel" id="office_phone" name="office_phone" class="form-input" placeholder="+44 123 456 7891">
+                            <input
+                                type="tel"
+                                id="office_phone"
+                                name="office_phone"
+                                class="form-input"
+                                placeholder="+44 123 456 7891"
+                                inputmode="numeric"
+                                pattern="^[0-9]{7,15}$"
+                                oninput="this.value = this.value.replace(/\D+/g, ''); this.setCustomValidity('');"
+                                oninvalid="this.setCustomValidity('Please enter a valid office phone number using digits only (no spaces or letters), between 7 and 15 digits long.')"
+                            >
                         </div>
                         
                         <div class="form-group">
@@ -370,7 +417,18 @@
                         <div class="form-group">
                             <label class="form-label" for="password">Password <span class="required">*</span></label>
                             <div class="password-toggle">
-                                <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password">
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    class="form-input"
+                                    placeholder="Min. 8 characters"
+                                    required
+                                    minlength="8"
+                                    autocomplete="new-password"
+                                    pattern="^\S(.*\S)?$"
+                                    title="Password cannot start or end with a space."
+                                >
                                 <button type="button" class="toggle-btn" onclick="togglePassword('password')">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -383,7 +441,17 @@
                         <div class="form-group">
                             <label class="form-label" for="confirm_password">Confirm Password <span class="required">*</span></label>
                             <div class="password-toggle">
-                                <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Re-enter your password" required minlength="8">
+                                <input
+                                    type="password"
+                                    id="confirm_password"
+                                    name="confirm_password"
+                                    class="form-input"
+                                    placeholder="Re-enter your password"
+                                    required
+                                    minlength="8"
+                                    pattern="^\S(.*\S)?$"
+                                    title="Password cannot start or end with a space."
+                                >
                                 <button type="button" class="toggle-btn" onclick="togglePassword('confirm_password')">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -391,6 +459,11 @@
                                     </svg>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Shared error message -->
+                        <div class="field-error" id="account-security-error" style="display:none;">
+                            The password or confirmation you entered is invalid. Please check and try again.
                         </div>
                     </div>
 
@@ -512,11 +585,16 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2025 STIF - Sustainability Technology and Innovation Forum. All rights reserved.</p>
+                <p>
+                &copy; <span id="current-year"></span>
+                STIF - Sustainability Technology and Innovation Forum. All rights reserved.
+                </p>
                 <p>Built with purpose for a sustainable future.</p>
             </div>
         </div>
     </footer>
+
+<script src="footer-year.js"></script>
 
     <!-- Scripts -->
     <!-- Services -->
