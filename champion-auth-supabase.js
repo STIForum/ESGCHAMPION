@@ -59,6 +59,13 @@ class ChampionAuth {
 
         try {
             this.currentChampion = await this.service.getChampion(this.currentUser.id);
+            
+            // Check if profile needs to be populated from registration metadata
+            if (this.currentChampion && this.shouldPopulateFromMetadata(this.currentChampion)) {
+                console.log('Profile incomplete, populating from metadata...');
+                await this.populateProfileFromMetadata();
+            }
+            
         } catch (error) {
             // Champion might not exist yet, create basic profile
             if (error.code === 'PGRST116') {
@@ -69,6 +76,52 @@ class ChampionAuth {
         }
 
         return this.currentChampion;
+    }
+
+    /**
+     * Check if profile should be populated from metadata
+     */
+    shouldPopulateFromMetadata(champion) {
+        const metadata = this.currentUser.user_metadata || {};
+        
+        // If user has registration_complete flag but profile is missing key fields
+        if (metadata.registration_complete) {
+            const hasBasicInfo = champion.company && champion.job_title && champion.mobile_number;
+            if (!hasBasicInfo) {
+                console.log('Profile missing registration data, should populate from metadata');
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Populate profile from user metadata (after email confirmation)
+     */
+    async populateProfileFromMetadata() {
+        const metadata = this.currentUser.user_metadata || {};
+        console.log('Populating profile from metadata:', metadata);
+        
+        const updates = {
+            full_name: metadata.full_name || '',
+            company: metadata.company || '',
+            job_title: metadata.job_title || '',
+            mobile_number: metadata.mobile_number || '',
+            office_phone: metadata.office_phone || '',
+            linkedin_url: metadata.linkedin_url || '',
+            bio: this.buildRegistrationBio(metadata),
+            // Mark that profile has been populated
+            profile_populated_from_metadata: true,
+            profile_populated_at: new Date().toISOString()
+        };
+        
+        try {
+            console.log('Updating profile with metadata:', updates);
+            this.currentChampion = await this.service.updateChampion(this.currentUser.id, updates);
+            console.log('Profile populated from metadata successfully');
+        } catch (error) {
+            console.error('Error populating profile from metadata:', error);
+        }
     }
 
     /**
@@ -85,12 +138,16 @@ class ChampionAuth {
             full_name: metadata.full_name || metadata.name || '',
             company: metadata.company || '',
             job_title: metadata.job_title || '',
+            mobile_number: metadata.mobile_number || '',           // ✅ Add missing field
+            office_phone: metadata.office_phone || '',             // ✅ Add missing field
+            linkedin_url: metadata.linkedin_url || '',             // ✅ Add missing field
             avatar_url: metadata.avatar_url || this.currentUser.user_metadata?.picture || '',
             is_verified: this.currentUser.email_confirmed_at ? true : false,
             cla_accepted: metadata.cla_accepted || false,
             nda_accepted: metadata.nda_accepted || false,
             cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
-            nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null
+            nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null,
+            bio: this.buildRegistrationBio(metadata)               // ✅ Add structured bio
         };
 
         try {
@@ -102,21 +159,27 @@ class ChampionAuth {
         }
     }
 
+
     /**
      * Register a new champion
      */
     async register(email, password, metadata = {}) {
         try {
-            const data = await this.service.signUp(email, password, metadata);
-            
-            // Note: Champion profile is created automatically by database trigger
-            // when user is inserted into auth.users. We don't need to manually insert here
-            // because the user isn't fully authenticated until email confirmation.
+            // Store ALL registration data in user metadata so it survives email confirmation
+            const enrichedMetadata = {
+                ...metadata,
+                // Ensure all form fields are in metadata
+                registration_complete: true,
+                registration_timestamp: new Date().toISOString()
+            };
+
+            console.log('Registering with metadata:', enrichedMetadata);
+
+            const data = await this.service.signUp(email, password, enrichedMetadata);
             
             if (data.user) {
                 // Try to update champion profile with additional metadata
                 // This may fail if email confirmation is required (RLS blocks it)
-                // That's okay - the trigger created the basic profile already
                 try {
                     const profileData = {
                         id: data.user.id,
@@ -124,16 +187,21 @@ class ChampionAuth {
                         full_name: metadata.full_name || '',
                         company: metadata.company || '',
                         job_title: metadata.job_title || '',
+                        mobile_number: metadata.mobile_number || '',
+                        office_phone: metadata.office_phone || '',
                         linkedin_url: metadata.linkedin_url || '',
                         cla_accepted: metadata.cla_accepted || false,
                         nda_accepted: metadata.nda_accepted || false,
                         cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
-                        nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null
+                        nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null,
+                        bio: this.buildRegistrationBio(metadata)
                     };
+                    
+                    console.log('Attempting to save profile data:', profileData);
                     await this.service.upsertChampion(profileData);
+                    console.log('Profile data saved successfully during registration');
                 } catch (profileError) {
                     // This is expected if email confirmation is required
-                    // The database trigger already created the basic profile
                     console.log('Profile will be updated after email confirmation:', profileError.message);
                 }
             }
@@ -150,6 +218,31 @@ class ChampionAuth {
                 error: error.message || 'Registration failed'
             };
         }
+    }
+
+    /**
+     * Build bio from registration metadata
+     */
+    buildRegistrationBio(metadata) {
+        const bioParts = [];
+        
+        // Add ESG contributions if provided
+        if (metadata.esg_contributions) {
+            bioParts.push(metadata.esg_contributions);
+        }
+        
+        // Add other metadata as structured info
+        const extras = [];
+        if (metadata.website) extras.push(`Website: ${metadata.website}`);
+        if (metadata.competence_level) extras.push(`ESG Competence: ${metadata.competence_level}`);
+        if (metadata.primary_sector) extras.push(`Sector Focus: ${metadata.primary_sector}`);
+        if (metadata.expertise_area) extras.push(`Panel Expertise: ${metadata.expertise_area}`);
+        
+        if (extras.length > 0) {
+            bioParts.push(extras.join(' | '));
+        }
+        
+        return bioParts.filter(Boolean).join('\n\n');
     }
 
     /**
