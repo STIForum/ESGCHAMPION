@@ -178,20 +178,18 @@ class SupabaseService {
      * Sign up with email and password
      */
     async signUp(email, password, metadata = {}) {
-        // Use your exact Vercel domain instead of window.location.origin
-        const redirectUrl = 'https://esgchampion-stiforums-projects.vercel.app/champion-dashboard.html';
-        
         const { data, error } = await this.client.auth.signUp({
             email,
             password,
             options: {
                 data: metadata,
-                emailRedirectTo: redirectUrl
+                emailRedirectTo: `${window.location.origin}/champion-dashboard.html`
             }
         });
         if (error) throw error;
         return data;
     }
+
     /**
      * Sign in with email and password
      */
