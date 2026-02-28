@@ -44,7 +44,7 @@ const CHAMPION_FIELDS = [
     'location', 'bio', 'linkedin_url', 'twitter_url', 'website_url',
     'credits', 'is_admin', 'is_active', 'last_login_at', 'email_notifications',
     'marketing_emails', 'review_reminders', 'mobile_number', 'office_phone'
-];
+];y
 
 const PANEL_FIELDS = [
     'id', 'name', 'description', 'category', 'icon', 'color',
@@ -178,18 +178,20 @@ class SupabaseService {
      * Sign up with email and password
      */
     async signUp(email, password, metadata = {}) {
+        // Use your exact Vercel domain instead of window.location.origin
+        const redirectUrl = 'https://esgchampion-stiforums-projects.vercel.app/champion-dashboard.html';
+        
         const { data, error } = await this.client.auth.signUp({
             email,
             password,
             options: {
                 data: metadata,
-                emailRedirectTo: `${window.location.origin}/champion-dashboard.html`
+                emailRedirectTo: redirectUrl
             }
         });
         if (error) throw error;
         return data;
     }
-
     /**
      * Sign in with email and password
      */
