@@ -43,7 +43,7 @@ const CHAMPION_FIELDS = [
     'id', 'full_name', 'email', 'avatar_url', 'job_title', 'company',
     'location', 'bio', 'linkedin_url', 'twitter_url', 'website_url',
     'credits', 'is_admin', 'is_active', 'last_login_at', 'email_notifications',
-    'marketing_emails', 'review_reminders'
+    'marketing_emails', 'review_reminders', 'mobile_number', 'office_phone'
 ];
 
 const PANEL_FIELDS = [
