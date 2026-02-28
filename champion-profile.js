@@ -187,11 +187,15 @@ class ChampionProfile {
         document.getElementById('company').value = this.champion.company || '';
         document.getElementById('job_title').value = this.champion.job_title || '';
         document.getElementById('linkedin_url').value = this.champion.linkedin_url || '';
+        document.getElementById('mobile_number').value = this.champion.mobile_number || '';     // ✅ Load from separate field
+        document.getElementById('office_phone').value = this.champion.office_phone || '';       // ✅ Load from separate field
 
-        // Map existing bio to key contributions
-        document.getElementById('key_contributions').value = this.champion.bio || '';
+        // Map existing bio to key contributions (remove phone numbers if they were stored there)
+        let bio = this.champion.bio || '';
+        // Clean up bio by removing phone number entries that might have been stored there previously
+        bio = bio.replace(/Mobile: [^\s|]+/g, '').replace(/Office: [^\s|]+/g, '').replace(/\|\s*\|/g, '|').trim();
+        document.getElementById('key_contributions').value = bio;
     }
-
     setupEventListeners() {
         // Tab switching
         document.querySelectorAll('.profile-tab').forEach(tab => {
@@ -303,7 +307,7 @@ class ChampionProfile {
         const firstName = document.getElementById('first_name').value.trim();
         const lastName = document.getElementById('last_name').value.trim();
         const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
-        document.getElementById('full_name').value = fullName; // keep hidden field in sync
+        document.getElementById('full_name').value = fullName;
 
         const keyContributions = document.getElementById('key_contributions').value.trim();
         const mobile = document.getElementById('mobile_number').value.trim();
@@ -313,9 +317,8 @@ class ChampionProfile {
         const sector = document.getElementById('sectors_focus').value;
         const panelExpertise = document.getElementById('expertise_panels').value;
 
+        // Only add non-phone fields to extras
         const extras = [];
-        if (mobile) extras.push(`Mobile: ${mobile}`);
-        if (officePhone) extras.push(`Office: ${officePhone}`);
         if (website) extras.push(`Website: ${website}`);
         if (competence) extras.push(`ESG Competence: ${competence}`);
         if (sector) extras.push(`Sector Focus: ${sector}`);
@@ -328,7 +331,9 @@ class ChampionProfile {
             company: document.getElementById('company').value,
             job_title: document.getElementById('job_title').value,
             linkedin_url: document.getElementById('linkedin_url').value,
-            bio: bioCombined
+            bio: bioCombined,
+            mobile_number: mobile,      // ✅ Save as separate field
+            office_phone: officePhone   // ✅ Save as separate field
         };
 
         try {
