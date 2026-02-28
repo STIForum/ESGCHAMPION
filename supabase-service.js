@@ -183,7 +183,8 @@ class SupabaseService {
             password,
             options: {
                 data: metadata,
-                emailRedirectTo: `${window.location.origin}/champion-dashboard.html`
+                // Redirect back to verify.html after the user clicks "Confirm your mail"
+                emailRedirectTo: `${window.location.origin}/verify.html`
             }
         });
         if (error) throw error;
