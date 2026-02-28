@@ -1691,7 +1691,7 @@ p {
    Full-width background, constrained inner content
    ===================================================== */
 .footer-compact {
-    background: var(--gray-900);
+    background: #ffffff;
     color: var(--gray-400);
     padding: var(--space-4) 0;
     width: 100%; /* Full-bleed from left to right edge */
