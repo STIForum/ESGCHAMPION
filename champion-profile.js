@@ -187,14 +187,57 @@ class ChampionProfile {
         document.getElementById('company').value = this.champion.company || '';
         document.getElementById('job_title').value = this.champion.job_title || '';
         document.getElementById('linkedin_url').value = this.champion.linkedin_url || '';
-        document.getElementById('mobile_number').value = this.champion.mobile_number || '';     // ✅ Load from separate field
-        document.getElementById('office_phone').value = this.champion.office_phone || '';       // ✅ Load from separate field
+        document.getElementById('mobile_number').value = this.champion.mobile_number || '';
+        document.getElementById('office_phone').value = this.champion.office_phone || '';
 
-        // Map existing bio to key contributions (remove phone numbers if they were stored there)
-        let bio = this.champion.bio || '';
-        // Clean up bio by removing phone number entries that might have been stored there previously
-        bio = bio.replace(/Mobile: [^\s|]+/g, '').replace(/Office: [^\s|]+/g, '').replace(/\|\s*\|/g, '|').trim();
-        document.getElementById('key_contributions').value = bio;
+        // Parse bio to extract structured data
+        this.parseBioData();
+    }
+
+    /**
+     * Parse bio data and populate form fields
+     */
+    parseBioData() {
+        const bio = this.champion.bio || '';
+        
+        // Split bio into parts
+        const parts = bio.split('\n\n');
+        let keyContributions = '';
+        let structuredData = '';
+        
+        if (parts.length >= 2) {
+            keyContributions = parts[0];
+            structuredData = parts[1];
+        } else {
+            keyContributions = bio;
+        }
+        
+        // Set key contributions
+        document.getElementById('key_contributions').value = keyContributions;
+        
+        // Parse structured data
+        if (structuredData) {
+            const dataItems = structuredData.split(' | ');
+            dataItems.forEach(item => {
+                const [key, value] = item.split(': ');
+                if (key && value) {
+                    switch (key.trim()) {
+                        case 'Website':
+                            document.getElementById('website').value = value;
+                            break;
+                        case 'ESG Competence':
+                            document.getElementById('competence_esg').value = value;
+                            break;
+                        case 'Sector Focus':
+                            document.getElementById('sectors_focus').value = value;
+                            break;
+                        case 'Panel Expertise':
+                            document.getElementById('expertise_panels').value = value;
+                            break;
+                    }
+                }
+            });
+        }
     }
     setupEventListeners() {
         // Tab switching
