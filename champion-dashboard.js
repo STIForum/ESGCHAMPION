@@ -51,13 +51,24 @@ class ChampionDashboard {
     }
 
     async init() {
-        // Wait for auth to be ready
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+        // Ensure auth service exists
+        if (!window.championAuth || !window.championAuth.init) {
+            console.error('championAuth not initialized');
+            window.location.href = '/champion-login.html?redirect=/champion-dashboard.html';
+            return;
+        }
+
+        // Explicitly (re)initialize auth so it picks up the session from the verify‑email redirect
+        try {
+            await window.championAuth.init();
+        } catch (e) {
+            console.error('Auth init failed on dashboard:', e);
+        }
+
         this.auth = window.championAuth;
         this.db = window.championDB;
 
-        // Check authentication
+        // Check authentication AFTER init
         if (!this.auth?.isAuthenticated?.()) {
             window.location.href = '/champion-login.html?redirect=/champion-dashboard.html';
             return;
