@@ -467,36 +467,37 @@
                         </div>
                     </div>
 
-                    <!-- Section 1.5: Legal -->
-                    <div class="form-section">
-                        <h2 class="section-title">1.5 Legal</h2>
-                        
-                        <label class="form-checkbox mb-4">
-                            <input type="checkbox" id="cla_accepted" required>
-                            <span>I accept the <a href="/contributor-agreements.md" target="_blank">Contributor License Agreement (CLA)</a> <span class="required">*</span></span>
-                        </label>
-                        
-                        <label class="form-checkbox mb-4">
-                            <input type="checkbox" id="nda_accepted">
-                            <span>I have read and agree to the <a href="/contributor-agreements.md" target="_blank">Non-Disclosure Agreement (NDA)</a> <span class="required">*</span></span>
-                        </label>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="digital_signature">Digital Signature <span class="required">*</span></label>
-                            <input type="text" id="digital_signature" name="digital_signature" class="form-input" placeholder="Type your full name as digital signature" required>
-                            <p class="form-helper">By typing your name, you are providing your digital signature</p>
-                        </div>
-                        
-                        <label class="form-checkbox mb-4">
-                            <input type="checkbox" id="terms_accepted" required>
-                            <span>I accept the <a href="/terms.html" target="_blank">Terms & Conditions</a> <span class="required">*</span></span>
-                        </label>
-                        
-                        <label class="form-checkbox mb-4">
-                            <input type="checkbox" id="ip_accepted">
-                            <span>I accept the <a href="/terms.html" target="_blank">IP & Attribution Policy</a> (optional if covered in CLA)</span>
-                        </label>
+                <!-- Section 1.5: Legal -->
+                <div class="form-section">
+                    <h2 class="section-title">1.5 Legal</h2>
+                    
+                    <label class="form-checkbox mb-4">
+                        <input type="checkbox" id="cla_accepted" required>
+                        <span>I accept the <a href="/contributor-agreements.md" target="_blank">Contributor License Agreement (CLA)</a> <span class="required">*</span></span>
+                    </label>
+                    
+                    <label class="form-checkbox mb-4">
+                        <input type="checkbox" id="nda_accepted">
+                        <span>I have read and agree to the <a href="/contributor-agreements.md" target="_blank">Non-Disclosure Agreement (NDA)</a> <span class="required">*</span></span>
+                    </label>
+                    
+                    <label class="form-checkbox mb-4">
+                        <input type="checkbox" id="terms_accepted" required>
+                        <span>I accept the <a href="/terms.html" target="_blank">Terms & Conditions</a> <span class="required">*</span></span>
+                    </label>
+                    
+                    <label class="form-checkbox mb-4">
+                        <input type="checkbox" id="ip_accepted">
+                        <span>I accept the <a href="/terms.html" target="_blank">IP & Attribution Policy</a> (optional if covered in CLA)</span>
+                    </label>
+                    
+                    <!-- Digital Signature (moved to end) -->
+                    <div class="form-group">
+                        <label class="form-label" for="digital_signature">Digital Signature <span class="required">*</span></label>
+                        <input type="text" id="digital_signature" name="digital_signature" class="form-input" placeholder="Type your full name as digital signature" required>
+                        <p class="form-helper">By typing your name, you are providing your digital signature</p>
                     </div>
+                </div>
 
                     <div id="error-message" class="alert alert-error hidden" style="margin-bottom: var(--space-4);"></div>
 
