@@ -243,25 +243,34 @@
     <!-- Compact Footer (Dashboard variant) -->
     <footer class="footer-compact">
         <div class="container">
+            <!-- LEFT: Footer links -->
             <ul class="footer-compact-links">
-                <li><a href="/terms.html">Terms of Service</a></li>
-                <li><a href="/privacy.html">Privacy Policy</a></li>
-                <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                <li><a href="/terms.html" class="footer-link">Terms of Service</a></li>
+                <li><a href="/privacy.html" class="footer-link">Privacy Policy</a></li>
+                <li><a href="/cookie-policy.html" class="footer-link">Cookie Policy</a></li>
             </ul>
+            <!-- CENTER: Contact button -->
             <div class="footer-compact-cta">
-                <a href="#" class="btn btn-primary btn-sm">
+                <a href="https://calendly.com/stiforum-info/30min" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    Schedule
+                    Contact
                 </a>
             </div>
-            <span class="footer-compact-copyright">&copy; 2025 STIF</span>
+            <!-- RIGHT: Copyright dynamic year -->
+            <span class="footer-compact-copyright">
+                &copy; <span id="footer-year"></span> STIF
+            </span>
         </div>
     </footer>
+    <script>
+        // Dynamically set the year
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
+    </script>
 
     <!-- Scripts -->
     <!-- Services -->
