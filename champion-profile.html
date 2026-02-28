@@ -131,12 +131,33 @@
                                             <input type="email" id="email" class="form-input" disabled>
                                         </div>
                                         <div class="form-group">
-                                            <label class="form-label" for="mobile_number">Mobile Number *</label>
-                                            <input type="text" id="mobile_number" class="form-input" placeholder="+44 123 456 7890">
+                                            <label class="form-label" for="mobile_number">Mobile Number <span class="required">*</span></label>
+                                            <input
+                                                type="tel"
+                                                id="mobile_number"
+                                                name="mobile_number"
+                                                class="form-input"
+                                                placeholder="1234567890"
+                                                required
+                                                inputmode="numeric"
+                                                pattern="^[0-9]{7,15}$"
+                                                oninput="this.value = this.value.replace(/\D+/g, ''); this.setCustomValidity('');"
+                                                oninvalid="this.setCustomValidity('Please enter a valid mobile number using digits only (no spaces or letters), between 7 and 15 digits long.')"
+                                            >
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="office_phone">Office Phone Number</label>
-                                            <input type="text" id="office_phone" class="form-input" placeholder="+44 123 456 7891">
+                                            <input
+                                                type="tel"
+                                                id="office_phone"
+                                                name="office_phone"
+                                                class="form-input"
+                                                placeholder="1234567891"
+                                                inputmode="numeric"
+                                                pattern="^[0-9]{7,15}$"
+                                                oninput="this.value = this.value.replace(/\D+/g, ''); this.setCustomValidity('');"
+                                                oninvalid="this.setCustomValidity('Please enter a valid office phone number using digits only (no spaces or letters), between 7 and 15 digits long.')"
+                                            >
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="linkedin_url">LinkedIn Profile</label>
@@ -217,14 +238,54 @@
                             <form id="password-form" style="max-width: 400px;">
                                 <div class="form-group">
                                     <label class="form-label" for="new_password">New Password</label>
-                                    <input type="password" id="new_password" class="form-input" minlength="6" required>
+                                    <input 
+                                        type="password" 
+                                        id="new_password" 
+                                        class="form-input" 
+                                        minlength="6" 
+                                        required
+                                        pattern="^\S(.*\S)?$"
+                                        title="Password cannot start or end with a space."
+                                    >
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="confirm_password">Confirm Password</label>
-                                    <input type="password" id="confirm_password" class="form-input" required>
+                                    <input 
+                                        type="password" 
+                                        id="confirm_password" 
+                                        class="form-input" 
+                                        required
+                                        pattern="^\S(.*\S)?$"
+                                        title="Password cannot start or end with a space."
+                                    >
+                                </div>
+                                <div class="field-error" id="pw-error" style="display:none; color:#dc2626; margin-bottom:1em;">
+                                    Passwords must not start or end with a space and must match.
                                 </div>
                                 <button type="submit" class="btn btn-primary" id="change-password-btn">Update Password</button>
                             </form>
+                        </div>
+                        <script>
+                        // Change Password Validation
+                        document.getElementById('password-form').addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            const pw1 = document.getElementById('new_password').value;
+                            const pw2 = document.getElementById('confirm_password').value;
+                            const error = document.getElementById('pw-error');
+
+                            // Reject if leading/trailing space OR if mismatch
+                            if (
+                                pw1 !== pw2 ||
+                                /^\s|\s$/.test(pw1) ||
+                                /^\s|\s$/.test(pw2)
+                            ) {
+                                error.style.display = '';
+                                return;
+                            }
+                            error.style.display = 'none';
+                            // Continue with password update logic
+                        });
+                        </script>
 
                             <hr style="margin: var(--space-8) 0; border: none; border-top: 1px solid var(--gray-200);">
 
