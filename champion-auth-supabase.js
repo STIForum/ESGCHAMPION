@@ -59,13 +59,6 @@ class ChampionAuth {
 
         try {
             this.currentChampion = await this.service.getChampion(this.currentUser.id);
-            
-            // Check if profile needs to be populated from registration metadata
-            if (this.currentChampion && this.shouldPopulateFromMetadata(this.currentChampion)) {
-                console.log('Profile incomplete, populating from metadata...');
-                await this.populateProfileFromMetadata();
-            }
-            
         } catch (error) {
             // Champion might not exist yet, create basic profile
             if (error.code === 'PGRST116') {
@@ -76,52 +69,6 @@ class ChampionAuth {
         }
 
         return this.currentChampion;
-    }
-
-    /**
-     * Check if profile should be populated from metadata
-     */
-    shouldPopulateFromMetadata(champion) {
-        const metadata = this.currentUser.user_metadata || {};
-        
-        // If user has registration_complete flag but profile is missing key fields
-        if (metadata.registration_complete) {
-            const hasBasicInfo = champion.company && champion.job_title && champion.mobile_number;
-            if (!hasBasicInfo) {
-                console.log('Profile missing registration data, should populate from metadata');
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Populate profile from user metadata (after email confirmation)
-     */
-    async populateProfileFromMetadata() {
-        const metadata = this.currentUser.user_metadata || {};
-        console.log('Populating profile from metadata:', metadata);
-        
-        const updates = {
-            full_name: metadata.full_name || '',
-            company: metadata.company || '',
-            job_title: metadata.job_title || '',
-            mobile_number: metadata.mobile_number || '',
-            office_phone: metadata.office_phone || '',
-            linkedin_url: metadata.linkedin_url || '',
-            bio: this.buildRegistrationBio(metadata),
-            // Mark that profile has been populated
-            profile_populated_from_metadata: true,
-            profile_populated_at: new Date().toISOString()
-        };
-        
-        try {
-            console.log('Updating profile with metadata:', updates);
-            this.currentChampion = await this.service.updateChampion(this.currentUser.id, updates);
-            console.log('Profile populated from metadata successfully');
-        } catch (error) {
-            console.error('Error populating profile from metadata:', error);
-        }
     }
 
     /**
