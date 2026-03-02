@@ -989,11 +989,55 @@ class AdminReviewPage {
     }
 
     setupFilterEventListeners() {
+        const MAX_LEN = 256;
+
+        const ensureWarningElement = (inputEl) => {
+            // Looks for or creates a small warning span right after the input
+            const warningId = `${inputEl.id}-maxlen-warning`;
+            let warning = document.getElementById(warningId);
+
+            if (!warning) {
+                warning = document.createElement('div');
+                warning.id = warningId;
+                warning.style.fontSize = '12px';
+                warning.style.color = '#dc2626'; // red-600
+                warning.style.marginTop = '4px';
+                warning.style.display = 'none';
+                inputEl.insertAdjacentElement('afterend', warning);
+            }
+
+            return warning;
+        };
+
         const bindInput = (id, tabKey, filterKey) => {
             const el = document.getElementById(id);
             if (!el) return;
+
+            // Enforce hard max length at input level
+            el.maxLength = MAX_LEN;
+
+            // Prepare warning element
+            const warning = ensureWarningElement(el);
+
             el.addEventListener('input', () => {
-                this.tabFilters[tabKey][filterKey] = String(el.value || '').trim();
+                let value = String(el.value || '');
+
+                // Hard truncate in case browser ignores maxLength (e.g., pastes)
+                if (value.length > MAX_LEN) {
+                    value = value.slice(0, MAX_LEN);
+                    el.value = value;
+                }
+
+                // Show/hide warning
+                if (value.length === MAX_LEN) {
+                    warning.textContent = `Maximum ${MAX_LEN} characters reached. Further input is not accepted.`;
+                    warning.style.display = 'block';
+                } else {
+                    warning.textContent = '';
+                    warning.style.display = 'none';
+                }
+
+                this.tabFilters[tabKey][filterKey] = value.trim();
                 this.tabFilters[tabKey].page = 1;
                 this.renderTabData(tabKey);
             });
