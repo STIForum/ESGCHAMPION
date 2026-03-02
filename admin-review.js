@@ -108,13 +108,12 @@ class AdminReviewPage {
             }
         };
     }
-
     async init() {
-        // Wait for auth to be ready
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Check if user is admin
         const isAdmin = await window.championAuth.isAdmin();
+        console.log('Admin check result:', isAdmin); // ← ADD THIS
+        
         if (!isAdmin) {
             window.location.href = '/champion-dashboard.html';
             return;
