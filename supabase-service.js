@@ -1297,10 +1297,54 @@ class SupabaseService {
             submission.champions = champion || null;
         }
 
-        // Get indicator reviews
+        // Get indicator reviews with ALL methodology fields
         const { data: indicatorReviews, error: revError } = await this.client
             .from('panel_review_indicator_reviews')
-            .select('id, indicator_id, submission_id, clarity_rating, analysis, status, created_at, indicators(id, name, description)')
+            .select(`
+                id,
+                indicator_id,
+                submission_id,
+                champion_id,
+                
+                sme_context,
+                cost_to_collect,
+                relevance_to_sme,
+                clarity_and_language,
+                data_availability,
+                additional_guidance,
+                suggested_tier,
+                sdgs,
+                tags,
+                notes,
+                status,
+                review_status,
+                feedback,
+                reviewed_by,
+                reviewed_at,
+                created_at,
+                updated_at,
+                reviewer_user_id,
+                analysis,
+                is_necessary,
+                clarity_rating,
+                
+                sme_size_band,
+                primary_sector,
+                primary_framework,
+                esg_class,
+                relevance,
+                regulatory_necessity,
+                operational_feasibility,
+                misreporting_risk,
+                rationale,
+                optional_tags,
+                geographic_footprint,
+                estimated_time,
+                support_required,
+                stakeholder_priority,
+                
+                indicators(id, name, description, code, primary_framework, esg_class, impact_level)
+            `)
             .eq('submission_id', submissionId);
         if (revError) throw revError;
 
