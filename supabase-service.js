@@ -1244,8 +1244,17 @@ class SupabaseService {
         }
 
         const { data, error } = await query;
-        if (error) throw error;
-        
+
+        // --- ADD THIS ---
+        if (error) {
+            console.error('getAdminPanelReviewSubmissions error:', error);
+            throw error;  // Was silently returning [] before
+        }
+        if (!data || data.length === 0) {
+            console.warn('getAdminPanelReviewSubmissions: no submissions returned. Check RLS policies on panel_review_submissions.');
+        }
+        // ----------------
+
         // Fetch champion details separately for each submission
         if (data && data.length > 0) {
             const userIds = [...new Set(data.map(s => s.champion_id))];
@@ -1259,7 +1268,6 @@ class SupabaseService {
                 champions.forEach(c => championsMap[c.id] = c);
             }
             
-            // Attach champion data to submissions
             data.forEach(submission => {
                 submission.champions = championsMap[submission.champion_id] || null;
             });
@@ -1267,7 +1275,6 @@ class SupabaseService {
         
         return data || [];
     }
-
     /**
      * Get a submission with its indicator reviews
      */
