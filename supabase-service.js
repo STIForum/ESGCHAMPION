@@ -43,7 +43,9 @@ const CHAMPION_FIELDS = [
     'id', 'full_name', 'email', 'avatar_url', 'job_title', 'company',
     'location', 'bio', 'linkedin_url', 'twitter_url', 'website_url',
     'credits', 'is_admin', 'is_active', 'last_login_at', 'email_notifications',
-    'marketing_emails', 'review_reminders', 'mobile_number', 'office_phone'
+    'marketing_emails', 'review_reminders', 'mobile_number', 'office_phone',
+    // ➕ add these:
+    'failed_login_attempts', 'locked_until'
 ];
 
 const PANEL_FIELDS = [
@@ -318,10 +320,17 @@ class SupabaseService {
             .from('champions')
             .update({ ...safeUpdates, updated_at: new Date().toISOString() })
             .eq('id', id)
-            .select()
-            .single();
+            .select();
+
+        // If RLS or other conditions result in 0 rows, don't throw PGRST116
         if (error) throw error;
-        return data;
+        if (!data || data.length === 0) {
+            // Log and return null instead of throwing
+            console.warn('updateChampion: no rows updated for id', id);
+            return null;
+        }
+
+        return data[0];
     }
 
     /**
@@ -1491,6 +1500,36 @@ class SupabaseService {
         const indicatorIds = [...new Set((indicatorReviews || []).map(r => r.indicator_id))];
         return indicatorIds;
     }
+        /**
+     * Increment failed login attempts for a champion and lock if threshold exceeded
+     */
+    async recordFailedLoginAttempt(email, maxAttempts = 5, lockMinutes = 15) {
+        const champion = await this.getChampionByEmail(email).catch(() => null);
+        if (!champion) return null;
+
+        const currentAttempts = champion.failed_login_attempts || 0;
+        const newAttempts = currentAttempts + 1;
+        const updates = {
+            failed_login_attempts: newAttempts
+        };
+
+        if (newAttempts >= maxAttempts) {
+            const lockUntil = new Date(Date.now() + lockMinutes * 60 * 1000).toISOString();
+            updates.locked_until = lockUntil;
+        }
+
+        return await this.updateChampion(champion.id, updates);
+    }
+
+    /**
+     * Reset failed login attempts and unlock account
+     */
+    async resetLoginFailures(championId) {
+        return await this.updateChampion(championId, {
+            failed_login_attempts: 0,
+            locked_until: null
+        });
+    }
 
     /**
      * Get user's rejected indicator IDs for a specific panel
@@ -1542,4 +1581,3 @@ class SupabaseService {
 // Create and export singleton instance
 window.SupabaseService = SupabaseService;
 window.supabaseService = new SupabaseService();
-
