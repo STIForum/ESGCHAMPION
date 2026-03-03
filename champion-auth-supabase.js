@@ -4,7 +4,8 @@
  * 
  * Handles user authentication, registration, and session management
  */
-
+const MAX_ATTEMPTS = 5;
+const LOCK_MINUTES = 1;
 class ChampionAuth {
     constructor() {
         this.service = window.supabaseService;
@@ -249,25 +250,102 @@ class ChampionAuth {
      * Login with email and password
      */
     async login(email, password) {
+        const MAX_ATTEMPTS = 5;
+        const LOCK_MINUTES = 1; // or 15, etc.
+
         try {
+            // 1) Check if account is locked before attempting auth
+            let champion = null;
+            try {
+                champion = await this.service.getChampionByEmail(email);
+            } catch (e) {
+                // If champion record doesn't exist yet, we still let Supabase handle auth error
+                champion = null;
+            }
+
+            if (champion && champion.locked_until) {
+                const lockedUntil = new Date(champion.locked_until);
+                const now = new Date();
+                if (lockedUntil > now) {
+                    const minutesLeft = Math.ceil((lockedUntil - now) / 60000);
+                    return {
+                        success: false,
+                        error: `Your account is locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`
+                    };
+                }
+            }
+
+            // 2) Try Supabase authentication
             const data = await this.service.signIn(email, password);
             this.currentUser = data.user;
             await this.loadChampionProfile();
 
-            // Log login activity
+            // 3) On successful login, reset failed attempts & lock state
+            if (this.currentChampion) {
+                try {
+                    await this.service.updateChampion(this.currentChampion.id, {
+                        failed_login_attempts: 0,
+                        locked_until: null
+                    });
+                } catch (e) {
+                    console.error('Failed to reset login attempts:', e);
+                }
+            }
+
+            // 4) Log login activity
             if (this.currentUser) {
                 await this.service.logActivity(this.currentUser.id, 'login');
             }
 
             return {
                 success: true,
-                data: data
+                data
             };
         } catch (error) {
             console.error('Login error:', error);
+
+            // 5) On failed login, increment failed_login_attempts and maybe lock
+            try {
+                const champion = await this.service.getChampionByEmail(email);
+                if (champion) {
+                    const currentAttempts = champion.failed_login_attempts || 0;
+                    const newAttempts = currentAttempts + 1;
+
+                    const updates = { failed_login_attempts: newAttempts };
+
+                    if (newAttempts >= MAX_ATTEMPTS) {
+                        const lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000).toISOString();
+                        updates.locked_until = lockUntil;
+                    }
+
+                    await this.service.updateChampion(champion.id, updates);
+                }
+            } catch (updateError) {
+                // Don't break login flow if we can't update counters
+                console.error('Error updating failed login attempts:', updateError);
+            }
+
+            // 6) Build appropriate error message
+            let message = this.getAuthErrorMessage(error);
+
+            // If account is now locked, override with lock message (dynamic time)
+            try {
+                const champion = await this.service.getChampionByEmail(email);
+                if (champion && champion.locked_until) {
+                    const lockedUntil = new Date(champion.locked_until);
+                    const now = new Date();
+                    if (lockedUntil > now) {
+                        const minutesLeft = Math.ceil((lockedUntil - now) / 60000);
+                        message = `Your account is locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`;
+                    }
+                }
+            } catch (_) {
+                // ignore
+            }
+
             return {
                 success: false,
-                error: this.getAuthErrorMessage(error)
+                error: message
             };
         }
     }
@@ -640,4 +718,3 @@ window.championAuth = new ChampionAuth();
 document.addEventListener('DOMContentLoaded', () => {
     window.championAuth.init();
 });
-
