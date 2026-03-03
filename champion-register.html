@@ -467,55 +467,239 @@
                         </div>
                     </div>
 
-                <!-- Section 1.5: Legal -->
-                <!-- Section 1.5: Legal -->
+                <!-- Section 1.5: Legal (Option 1 – anchored popover-style panels) -->
                 <div class="form-section">
                     <h2 class="section-title">1.5 Legal</h2>
                     
+                    <!-- CLA Checkbox + anchored panel -->
                     <label class="form-checkbox mb-4">
                         <input type="checkbox" id="cla_accepted" required>
                         <span>
                             I accept the 
-                            <button type="button" class="link-button" data-legal-modal="cla-modal">
+                            <button
+                                type="button"
+                                class="link-button legal-trigger"
+                                data-legal-panel="cla-panel"
+                            >
                                 Contributor License Agreement (CLA)
                             </button>
                             <span class="required">*</span>
                         </span>
                     </label>
-                    
+                    <div class="legal-panel" id="cla-panel" aria-hidden="true">
+                        <div class="legal-panel-inner">
+                            <div class="legal-panel-header">
+                                <h3 class="legal-panel-title">Contributor License Agreement (CLA)</h3>
+                                <button
+                                    type="button"
+                                    class="legal-close-btn"
+                                    data-legal-close="cla-panel"
+                                    aria-label="Close CLA"
+                                >&times;</button>
+                            </div>
+                            <div class="legal-panel-body">
+                                <div class="legal-doc-heading">Contributor License Agreement (CLA)</div>
+                                <div class="legal-doc-meta">
+                                    Effective Date: 28 February 2026 &mdash; Last Updated: 28 February 2026
+                                </div>
+
+                                <div class="legal-doc-section-title">1. Introduction</div>
+                                <p>This Contributor License Agreement governs the contributions made by ESG Champions to STIF's ESG framework validation, indicator development, and disclosure refinement processes. By accepting this agreement, you grant STIF the rights described below to use your contributions.</p>
+
+                                <div class="legal-doc-section-title">3. Grant of Copyright Licence</div>
+                                <p>You grant STIF a perpetual, worldwide, non-exclusive, royalty-free, irrevocable copyright licence to reproduce, modify, distribute, publicly display, and sublicence your contributions. You retain ownership of your work but allow STIF to incorporate it into its frameworks and materials.</p>
+
+                                <div class="legal-doc-section-title">4. Grant of Patent Licence</div>
+                                <p>If your contributions include patentable ideas, you grant STIF a perpetual, worldwide, non-exclusive, royalty-free, irrevocable patent licence to make, use, sell, and otherwise exploit such contributions. This licence may terminate if you bring certain patent claims against STIF.</p>
+
+                                <div class="legal-doc-section-title">5. Representations and Warranties</div>
+                                <p>You confirm that you are legally entitled to make contributions, that they are your original work (or properly licensed), and that they do not infringe third-party rights or violate any contractual obligations.</p>
+
+                                <div class="legal-doc-section-title">7. Attribution and Recognition</div>
+                                <p>Subject to the ESG Champion ranking system and your preferences, STIF may attribute contributions to you by name and may feature you in community or thought-leadership materials. You can request anonymity or changes to how you are attributed.</p>
+
+                                <div class="legal-doc-section-title">9. Confidentiality and Related Documents</div>
+                                <p>You may access confidential information as part of your contribution work and must treat it in accordance with STIF's confidentiality and NDA terms. Contributions are generally voluntary and unpaid unless otherwise agreed in a separate contract.</p>
+
+                                <p class="legal-doc-note">
+                                    This is a summary for convenience only. For the full legally binding terms, please refer to the complete Contributor License Agreement in the STIF Legal Documents.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NDA Checkbox + anchored panel -->
                     <label class="form-checkbox mb-4">
                         <input type="checkbox" id="nda_accepted">
                         <span>
                             I have read and agree to the 
-                            <button type="button" class="link-button" data-legal-modal="nda-modal">
+                            <button
+                                type="button"
+                                class="link-button legal-trigger"
+                                data-legal-panel="nda-panel"
+                            >
                                 Non-Disclosure Agreement (NDA)
                             </button>
                             <span class="required">*</span>
                         </span>
                     </label>
-                    
+                    <div class="legal-panel" id="nda-panel" aria-hidden="true">
+                        <div class="legal-panel-inner">
+                            <div class="legal-panel-header">
+                                <h3 class="legal-panel-title">Non-Disclosure Agreement (NDA)</h3>
+                                <button
+                                    type="button"
+                                    class="legal-close-btn"
+                                    data-legal-close="nda-panel"
+                                    aria-label="Close NDA"
+                                >&times;</button>
+                            </div>
+                            <div class="legal-panel-body">
+                                <div class="legal-doc-heading">Non-Disclosure Agreement (NDA)</div>
+                                <div class="legal-doc-meta">
+                                    Effective Date: 28 February 2026 &mdash; Last Updated: 28 February 2026
+                                </div>
+
+                                <div class="legal-doc-section-title">1–3. Scope and Confidential Information</div>
+                                <p>This NDA covers confidential and proprietary information you may access while acting as an ESG Champion, including unpublished frameworks, methodologies, business and technical information, and any data about business users or other contributors.</p>
+
+                                <div class="legal-doc-section-title">4. Obligations of Confidentiality</div>
+                                <p>You must keep all confidential information strictly confidential, use it only for your ESG Champion work with STIF, protect it with reasonable care, and not share it with third parties without STIF's written consent.</p>
+
+                                <div class="legal-doc-section-title">5–6. Required Disclosure and Return of Information</div>
+                                <p>If you are legally required to disclose information, you must notify STIF where permitted and disclose only what is required. When your involvement ends, you must return or securely delete confidential materials, except where retention is legally required.</p>
+
+                                <div class="legal-doc-section-title">7–9. Intellectual Property and Term</div>
+                                <p>The NDA does not grant you intellectual property rights in STIF's materials. Confidentiality obligations generally survive termination for at least five years or as long as the information remains confidential.</p>
+
+                                <div class="legal-doc-section-title">10–13. Remedies, Liability and Data Protection</div>
+                                <p>Unauthorised disclosure may cause irreparable harm; STIF may seek injunctive relief and other remedies. You must handle any personal data you see in line with UK GDPR and STIF's instructions.</p>
+
+                                <p class="legal-doc-note">
+                                    This is a summary for convenience only. For full details, please refer to the complete Non-Disclosure Agreement in the STIF Legal Documents.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms Checkbox + anchored panel -->
                     <label class="form-checkbox mb-4">
                         <input type="checkbox" id="terms_accepted" required>
                         <span>
                             I accept the 
-                            <button type="button" class="link-button" data-legal-modal="terms-modal">
+                            <button
+                                type="button"
+                                class="link-button legal-trigger"
+                                data-legal-panel="terms-panel"
+                            >
                                 Terms &amp; Conditions
                             </button>
                             <span class="required">*</span>
                         </span>
                     </label>
-                    
+                    <div class="legal-panel" id="terms-panel" aria-hidden="true">
+                        <div class="legal-panel-inner">
+                            <div class="legal-panel-header">
+                                <h3 class="legal-panel-title">STIF Terms and Conditions</h3>
+                                <button
+                                    type="button"
+                                    class="legal-close-btn"
+                                    data-legal-close="terms-panel"
+                                    aria-label="Close Terms &amp; Conditions"
+                                >&times;</button>
+                            </div>
+                            <div class="legal-panel-body">
+                                <div class="legal-doc-heading">Terms and Conditions</div>
+                                <div class="legal-doc-meta">
+                                    GREENURBS INNOVATION LTD (Company No. 14451676)<br>
+                                    Effective Date: 21 February 2026 &mdash; Last Updated: 21 February 2026
+                                </div>
+
+                                <div class="legal-doc-section-title">1. Introduction</div>
+                                <p>These Terms and Conditions ("Terms", "Agreement") govern your use of the STIF platform and associated services operated by GREENURBS INNOVATION LTD ("we", "us", "our", "STIF"). By accessing or using the STIF platform (the "Service"), you agree to be bound by these Terms. If you do not agree with any part of these Terms, you must not use our Service.</p>
+
+                                <div class="legal-doc-section-title">3. Eligibility and Account Registration</div>
+                                <p>You must be at least 18 years old and capable of forming a binding contract to use the Service. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to provide accurate, current, and complete information and to update it as necessary.</p>
+
+                                <div class="legal-doc-section-title">4. Services and Licence</div>
+                                <p>Subject to your compliance with these Terms and payment of applicable fees, we grant you a limited, non-exclusive, non-transferable, revocable licence to access and use the Service for your internal business purposes only. You must not copy, modify, reverse engineer, or attempt to gain unauthorised access to the Service.</p>
+
+                                <div class="legal-doc-section-title">5. Subscription and Payment</div>
+                                <p>Fees are payable in advance for each billing period and are generally non-refundable except as required by law or expressly stated. We reserve the right to change our pricing with notice and may suspend or terminate access for non-payment.</p>
+
+                                <div class="legal-doc-section-title">6. User Content and Conduct</div>
+                                <p>You retain ownership of your content but grant STIF a licence to use it to operate and improve the Service. You are responsible for ensuring that your content and use of the Service comply with applicable laws and do not infringe third-party rights or contain unlawful material.</p>
+
+                                <div class="legal-doc-section-title">8. Intellectual Property Rights</div>
+                                <p>Except for your own content, all software, frameworks, content, trademarks, logos, and other materials provided through the Service are owned by or licenced to GREENURBS INNOVATION LTD and are protected by intellectual property laws.</p>
+
+                                <div class="legal-doc-section-title">11–13. Disclaimers, Liability and Indemnity</div>
+                                <p>The Service is provided "as is" and "as available" without warranties of any kind to the maximum extent permitted by law. Our total liability to you is limited as set out in the full Terms, and you agree to indemnify STIF for losses arising from your misuse of the Service or breach of these Terms.</p>
+
+                                <div class="legal-doc-section-title">15–16. Dispute Resolution and General</div>
+                                <p>The Terms are governed by the laws of England and Wales, and the courts of England and Wales have exclusive jurisdiction. The Terms, together with our Privacy and Cookie Policies, form the entire agreement between you and STIF regarding the Service.</p>
+
+                                <p class="legal-doc-note">
+                                    This is a summary for convenience only. For full details, please refer to the complete Terms and Conditions in the STIF Legal Documents.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- IP Checkbox + anchored panel -->
                     <label class="form-checkbox mb-4">
                         <input type="checkbox" id="ip_accepted">
                         <span>
                             I accept the 
-                            <button type="button" class="link-button" data-legal-modal="ip-modal">
+                            <button
+                                type="button"
+                                class="link-button legal-trigger"
+                                data-legal-panel="ip-panel"
+                            >
                                 IP &amp; Attribution Policy
                             </button>
                             (optional if covered in CLA)
                         </span>
                     </label>
-                    
+                    <div class="legal-panel" id="ip-panel" aria-hidden="true">
+                        <div class="legal-panel-inner">
+                            <div class="legal-panel-header">
+                                <h3 class="legal-panel-title">IP &amp; Attribution Policy</h3>
+                                <button
+                                    type="button"
+                                    class="legal-close-btn"
+                                    data-legal-close="ip-panel"
+                                    aria-label="Close IP &amp; Attribution Policy"
+                                >&times;</button>
+                            </div>
+                            <div class="legal-panel-body">
+                                <div class="legal-doc-heading">IP and Attribution Policy</div>
+                                <div class="legal-doc-meta">
+                                    Effective Date: 28 February 2026 &mdash; Last Updated: 28 February 2026
+                                </div>
+
+                                <div class="legal-doc-section-title">2. Ownership of Contributions</div>
+                                <p>You retain ownership of the copyright and other IP rights in your original contributions. However, once submitted, your contributions become part of STIF frameworks under a licence that allows STIF to use, modify, and distribute them as described in the CLA.</p>
+
+                                <div class="legal-doc-section-title">3. Attribution Rights</div>
+                                <p>STIF may credit you in framework contributor lists, on your ESG Champion profile, and in thought-leadership or community materials. You can request anonymity, control profile visibility, or opt out of certain uses of your name and likeness.</p>
+
+                                <div class="legal-doc-section-title">4. Moral Rights</div>
+                                <p>To the extent permitted by law, you waive moral rights in your contributions so that STIF can edit, adapt, combine, or use them without needing additional approvals and without always providing attribution.</p>
+
+                                <div class="legal-doc-section-title">5–7. Name, Likeness and Confidential Contributions</div>
+                                <p>With your participation, STIF may use your name, likeness, and professional details to recognise your contributions. Contributions to unpublished frameworks remain confidential under the NDA until publicly released.</p>
+
+                                <div class="legal-doc-section-title">8–11. Disputes, Trademarks and Duration</div>
+                                <p>Attribution decisions are ultimately made by STIF, though you can raise concerns. STIF trademarks remain owned by GREENURBS INNOVATION LTD. The IP rights you grant are perpetual and continue even if you stop participating as an ESG Champion.</p>
+
+                                <p class="legal-doc-note">
+                                    This is a summary for convenience only. For full details, please refer to the complete IP and Attribution Policy in the STIF Legal Documents.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Digital Signature (kept at end) -->
                     <div class="form-group">
                         <label class="form-label" for="digital_signature">Digital Signature <span class="required">*</span></label>
@@ -524,59 +708,58 @@
                     </div>
                 </div>
 
-                <!-- === LEGAL MODALS === -->
                 <style>
-                    .legal-modal-backdrop {
-                        position: fixed;
-                        inset: 0;
-                        background: rgba(15, 23, 42, 0.55);
+                    /* Anchored panel layout */
+                    .legal-panel {
+                        position: relative;
+                        margin-top: 0.5rem;
+                        margin-left: 2.25rem; /* roughly align under checkbox */
+                        max-width: 100%;
                         display: none;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 1000;
+                        z-index: 10;
                     }
-                    .legal-modal {
+                    .legal-panel[aria-hidden="false"] {
+                        display: block;
+                    }
+                    .legal-panel-inner {
                         background: #fff;
-                        max-width: 800px;
-                        width: 100%;
-                        max-height: 80vh;
                         border-radius: var(--radius-xl, 16px);
-                        box-shadow: var(--shadow-2xl, 0 25px 50px -12px rgba(15, 23, 42, 0.25));
-                        display: flex;
-                        flex-direction: column;
+                        box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(15,23,42,0.1));
+                        max-height: 320px;
+                        overflow: hidden;
+                        border: 1px solid var(--gray-200, #e5e7eb);
                     }
-                    .legal-modal-header {
-                        padding: 1rem 1.5rem;
+                    .legal-panel-header {
+                        padding: 0.75rem 1rem;
                         border-bottom: 1px solid var(--gray-200, #e5e7eb);
                         display: flex;
                         align-items: center;
                         justify-content: space-between;
-                        gap: 1rem;
+                        gap: 0.75rem;
+                        background: #f9fafb;
                     }
-                    .legal-modal-title {
-                        font-size: 1rem;
+                    .legal-panel-title {
+                        font-size: 0.95rem;
                         font-weight: 600;
                     }
-                    .legal-modal-body {
-                        padding: 1rem 1.5rem;
-                        overflow-y: auto;
-                        font-size: 0.875rem;
+                    .legal-panel-body {
+                        padding: 0.75rem 1rem 0.85rem;
+                        font-size: 0.82rem;
                         line-height: 1.5;
+                        max-height: 260px;
+                        overflow-y: auto;
                     }
-                    .legal-modal-footer {
-                        padding: 0.75rem 1.5rem 1rem;
-                        border-top: 1px solid var(--gray-200, #e5e7eb);
-                        display: flex;
-                        justify-content: flex-end;
-                        gap: 0.75rem;
-                    }
+
                     .legal-close-btn {
                         border: none;
                         background: none;
-                        font-size: 1.25rem;
+                        font-size: 1.1rem;
                         cursor: pointer;
                         color: var(--gray-400, #9ca3af);
+                        line-height: 1;
+                        padding: 0;
                     }
+
                     .btn-tertiary {
                         border-radius: 9999px;
                         padding: 0.4rem 0.9rem;
@@ -585,6 +768,7 @@
                         background: #fff;
                         cursor: pointer;
                     }
+
                     .link-button {
                         background: none;
                         border: none;
@@ -595,191 +779,95 @@
                         text-decoration: underline;
                         font: inherit;
                     }
+
                     .legal-doc-heading {
                         font-weight: 600;
-                        margin-top: 1rem;
+                        margin-top: 0.25rem;
                         margin-bottom: 0.25rem;
                     }
                     .legal-doc-meta {
-                        font-size: 0.75rem;
+                        font-size: 0.72rem;
                         color: #6b7280;
-                        margin-bottom: 0.75rem;
+                        margin-bottom: 0.5rem;
                     }
                     .legal-doc-section-title {
                         font-weight: 600;
-                        margin-top: 0.75rem;
+                        margin-top: 0.6rem;
                         margin-bottom: 0.25rem;
+                    }
+                    .legal-doc-note {
+                        margin-top: 0.6rem;
+                        font-size: 0.75rem;
+                        color: #6b7280;
+                    }
+
+                    @media (max-width: 640px) {
+                        .legal-panel {
+                            margin-left: 0;
+                        }
                     }
                 </style>
 
-                <!-- TERMS & CONDITIONS MODAL -->
-                <div class="legal-modal-backdrop" id="terms-modal" aria-hidden="true">
-                    <div class="legal-modal" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
-                        <div class="legal-modal-header">
-                            <h3 class="legal-modal-title" id="terms-modal-title">STIF Terms and Conditions</h3>
-                            <button type="button" class="legal-close-btn" data-legal-close="terms-modal" aria-label="Close Terms &amp; Conditions">&times;</button>
-                        </div>
-                        <div class="legal-modal-body">
-                            <div class="legal-doc-heading">Terms and Conditions</div>
-                            <div class="legal-doc-meta">
-                                GREENURBS INNOVATION LTD (Company No. 14451676)<br>
-                                Effective Date: 21 February 2026 &mdash; Last Updated: 21 February 2026
-                            </div>
+                <script>
+                /**
+                 * Option 1: anchored legal panels (popover-style)
+                 * - Opens a panel just under the related checkbox/label.
+                 * - No full-screen overlay.
+                 */
+                document.addEventListener('click', function (event) {
+                    // Open
+                    const trigger = event.target.closest('.legal-trigger[data-legal-panel]');
+                    if (trigger) {
+                        const id = trigger.getAttribute('data-legal-panel');
+                        const panel = document.getElementById(id);
+                        if (!panel) return;
 
-                            <div class="legal-doc-section-title">1. Introduction</div>
-                            <p>These Terms and Conditions ("Terms", "Agreement") govern your use of the STIF platform and associated services operated by GREENURBS INNOVATION LTD ("we", "us", "our", "STIF"). By accessing or using the STIF platform (the "Service"), you agree to be bound by these Terms. If you do not agree with any part of these Terms, you must not use our Service.</p>
+                        const isOpen = panel.getAttribute('aria-hidden') === 'false';
 
-                            <div class="legal-doc-section-title">3. Eligibility and Account Registration</div>
-                            <p>You must be at least 18 years old and capable of forming a binding contract to use the Service. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to provide accurate, current, and complete information and to update it as necessary.</p>
+                        // Close all panels first
+                        document.querySelectorAll('.legal-panel').forEach(p => {
+                            p.setAttribute('aria-hidden', 'true');
+                        });
 
-                            <div class="legal-doc-section-title">4. Services and Licence</div>
-                            <p>Subject to your compliance with these Terms and payment of applicable fees, we grant you a limited, non-exclusive, non-transferable, revocable licence to access and use the Service for your internal business purposes only. You must not copy, modify, reverse engineer, or attempt to gain unauthorised access to the Service.</p>
+                        // Toggle clicked one
+                        if (!isOpen) {
+                            panel.setAttribute('aria-hidden', 'false');
+                            // Optional: scroll into view if off-screen
+                            panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                        }
 
-                            <div class="legal-doc-section-title">5. Subscription and Payment</div>
-                            <p>Fees are payable in advance for each billing period and are generally non-refundable except as required by law or expressly stated. We reserve the right to change our pricing with notice and may suspend or terminate access for non-payment.</p>
+                        event.preventDefault();
+                        return;
+                    }
 
-                            <div class="legal-doc-section-title">6. User Content and Conduct</div>
-                            <p>You retain ownership of your content but grant STIF a licence to use it to operate and improve the Service. You are responsible for ensuring that your content and use of the Service comply with applicable laws and do not infringe third-party rights or contain unlawful material.</p>
+                    // Close via explicit close button
+                    const closeBtn = event.target.closest('[data-legal-close]');
+                    if (closeBtn) {
+                        const id = closeBtn.getAttribute('data-legal-close');
+                        const panel = document.getElementById(id);
+                        if (panel) {
+                            panel.setAttribute('aria-hidden', 'true');
+                        }
+                        return;
+                    }
 
-                            <div class="legal-doc-section-title">8. Intellectual Property Rights</div>
-                            <p>Except for your own content, all software, frameworks, content, trademarks, logos, and other materials provided through the Service are owned by or licenced to GREENURBS INNOVATION LTD and are protected by intellectual property laws.</p>
+                    // Click outside: close any open panel (but ignore clicks within panels)
+                    if (!event.target.closest('.legal-panel') && !event.target.closest('.legal-trigger')) {
+                        document.querySelectorAll('.legal-panel').forEach(p => {
+                            p.setAttribute('aria-hidden', 'true');
+                        });
+                    }
+                });
 
-                            <div class="legal-doc-section-title">11–13. Disclaimers, Liability and Indemnity</div>
-                            <p>The Service is provided "as is" and "as available" without warranties of any kind to the maximum extent permitted by law. Our total liability to you is limited as set out in the full Terms, and you agree to indemnify STIF for losses arising from your misuse of the Service or breach of these Terms.</p>
-
-                            <div class="legal-doc-section-title">15–16. Dispute Resolution and General</div>
-                            <p>The Terms are governed by the laws of England and Wales, and the courts of England and Wales have exclusive jurisdiction. The Terms, together with our Privacy and Cookie Policies, form the entire agreement between you and STIF regarding the Service.</p>
-
-                            <p style="margin-top:0.75rem;font-size:0.8rem;color:#6b7280;">
-                                This is a summary for convenience only. For full details, please refer to the complete Terms and Conditions in the STIF Legal Documents.
-                            </p>
-                        </div>
-                        <div class="legal-modal-footer">
-                            <button type="button" class="btn-tertiary" data-legal-close="terms-modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PRIVACY POLICY MODAL (OPTIONAL: if you want easy access here too) -->
-                <!-- If you don't want this under 1.5 Legal, you can remove this block. Not tied to a checkbox. -->
-
-                <!-- CLA MODAL -->
-                <div class="legal-modal-backdrop" id="cla-modal" aria-hidden="true">
-                    <div class="legal-modal" role="dialog" aria-modal="true" aria-labelledby="cla-modal-title">
-                        <div class="legal-modal-header">
-                            <h3 class="legal-modal-title" id="cla-modal-title">Contributor License Agreement (CLA)</h3>
-                            <button type="button" class="legal-close-btn" data-legal-close="cla-modal" aria-label="Close CLA">&times;</button>
-                        </div>
-                        <div class="legal-modal-body">
-                            <div class="legal-doc-heading">Contributor License Agreement (CLA)</div>
-                            <div class="legal-doc-meta">
-                                Effective Date: 28 February 2026 &mdash; Last Updated: 28 February 2026
-                            </div>
-
-                            <div class="legal-doc-section-title">1. Introduction</div>
-                            <p>This Contributor License Agreement governs the contributions made by ESG Champions to STIF's ESG framework validation, indicator development, and disclosure refinement processes. By accepting this agreement, you grant STIF the rights described below to use your contributions.</p>
-
-                            <div class="legal-doc-section-title">3. Grant of Copyright Licence</div>
-                            <p>You grant STIF a perpetual, worldwide, non-exclusive, royalty-free, irrevocable copyright licence to reproduce, modify, distribute, publicly display, and sublicence your contributions. You retain ownership of your work but allow STIF to incorporate it into its frameworks and materials.</p>
-
-                            <div class="legal-doc-section-title">4. Grant of Patent Licence</div>
-                            <p>If your contributions include patentable ideas, you grant STIF a perpetual, worldwide, non-exclusive, royalty-free, irrevocable patent licence to make, use, sell, and otherwise exploit such contributions. This licence may terminate if you bring certain patent claims against STIF.</p>
-
-                            <div class="legal-doc-section-title">5. Representations and Warranties</div>
-                            <p>You confirm that you are legally entitled to make contributions, that they are your original work (or properly licensed), and that they do not infringe third-party rights or violate any contractual obligations.</p>
-
-                            <div class="legal-doc-section-title">7. Attribution and Recognition</div>
-                            <p>Subject to the ESG Champion ranking system and your preferences, STIF may attribute contributions to you by name and may feature you in community or thought-leadership materials. You can request anonymity or changes to how you are attributed.</p>
-
-                            <div class="legal-doc-section-title">9. Confidentiality and Related Documents</div>
-                            <p>You may access confidential information as part of your contribution work and must treat it in accordance with STIF's confidentiality and NDA terms. Contributions are generally voluntary and unpaid unless otherwise agreed in a separate contract.</p>
-
-                            <p style="margin-top:0.75rem;font-size:0.8rem;color:#6b7280;">
-                                This is a summary for convenience only. For the full legally binding terms, please refer to the complete Contributor License Agreement in the STIF Legal Documents.
-                            </p>
-                        </div>
-                        <div class="legal-modal-footer">
-                            <button type="button" class="btn-tertiary" data-legal-close="cla-modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- NDA MODAL -->
-                <div class="legal-modal-backdrop" id="nda-modal" aria-hidden="true">
-                    <div class="legal-modal" role="dialog" aria-modal="true" aria-labelledby="nda-modal-title">
-                        <div class="legal-modal-header">
-                            <h3 class="legal-modal-title" id="nda-modal-title">Non-Disclosure Agreement (NDA)</h3>
-                            <button type="button" class="legal-close-btn" data-legal-close="nda-modal" aria-label="Close NDA">&times;</button>
-                        </div>
-                        <div class="legal-modal-body">
-                            <div class="legal-doc-heading">Non-Disclosure Agreement (NDA)</div>
-                            <div class="legal-doc-meta">
-                                Effective Date: 28 February 2026 &mdash; Last Updated: 28 February 2026
-                            </div>
-
-                            <div class="legal-doc-section-title">1–3. Scope and Confidential Information</div>
-                            <p>This NDA covers confidential and proprietary information you may access while acting as an ESG Champion, including unpublished frameworks, methodologies, business and technical information, and any data about business users or other contributors.</p>
-
-                            <div class="legal-doc-section-title">4. Obligations of Confidentiality</div>
-                            <p>You must keep all confidential information strictly confidential, use it only for your ESG Champion work with STIF, protect it with reasonable care, and not share it with third parties without STIF's written consent.</p>
-
-                            <div class="legal-doc-section-title">5–6. Required Disclosure and Return of Information</div>
-                            <p>If you are legally required to disclose information, you must notify STIF where permitted and disclose only what is required. When your involvement ends, you must return or securely delete confidential materials, except where retention is legally required.</p>
-
-                            <div class="legal-doc-section-title">7–9. Intellectual Property and Term</div>
-                            <p>The NDA does not grant you intellectual property rights in STIF's materials. Confidentiality obligations generally survive termination for at least five years or as long as the information remains confidential.</p>
-
-                            <div class="legal-doc-section-title">10–13. Remedies, Liability and Data Protection</div>
-                            <p>Unauthorised disclosure may cause irreparable harm; STIF may seek injunctive relief and other remedies. You must handle any personal data you see in line with UK GDPR and STIF's instructions.</p>
-
-                            <p style="margin-top:0.75rem;font-size:0.8rem;color:#6b7280;">
-                                This is a summary for convenience only. For full details, please refer to the complete Non-Disclosure Agreement in the STIF Legal Documents.
-                            </p>
-                        </div>
-                        <div class="legal-modal-footer">
-                            <button type="button" class="btn-tertiary" data-legal-close="nda-modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- IP & ATTRIBUTION POLICY MODAL -->
-                <div class="legal-modal-backdrop" id="ip-modal" aria-hidden="true">
-                    <div class="legal-modal" role="dialog" aria-modal="true" aria-labelledby="ip-modal-title">
-                        <div class="legal-modal-header">
-                            <h3 class="legal-modal-title" id="ip-modal-title">IP &amp; Attribution Policy</h3>
-                            <button type="button" class="legal-close-btn" data-legal-close="ip-modal" aria-label="Close IP &amp; Attribution Policy">&times;</button>
-                        </div>
-                        <div class="legal-modal-body">
-                            <div class="legal-doc-heading">IP and Attribution Policy</div>
-                            <div class="legal-doc-meta">
-                                Effective Date: 28 February 2026 &mdash; Last Updated: 28 February 2026
-                            </div>
-
-                            <div class="legal-doc-section-title">2. Ownership of Contributions</div>
-                            <p>You retain ownership of the copyright and other IP rights in your original contributions. However, once submitted, your contributions become part of STIF frameworks under a licence that allows STIF to use, modify, and distribute them as described in the CLA.</p>
-
-                            <div class="legal-doc-section-title">3. Attribution Rights</div>
-                            <p>STIF may credit you in framework contributor lists, on your ESG Champion profile, and in thought-leadership or community materials. You can request anonymity, control profile visibility, or opt out of certain uses of your name and likeness.</p>
-
-                            <div class="legal-doc-section-title">4. Moral Rights</div>
-                            <p>To the extent permitted by law, you waive moral rights in your contributions so that STIF can edit, adapt, combine, or use them without needing additional approvals and without always providing attribution.</p>
-
-                            <div class="legal-doc-section-title">5–7. Name, Likeness and Confidential Contributions</div>
-                            <p>With your participation, STIF may use your name, likeness, and professional details to recognise your contributions. Contributions to unpublished frameworks remain confidential under the NDA until publicly released.</p>
-
-                            <div class="legal-doc-section-title">8–11. Disputes, Trademarks and Duration</div>
-                            <p>Attribution decisions are ultimately made by STIF, though you can raise concerns. STIF trademarks remain owned by GREENURBS INNOVATION LTD. The IP rights you grant are perpetual and continue even if you stop participating as an ESG Champion.</p>
-
-                            <p style="margin-top:0.75rem;font-size:0.8rem;color:#6b7280;">
-                                This is a summary for convenience only. For full details, please refer to the complete IP and Attribution Policy in the STIF Legal Documents.
-                            </p>
-                        </div>
-                        <div class="legal-modal-footer">
-                            <button type="button" class="btn-tertiary" data-legal-close="ip-modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-
+                // ESC to close all panels
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        document.querySelectorAll('.legal-panel').forEach(p => {
+                            p.setAttribute('aria-hidden', 'true');
+                        });
+                    }
+                });
+                </script>
                 <script>
                 // Simple open/close logic for legal modals
                 document.addEventListener('click', (event) => {
