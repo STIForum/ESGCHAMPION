@@ -1424,8 +1424,9 @@ class AdminReviewPage {
                                 <td><span class="badge badge-primary">${String(fw.code || '').toUpperCase()}</span></td>
                                 <td>${fw.version || '-'}</td>
                                 <td>${fw.owner_publisher || '-'}</td>
-                                <td><span class="badge badge-${fw.status === 'active' ? 'success' : fw.status === 'draft' ? 'warning' : 'error'}">${fw.status || '-'}</span></td>
-                            </tr>
+                                <td><span class="badge badge-${fw.status === 'active'? 'success': fw.status === 'draft'? 'warning': 'error'}">${fw.status === 'deprecated' ? 'inactive' : (fw.status || '-')}</span></td>
+
+                                </tr>
                         `).join('')}
                     </tbody>
                 </table>
@@ -3568,4 +3569,3 @@ document.addEventListener('DOMContentLoaded', () => {
     adminPage = new AdminReviewPage();
     adminPage.init();
 });
-
