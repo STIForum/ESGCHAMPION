@@ -1807,20 +1807,23 @@ class AdminReviewPage {
 
         try {
             const frameworks = await window.adminService.getAllFrameworks();
-            console.log('Frameworks loaded:', frameworks); // Debug log
+            console.log('Frameworks loaded:', frameworks);
             this.frameworksList = frameworks || [];
 
-            // Keep global labels in sync for other pages/components
             if (!window.FRAMEWORK_LABELS) window.FRAMEWORK_LABELS = {};
             this.frameworksList.forEach((fw) => {
                 if (fw?.code) {
-                    window.FRAMEWORK_LABELS[String(fw.code).toLowerCase()] = fw.name || String(fw.code).toUpperCase();
+                    window.FRAMEWORK_LABELS[String(fw.code).toLowerCase()] =
+                        fw.name || String(fw.code).toUpperCase();
                 }
             });
 
             this.renderFrameworksList();
             this.populateFrameworkSelects();
             this.populateFrameworkFilterSelects();
+            this.populateIndicatorFrameworkSelect();
+            this.populateEditIndicatorFrameworkSelect(); // ← add this
+
         } catch (error) {
             console.error('Error loading frameworks:', error);
             if (container) {
@@ -2810,30 +2813,100 @@ class AdminReviewPage {
         const backdrop = document.getElementById('add-indicator-modal-backdrop');
         const modal = document.getElementById('add-indicator-modal');
         
-        if (backdrop && modal) {
-            backdrop.classList.add('active');
-            modal.classList.add('active');
-            
-            // Load frameworks first (for display names)
-            if (!this.frameworksList || this.frameworksList.length === 0) {
-                await this.loadFrameworks();
+        if (!backdrop || !modal) return;
+
+        backdrop.classList.add('active');
+        modal.classList.add('active');
+        
+        // Load frameworks first (for display names)
+        if (!this.frameworksList || this.frameworksList.length === 0) {
+            await this.loadFrameworks();
+        }
+
+        // Populate panel dropdown for indicator
+        await this.loadPanelDropdown();
+
+        // NEW: populate Primary Framework select for indicators from backend frameworks
+        this.populateIndicatorFrameworkSelect();
+
+        // Clear CSV import status
+        const csvStatus = document.getElementById('csv-import-status');
+        if (csvStatus) {
+            csvStatus.style.display = 'none';
+            csvStatus.innerHTML = '';
+        }
+        
+        // Focus panel dropdown first
+        setTimeout(() => document.getElementById('indicator-panel')?.focus(), 100);
+    }
+    populateIndicatorFrameworkSelect() {
+        const select = document.getElementById('indicator-framework');
+        if (!select) return;
+
+        const current = select.value;
+
+        // Use active + draft frameworks from backend; fall back if none
+        const activeFrameworks = (this.frameworksList || []).filter(
+            fw => fw.status === 'active' || fw.status === 'draft'
+        );
+
+        const fallbackFrameworks = [
+            { code: 'gri', name: 'GRI' },
+            { code: 'esrs', name: 'ESRS' },
+            { code: 'ifrs', name: 'IFRS' }
+        ];
+
+        const source = activeFrameworks.length ? activeFrameworks : fallbackFrameworks;
+
+        select.innerHTML = '<option value="">Select framework</option>' +
+            source.map(fw => {
+                const code = String(fw.code || '').toLowerCase();
+                const label = fw.name || code.toUpperCase();
+                return `<option value="${code}">${label} (${code.toUpperCase()})</option>`;
+            }).join('');
+
+        // Preserve previously selected value if still valid
+        if (current) {
+            const normalized = String(current).toLowerCase();
+            if (source.some(fw => String(fw.code || '').toLowerCase() === normalized)) {
+                select.value = normalized;
             }
-            
-            // Load panels for dropdown
-            await this.loadPanelDropdown();
-            
-            // Clear CSV import status
-            const csvStatus = document.getElementById('csv-import-status');
-            if (csvStatus) {
-                csvStatus.style.display = 'none';
-                csvStatus.innerHTML = '';
+        }
+}
+
+    populateEditIndicatorFrameworkSelect() {
+        const select = document.getElementById('edit-indicator-framework');
+        if (!select) return;
+
+        const current = select.value;
+
+        const activeFrameworks = (this.frameworksList || []).filter(
+            fw => fw.status === 'active' || fw.status === 'draft'
+        );
+
+        const fallbackFrameworks = [
+            { code: 'gri', name: 'GRI' },
+            { code: 'esrs', name: 'ESRS' },
+            { code: 'ifrs', name: 'IFRS' }
+        ];
+
+        const source = activeFrameworks.length ? activeFrameworks : fallbackFrameworks;
+
+        select.innerHTML = '<option value="">Select framework</option>' +
+            source.map(fw => {
+                const code = String(fw.code || '').toLowerCase();
+                const label = fw.name || code.toUpperCase();
+                return `<option value="${code}">${label} (${code.toUpperCase()})</option>`;
+            }).join('');
+
+        // Restore previously selected value if still valid
+        if (current) {
+            const normalized = String(current).toLowerCase();
+            if (source.some(fw => String(fw.code || '').toLowerCase() === normalized)) {
+                select.value = normalized;
             }
-            
-            // Focus panel dropdown first
-            setTimeout(() => document.getElementById('indicator-panel')?.focus(), 100);
         }
     }
-
     /**
      * Load panels into the indicator panel dropdown
      */
@@ -3450,6 +3523,13 @@ class AdminReviewPage {
         modal.classList.add('active');
 
         try {
+            // Make sure frameworks are loaded so the dropdown is correct
+            if (!this.frameworksList || this.frameworksList.length === 0) {
+                await this.loadFrameworks();
+            } else {
+                this.populateEditIndicatorFrameworkSelect();
+            }
+
             // Fetch indicator data and panels in parallel
             const [indicators, panels] = await Promise.all([
                 window.adminService.getAllIndicators(),
@@ -3481,13 +3561,20 @@ class AdminReviewPage {
                 });
             }
 
+            // Ensure edit-indicator-framework select is populated from backend frameworks
+            this.populateEditIndicatorFrameworkSelect?.();
+
             // Populate form fields
             document.getElementById('edit-indicator-id').value = indicator.id;
             document.getElementById('edit-indicator-title').value = indicator.name || '';
             document.getElementById('edit-indicator-unit').value = indicator.unit || '';
             document.getElementById('edit-indicator-formula-required').checked = indicator.formula_required || false;
             document.getElementById('edit-indicator-code').value = indicator.code || '';
-            document.getElementById('edit-indicator-framework').value = indicator.primary_framework || '';
+
+            // Use lowercase to match how options are built from backend frameworks
+            const fwValue = (indicator.primary_framework || '').toLowerCase();
+            document.getElementById('edit-indicator-framework').value = fwValue;
+
             document.getElementById('edit-indicator-framework-version').value = indicator.framework_version || '';
             document.getElementById('edit-indicator-description').value = indicator.description || '';
             document.getElementById('edit-indicator-why-matters').value = indicator.why_it_matters || '';
@@ -3499,7 +3586,6 @@ class AdminReviewPage {
             document.getElementById('edit-indicator-response-type').value = indicator.response_type || '';
             document.getElementById('edit-indicator-tags').value = indicator.tags || '';
             document.getElementById('edit-indicator-icon').value = indicator.icon || '';
-
             // Set selected SDGs
             const sdgsSelect = document.getElementById('edit-indicator-sdgs');
             const relatedSdgs = indicator.related_sdgs || [];
