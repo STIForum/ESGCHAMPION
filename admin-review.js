@@ -3151,6 +3151,7 @@ class AdminReviewPage {
      */
     downloadCsvTemplate() {
         const headers = [
+            'panel_id',              // NEW: panel reference
             'name',
             'code',
             'description',
@@ -3170,6 +3171,7 @@ class AdminReviewPage {
         ];
 
         const sampleRow = [
+            'PANEL_ID_HERE',         // NEW: sample panel id placeholder
             'Scope 1 GHG Emissions',
             'GRI 305-1',
             'Direct GHG emissions from owned or controlled sources',
