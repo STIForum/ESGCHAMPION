@@ -1127,11 +1127,6 @@ class AdminReviewPage {
             deletePanelBtn.addEventListener('click', () => this.deleteCurrentPanel());
         }
 
-        // Toggle Panel Visibility Button
-        const toggleVisibilityBtn = document.getElementById('toggle-panel-visibility-btn');
-        if (toggleVisibilityBtn) {
-            toggleVisibilityBtn.addEventListener('click', () => this.togglePanelVisibility());
-        }
 
         // Edit Panel CSV Import handlers
         const editPanelDownloadCsvBtn = document.getElementById('edit-panel-download-csv-btn');
@@ -1504,17 +1499,22 @@ class AdminReviewPage {
     getFilteredPanels() {
         const { search = '', framework = 'all', status = 'all' } = this.tabFilters.panels || {};
         const q = search.toLowerCase();
+
         return (this.panelsList || []).filter((panel) => {
             // Framework filter
             const fw = String(panel.primary_framework || panel.framework || '').toLowerCase();
             const frameworkMatch = framework === 'all' || fw === framework;
 
-            // Status filter
-            let statusMatch = true;
-            if (status !== 'all') {
-                const isActiveFilter = status === 'active';   // true for active, false for inactive
-                statusMatch = panel.is_active === isActiveFilter;
+            // Derive effective status
+            let effectiveStatus = (panel.status || '').toLowerCase();
+            if (!effectiveStatus) {
+                if (panel.is_active === true) effectiveStatus = 'active';
+                else if (panel.is_active === false) effectiveStatus = 'inactive';
+                else effectiveStatus = 'draft';
             }
+
+            // Status filter
+            const statusMatch = status === 'all' || effectiveStatus === status;
 
             // Search filter
             const searchMatch = !q || String(panel.name || '').toLowerCase().includes(q);
@@ -1644,6 +1644,8 @@ class AdminReviewPage {
         }
     }
 
+// Full replacement for renderPanelsList and editPanel/updatePanel related status handling
+
     renderPanelsList() {
         const container = document.getElementById('panels-list');
         if (!container) return;
@@ -1652,11 +1654,29 @@ class AdminReviewPage {
         const pageMeta = this.paginateItems(filtered, 'panels');
         const pageItems = pageMeta.pagedItems;
 
-        // Helper to get framework display
         const getFramework = (panel) => {
             const fw = (panel.primary_framework || panel.framework || '').toLowerCase();
-            const fromList = (this.frameworksList || []).find(f => String(f.code || '').toLowerCase() === fw);
+            const fromList = (this.frameworksList || []).find(
+                f => String(f.code || '').toLowerCase() === fw
+            );
             return fromList?.name || window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || 'N/A';
+        };
+
+        const getStatusInfo = (panel) => {
+            let status = (panel.status || '').toLowerCase();
+            if (!status) {
+                if (panel.is_active === true) status = 'active';
+                else if (panel.is_active === false) status = 'inactive';
+                else status = 'draft';
+            }
+
+            const label = status.charAt(0).toUpperCase() + status.slice(1);
+            const badge =
+                status === 'active' ? 'success'
+                : status === 'draft' ? 'warning'
+                : 'error';
+
+            return { status, label, badge };
         };
 
         if (!filtered.length) {
@@ -1679,20 +1699,23 @@ class AdminReviewPage {
                         ${pageItems.map(panel => {
                             const framework = getFramework(panel);
                             const fwLower = (panel.primary_framework || panel.framework || '').toLowerCase();
+                            const { label: statusLabel, badge: statusBadge } = getStatusInfo(panel);
+
                             return `
                             <tr>
                                 <td><strong>${panel.name}</strong></td>
                                 <td><span class="badge badge-${fwLower || 'primary'}">${framework}</span></td>
                                 <td>
-                                    <span class="badge badge-${panel.is_active ? 'success' : 'error'}">
-                                        ${panel.is_active ? 'Active' : 'Inactive'}
+                                    <span class="badge badge-${statusBadge}">
+                                        ${statusLabel}
                                     </span>
                                 </td>
                                 <td>
                                     <button class="btn btn-ghost btn-sm" onclick="adminPage.editPanel('${panel.id}')">Edit</button>
                                 </td>
                             </tr>
-                        `}).join('')}
+                        `;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -1700,6 +1723,82 @@ class AdminReviewPage {
         `;
     }
 
+
+    async updatePanel() {
+        if (!this.validateEditPanelForm()) {
+            return;
+        }
+
+        const updateBtn = document.getElementById('update-panel-btn');
+        if (updateBtn) {
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = '<span class="loading-spinner-sm" style="width: 16px; height: 16px; margin-right: var(--space-2);"></span> Updating...';
+        }
+
+        try {
+            const panelId = document.getElementById('edit-panel-id').value;
+            const title = document.getElementById('edit-panel-title').value.trim();
+            const category = document.getElementById('edit-panel-category').value;
+            const impact = document.getElementById('edit-panel-impact').value;
+            const description = document.getElementById('edit-panel-description').value.trim();
+            const esgClassification = document.getElementById('edit-panel-esg-classification').value;
+            const primaryFramework = document.getElementById('edit-panel-framework').value;
+            const purpose = document.getElementById('edit-panel-purpose').value.trim();
+            const unicode = document.getElementById('edit-panel-unicode').value.trim();
+            const icon = document.getElementById('edit-panel-icon').value.trim();
+            const status = document.getElementById('edit-panel-status').value || 'draft';
+
+            // SDGs
+            const sdgsSelect = document.getElementById('edit-panel-sdgs');
+            const relatedSdgs = Array.from(sdgsSelect.selectedOptions).map(opt => opt.value);
+
+            // Framework: keep exactly what the DB uses now (lowercase codes like "ifrs")
+            const normalizedFramework = primaryFramework || null;
+
+            // status → is_active mapping
+            const isActive = status === 'active';
+
+            const updates = {
+                name: title,
+                category: category,
+                impact: impact,
+                description: description || null,
+                esg_classification: esgClassification,
+                primary_framework: normalizedFramework,
+                related_sdgs: relatedSdgs.length ? relatedSdgs : null,
+                purpose: purpose || null,
+                unicode: unicode || null,
+                icon: icon || null,
+                status,             // "active" | "inactive" | "draft"
+                is_active: isActive // boolean
+            };
+
+            const updated = await window.adminService.updatePanel(panelId, updates);
+            console.log('Updated panel from DB:', updated);
+
+            // Keep in-memory list in sync
+            const idx = this.panelsList.findIndex(p => p.id === panelId);
+            if (idx !== -1) {
+                this.panelsList[idx] = updated;
+            }
+
+            window.showToast?.('Panel updated successfully!', 'success');
+            this.closeEditPanelModal();
+
+            if (this.currentTab === 'panels') {
+                this.renderPanelsList();
+            }
+
+        } catch (error) {
+            console.error('Error updating panel:', error);
+            window.showToast?.('Failed to update panel. Please try again.', 'error');
+        } finally {
+            if (updateBtn) {
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = 'Update Panel';
+            }
+        }
+    }
     async loadFrameworks() {
         const container = document.getElementById('frameworks-list');
         if (container) {
@@ -2228,7 +2327,18 @@ class AdminReviewPage {
             document.getElementById('edit-panel-purpose').value = panel.purpose || '';
             document.getElementById('edit-panel-unicode').value = panel.unicode || '';
             document.getElementById('edit-panel-icon').value = panel.icon || '';
-            document.getElementById('edit-panel-active').checked = panel.is_active !== false;
+
+            // Derive status from existing fields
+            const currentStatus =
+                panel.status ||
+                (panel.is_active === true ? 'active' :
+                 panel.is_active === false ? 'inactive' :
+                 'draft');
+
+            const statusSelect = document.getElementById('edit-panel-status');
+            if (statusSelect) {
+                statusSelect.value = currentStatus;
+            }
 
             // Set selected SDGs
             const sdgsSelect = document.getElementById('edit-panel-sdgs');
@@ -2236,9 +2346,6 @@ class AdminReviewPage {
             Array.from(sdgsSelect.options).forEach(option => {
                 option.selected = relatedSdgs.includes(option.value);
             });
-
-            // Update visibility toggle button state
-            this.updateVisibilityButtonState(panel.is_active !== false);
 
             // Load indicator count for this panel
             try {
@@ -2271,6 +2378,7 @@ class AdminReviewPage {
             this.closeEditPanelModal();
         }
     }
+
 
     closeEditPanelModal() {
         const backdrop = document.getElementById('edit-panel-modal-backdrop');
@@ -2321,74 +2429,6 @@ class AdminReviewPage {
         return isValid;
     }
 
-    async updatePanel() {
-        if (!this.validateEditPanelForm()) {
-            return;
-        }
-
-        const updateBtn = document.getElementById('update-panel-btn');
-        if (updateBtn) {
-            updateBtn.disabled = true;
-            updateBtn.innerHTML = '<span class="loading-spinner-sm" style="width: 16px; height: 16px; margin-right: var(--space-2);"></span> Updating...';
-        }
-
-        try {
-            const panelId = document.getElementById('edit-panel-id').value;
-            const title = document.getElementById('edit-panel-title').value.trim();
-            const category = document.getElementById('edit-panel-category').value;
-            const impact = document.getElementById('edit-panel-impact').value;
-            const description = document.getElementById('edit-panel-description').value.trim();
-            const esgClassification = document.getElementById('edit-panel-esg-classification').value;
-            const primaryFramework = document.getElementById('edit-panel-framework').value;
-            const purpose = document.getElementById('edit-panel-purpose').value.trim();
-            const unicode = document.getElementById('edit-panel-unicode').value.trim();
-            const icon = document.getElementById('edit-panel-icon').value.trim();
-            const isActive = document.getElementById('edit-panel-active').checked;
-
-            // Get selected SDGs
-            const sdgsSelect = document.getElementById('edit-panel-sdgs');
-            const relatedSdgs = Array.from(sdgsSelect.selectedOptions).map(opt => opt.value);
-
-            // Normalize framework to uppercase for database constraint
-            const normalizedFramework = primaryFramework ? primaryFramework.toUpperCase() : null;
-
-            // Build update object
-            const updates = {
-                name: title,
-                category: category,
-                impact: impact,
-                description: description || null,
-                esg_classification: esgClassification,
-                primary_framework: normalizedFramework,
-                related_sdgs: relatedSdgs.length > 0 ? relatedSdgs : null,
-                purpose: purpose || null,
-                unicode: unicode || null,
-                icon: icon || null,
-                is_active: isActive
-            };
-
-            // Update via admin service
-            await window.adminService.updatePanel(panelId, updates);
-
-            window.showToast?.('Panel updated successfully!', 'success');
-            
-            this.closeEditPanelModal();
-
-            // Refresh panels list
-            if (this.currentTab === 'panels') {
-                await this.loadPanels();
-            }
-
-        } catch (error) {
-            console.error('Error updating panel:', error);
-            window.showToast?.('Failed to update panel. Please try again.', 'error');
-        } finally {
-            if (updateBtn) {
-                updateBtn.disabled = false;
-                updateBtn.innerHTML = 'Update Panel';
-            }
-        }
-    }
 
     deleteCurrentPanel() {
         if (!this.currentEditingPanel) return;
@@ -2483,84 +2523,6 @@ class AdminReviewPage {
         }
     }
 
-    // =====================================================
-    // PANEL VISIBILITY TOGGLE
-    // =====================================================
-
-    updateVisibilityButtonState(isActive) {
-        const btn = document.getElementById('toggle-panel-visibility-btn');
-        const btnText = document.getElementById('visibility-btn-text');
-        const icon = document.getElementById('visibility-icon');
-
-        if (btn && btnText && icon) {
-            if (isActive) {
-                // Panel is active - show "Hide" option
-                btnText.textContent = 'Hide';
-                btn.style.background = 'var(--gray-100)';
-                btn.style.color = 'var(--gray-700)';
-                icon.innerHTML = `
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                `;
-            } else {
-                // Panel is inactive - show "Show" option
-                btnText.textContent = 'Show';
-                btn.style.background = 'var(--success-bg)';
-                btn.style.color = 'var(--success)';
-                icon.innerHTML = `
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                `;
-            }
-        }
-    }
-
-    async togglePanelVisibility() {
-        if (!this.currentEditingPanel) return;
-
-        const btn = document.getElementById('toggle-panel-visibility-btn');
-        const btnText = document.getElementById('visibility-btn-text');
-        const currentState = this.currentEditingPanel.is_active !== false;
-        const newState = !currentState;
-
-        if (btn) {
-            btn.disabled = true;
-            btnText.textContent = newState ? 'Showing...' : 'Hiding...';
-        }
-
-        try {
-            // Update only the is_active field
-            await window.adminService.updatePanel(this.currentEditingPanel.id, { is_active: newState });
-
-            // Update local state
-            this.currentEditingPanel.is_active = newState;
-
-            // Update the checkbox in the form
-            document.getElementById('edit-panel-active').checked = newState;
-
-            // Update button state
-            this.updateVisibilityButtonState(newState);
-
-            window.showToast?.(
-                newState ? 'Panel is now visible to champions!' : 'Panel is now hidden from champions.',
-                'success'
-            );
-
-            // Refresh panels list
-            if (this.currentTab === 'panels') {
-                await this.loadPanels();
-            }
-
-        } catch (error) {
-            console.error('Error toggling panel visibility:', error);
-            window.showToast?.('Failed to update panel visibility.', 'error');
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                this.updateVisibilityButtonState(this.currentEditingPanel.is_active);
-            }
-        }
-    }
 
     // =====================================================
     // ADD FRAMEWORK MODAL
