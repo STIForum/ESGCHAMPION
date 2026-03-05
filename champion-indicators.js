@@ -69,11 +69,7 @@ class ChampionIndicators {
             { value: 'other_services', label: 'Other Service Activities' }
         ];
 
-        this.frameworkOptions = [
-            { value: 'gri', label: 'GRI' },
-            { value: 'esrs', label: 'ESRS' },
-            { value: 'ifrs', label: 'IFRS' }
-        ];
+        this.frameworkOptions = [];
 
         this.geographicFootprintOptions = [
             { value: 'uk_only', label: 'UK Only' },
@@ -172,7 +168,42 @@ class ChampionIndicators {
             notes: 'Capture any important conditions or exceptions (e.g., only feasible in water-stressed regions).'
         };
     }
+    async loadFrameworks() {
+        try {
+            const supabase = window.getSupabase?.();
+            if (!supabase) throw new Error('Supabase client not available');
 
+            const { data, error } = await supabase
+                .from('frameworks')
+                .select('name, code, status, is_active, order_index')
+                .eq('is_active', true)
+                .order('order_index', { ascending: true })
+                .order('name', { ascending: true });
+
+            if (error) throw error;
+
+            const frameworks = (data || [])
+                .map(f => ({
+                    value: String(f.code || '').toLowerCase(),
+                    label: f.name || String(f.code || '').toUpperCase()
+                }))
+                .filter(f => f.value);
+
+            // Fallback if table is empty or misconfigured
+            this.frameworkOptions = frameworks.length ? frameworks : [
+                { value: 'gri',  label: 'GRI' },
+                { value: 'esrs', label: 'ESRS' },
+                { value: 'ifrs', label: 'IFRS' }
+            ];
+        } catch (err) {
+            console.warn('Could not load frameworks from database, using defaults:', err);
+            this.frameworkOptions = [
+                { value: 'gri',  label: 'GRI' },
+                { value: 'esrs', label: 'ESRS' },
+                { value: 'ifrs', label: 'IFRS' }
+            ];
+        }
+    }
     async isBusinessUserSession() {
         try {
             if (!window.getSupabase) return false;
@@ -244,7 +275,8 @@ class ChampionIndicators {
                 this.currentPanelId = panelParam;
             }
         }
-
+        // NEW: load available frameworks from DB
+        await this.loadFrameworks();
         if (this.selectedIndicatorIds.length === 0) {
             // No indicators selected, redirect to panels
             window.location.href = '/champion-panels.html';
