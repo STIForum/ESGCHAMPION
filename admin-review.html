@@ -551,7 +551,120 @@
             </div>
         </div>
     </div>
+    <!-- Edit Framework Modal -->
+    <div class="modal-backdrop" id="edit-framework-modal-backdrop">
+        <div class="modal" id="edit-framework-modal" style="max-width: 640px; max-height: 90vh;">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Framework</h3>
+                <button class="modal-close" id="edit-framework-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <form id="edit-framework-form">
+                    <input type="hidden" id="edit-framework-id" name="id">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Framework Name <span style="color: var(--error);">*</span></label>
+                        <input type="text" class="form-input" id="edit-framework-name" placeholder="e.g., GRI Standards" required>
+                        <span class="form-error" id="edit-framework-name-error"></span>
+                    </div>
 
+                    <div class="form-group">
+                        <label class="form-label">Framework Code <span style="color: var(--error);">*</span></label>
+                        <input type="text" class="form-input" id="edit-framework-code" placeholder="e.g., GRI, VSME, ISSB_S1" required>
+                        <span class="form-error" id="edit-framework-code-error"></span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label">Version / Edition <span style="color: var(--error);">*</span></label>
+                            <input type="text" class="form-input" id="edit-framework-version" placeholder="e.g., 2024, 1.1.1" required>
+                            <span class="form-error" id="edit-framework-version-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status <span style="color: var(--error);">*</span></label>
+                            <select class="form-select" id="edit-framework-status" required>
+                                <option value="">Select status</option>
+                                <option value="draft">Draft</option>
+                                <option value="active">Active</option>
+                                <option value="deprecated">Inactive</option>
+                            </select>
+                            <span class="form-error" id="edit-framework-status-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Owner / Publisher <span style="color: var(--error);">*</span></label>
+                        <input type="text" class="form-input" id="edit-framework-owner" placeholder="e.g., GRI, EFRAG, ISSB" required>
+                        <span class="form-error" id="edit-framework-owner-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Order Index</label>
+                        <input type="number" class="form-input" id="edit-framework-order" placeholder="Display order" min="0">
+                        <span class="form-error" id="edit-framework-order-error"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; gap: var(--space-3);">
+                <div style="display: flex; gap: var(--space-2);">
+                    <button type="button" class="btn btn-error" id="delete-framework-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete
+                    </button>
+                </div>
+                <div style="display: flex; gap: var(--space-3);">
+                    <button type="button" class="btn btn-secondary" id="cancel-edit-framework-btn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="update-framework-btn">Update Framework</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Framework Confirmation Modal -->
+    <div class="modal-backdrop" id="delete-framework-confirm-modal-backdrop">
+        <div class="modal" id="delete-framework-confirm-modal" style="max-width: 450px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <h3 class="modal-title" style="color: var(--error);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: var(--space-2);">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Confirm Deletion
+                </h3>
+                <button class="modal-close" id="delete-framework-confirm-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: var(--space-4);">
+                    You are about to delete the framework: <strong id="delete-framework-name"></strong>
+                </p>
+                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
+                    <strong style="color: var(--error);">Warning:</strong> This action will permanently delete this framework from the database. This may affect panels that reference this framework. This action <strong>cannot be undone</strong>.
+                </p>
+                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
+                    💡 <em>Tip: To hide a framework without deleting it, set its status to "Inactive" instead.</em>
+                </p>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Type <strong>"DELETE"</strong> to confirm:</label>
+                    <input type="text" class="form-input" id="delete-framework-confirm-input" placeholder="Type DELETE here" autocomplete="off">
+                    <span class="form-error" id="delete-framework-confirm-error"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="delete-framework-confirm-cancel-btn">Cancel</button>
+                <button type="button" class="btn btn-error" id="delete-framework-confirm-btn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Delete Framework
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- Edit Panel Modal -->
     <div class="modal-backdrop" id="edit-panel-modal-backdrop">
         <div class="modal" id="edit-panel-modal" style="max-width: 700px; max-height: 90vh;">
