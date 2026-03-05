@@ -146,30 +146,55 @@ class AdminService {
         return data;
     }
 
-    /**
-     * Permanently delete a panel from the database
-     */
     async permanentlyDeletePanel(panelId) {
         const client = window.getSupabase();
-        
-        // First delete all indicators associated with this panel
-        await client
-            .from('indicators')
-            .delete()
-            .eq('panel_id', panelId);
 
-        // Then delete the panel itself
-        const { data, error } = await client
-            .from('panels')
-            .delete()
-            .eq('id', panelId)
-            .select()
-            .single();
+        try {
+            // 1. Delete all indicator reviews linked to this panel's submissions
+            const { data: submissions } = await client
+                .from('panel_review_submissions')
+                .select('id')
+                .eq('panel_id', panelId);
 
-        if (error) throw error;
-        
-        await this.logAction('permanent_delete_panel', 'panel', panelId);
-        return data;
+            if (submissions && submissions.length) {
+                const submissionIds = submissions.map(s => s.id);
+
+                // Delete indicator reviews
+                await client
+                    .from('panel_review_indicator_reviews')
+                    .delete()
+                    .in('submission_id', submissionIds);
+
+                // Delete submissions
+                await client
+                    .from('panel_review_submissions')
+                    .delete()
+                    .in('id', submissionIds);
+            }
+
+            // 2. Delete indicators
+            await client
+                .from('indicators')
+                .delete()
+                .eq('panel_id', panelId);
+
+            // 3. Finally delete the panel
+            const { data, error } = await client
+                .from('panels')
+                .delete()
+                .eq('id', panelId)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            await this.logAction('permanent_delete_panel', 'panel', panelId);
+            return data;
+
+        } catch (error) {
+            console.error('Error in permanentlyDeletePanel:', error);
+            throw error; // Let the caller handle the error message
+        }
     }
 
     // =====================================================
