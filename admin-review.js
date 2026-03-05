@@ -50,7 +50,7 @@ class AdminReviewPage {
             'panel-reviews': { search: '', framework: 'all', page: 1 },
             frameworks: { search: '', status: 'all', page: 1 },
             panels: { search: '', framework: 'all', status: 'all', page: 1 },  // ← added status
-            indicators: { search: '', framework: 'all', page: 1 },
+            indicators: { search: '', framework: 'all', status: 'all', page: 1 },
             champions: { search: '', role: 'all', page: 1 },
             'business-users': { search: '', subscription: 'all', page: 1 }
         };
@@ -1229,7 +1229,6 @@ class AdminReviewPage {
         const updateIndicatorBtn = document.getElementById('update-indicator-btn');
         const cancelEditIndicatorBtn = document.getElementById('cancel-edit-indicator-btn');
         const deleteIndicatorBtn = document.getElementById('delete-indicator-btn');
-        const toggleIndicatorVisibilityBtn = document.getElementById('toggle-indicator-visibility-btn');
 
         if (editIndicatorModalClose) {
             editIndicatorModalClose.addEventListener('click', () => this.closeEditIndicatorModal());
@@ -1250,9 +1249,7 @@ class AdminReviewPage {
         if (deleteIndicatorBtn) {
             deleteIndicatorBtn.addEventListener('click', () => this.deleteCurrentIndicator());
         }
-        if (toggleIndicatorVisibilityBtn) {
-            toggleIndicatorVisibilityBtn.addEventListener('click', () => this.toggleIndicatorVisibility());
-        }
+
 
         // Delete Indicator Confirmation Modal
         const deleteIndicatorConfirmModalClose = document.getElementById('delete-indicator-confirm-modal-close');
@@ -1384,6 +1381,7 @@ class AdminReviewPage {
         bindSelect('panel-filter-status', 'panels', 'status');
         bindInput('indicator-search-filter', 'indicators', 'search');
         bindSelect('indicator-filter-framework', 'indicators', 'framework');
+        bindSelect('indicator-filter-status', 'indicators', 'status');
 
         bindInput('champion-search', 'champions', 'search');
         bindSelect('champion-filter-role', 'champions', 'role');
@@ -1524,13 +1522,25 @@ class AdminReviewPage {
     }
 
     getFilteredIndicators() {
-        const { search = '', framework = 'all' } = this.tabFilters.indicators || {};
+        const { search = '', framework = 'all', status = 'all' } = this.tabFilters.indicators || {};
         const q = search.toLowerCase();
         return (this.indicatorsList || []).filter((indicator) => {
+            // Framework filter
             const fw = String(indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
             const frameworkMatch = framework === 'all' || fw === framework;
+
+            // Status determination
+            let effectiveStatus = (indicator.status || '').toLowerCase();
+            if (!effectiveStatus) {
+                if (indicator.is_active === true) effectiveStatus = 'active';
+                else if (indicator.is_active === false) effectiveStatus = 'inactive';
+                else effectiveStatus = 'draft';
+            }
+            const statusMatch = status === 'all' || effectiveStatus === status;
+
             const searchMatch = !q || String(indicator.name || '').toLowerCase().includes(q);
-            return frameworkMatch && searchMatch;
+
+            return frameworkMatch && statusMatch && searchMatch;
         });
     }
 
@@ -1941,6 +1951,28 @@ class AdminReviewPage {
             return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || '';
         };
 
+        // NEW: helper to compute status + badge
+        const getStatusInfo = (indicator) => {
+            // Prefer DB status field
+            let status = (indicator.status || '').toLowerCase();
+
+            // Backwards-compat: infer from is_active if status not set
+            if (!status) {
+                if (indicator.is_active === true) status = 'active';
+                else if (indicator.is_active === false) status = 'inactive';
+                else status = 'draft';
+            }
+
+            const label = status.charAt(0).toUpperCase() + status.slice(1); // "Active", "Inactive", "Draft"
+
+            const badge =
+                status === 'active'   ? 'success'  :
+                status === 'draft'    ? 'warning'  :
+                /* inactive or anything else */ 'error';
+
+            return { status, label, badge };
+        };
+
         if (!filtered.length) {
             container.innerHTML = '<p class="text-secondary">No indicators match your filters.</p>';
             return;
@@ -1962,21 +1994,24 @@ class AdminReviewPage {
                         ${pageItems.map(indicator => {
                             const framework = getFramework(indicator);
                             const fwLower = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
+                            const { label: statusLabel, badge: statusBadge } = getStatusInfo(indicator);
+
                             return `
                             <tr>
                                 <td><strong>${indicator.name}</strong></td>
                                 <td>${indicator.panels?.name || 'Unknown'}</td>
                                 <td><span class="badge badge-${fwLower || 'primary'}">${framework || 'N/A'}</span></td>
                                 <td>
-                                    <span class="badge badge-${indicator.is_active ? 'success' : 'error'}">
-                                        ${indicator.is_active ? 'Active' : 'Inactive'}
+                                    <span class="badge badge-${statusBadge}">
+                                        ${statusLabel}
                                     </span>
                                 </td>
                                 <td>
                                     <button class="btn btn-ghost btn-sm" onclick="adminPage.editIndicator('${indicator.id}')">Edit</button>
                                 </td>
                             </tr>
-                        `}).join('')}
+                        `;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -3586,6 +3621,7 @@ class AdminReviewPage {
             document.getElementById('edit-indicator-response-type').value = indicator.response_type || '';
             document.getElementById('edit-indicator-tags').value = indicator.tags || '';
             document.getElementById('edit-indicator-icon').value = indicator.icon || '';
+
             // Set selected SDGs
             const sdgsSelect = document.getElementById('edit-indicator-sdgs');
             const relatedSdgs = indicator.related_sdgs || [];
@@ -3593,11 +3629,20 @@ class AdminReviewPage {
                 option.selected = relatedSdgs.includes(option.value);
             });
 
-            // Update visibility toggle button
-            this.updateIndicatorVisibilityButtonState(indicator.is_active !== false);
+            // Derive status from existing fields
+            let currentStatus = (indicator.status || '').toLowerCase();
+            if (!currentStatus) {
+                if (indicator.is_active === true) currentStatus = 'active';
+                else if (indicator.is_active === false) currentStatus = 'inactive';
+                else currentStatus = 'draft';
+            }
+
+            const statusSelect = document.getElementById('edit-indicator-status');
+            if (statusSelect) {
+                statusSelect.value = currentStatus;
+            }
 
             setTimeout(() => document.getElementById('edit-indicator-title').focus(), 100);
-
         } catch (error) {
             console.error('Error loading indicator:', error);
             window.showToast?.('Failed to load indicator data.', 'error');
@@ -3665,6 +3710,9 @@ class AdminReviewPage {
         try {
             const indicatorId = document.getElementById('edit-indicator-id').value;
 
+            const status = (document.getElementById('edit-indicator-status')?.value || 'draft').toLowerCase();
+            const isActive = status === 'active';
+
             const updates = {
                 panel_id: document.getElementById('edit-indicator-panel').value,
                 name: document.getElementById('edit-indicator-title').value.trim(),
@@ -3682,7 +3730,9 @@ class AdminReviewPage {
                 validation_question: document.getElementById('edit-indicator-validation-question').value.trim() || null,
                 response_type: document.getElementById('edit-indicator-response-type').value || null,
                 tags: document.getElementById('edit-indicator-tags').value.trim() || null,
-                icon: document.getElementById('edit-indicator-icon').value.trim() || null
+                icon: document.getElementById('edit-indicator-icon').value.trim() || null,
+                status,
+                is_active: isActive
             };
 
             // Get selected SDGs
@@ -3711,74 +3761,7 @@ class AdminReviewPage {
         }
     }
 
-    // =====================================================
-    // INDICATOR VISIBILITY TOGGLE
-    // =====================================================
 
-    updateIndicatorVisibilityButtonState(isActive) {
-        const btn = document.getElementById('toggle-indicator-visibility-btn');
-        const btnText = document.getElementById('indicator-visibility-btn-text');
-        const icon = document.getElementById('indicator-visibility-icon');
-
-        if (btn && btnText && icon) {
-            if (isActive) {
-                btnText.textContent = 'Hide';
-                btn.style.background = 'var(--gray-100)';
-                btn.style.color = 'var(--gray-700)';
-                icon.innerHTML = `
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                `;
-            } else {
-                btnText.textContent = 'Show';
-                btn.style.background = 'var(--success-bg)';
-                btn.style.color = 'var(--success)';
-                icon.innerHTML = `
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                `;
-            }
-        }
-    }
-
-    async toggleIndicatorVisibility() {
-        if (!this.currentEditingIndicator) return;
-
-        const btn = document.getElementById('toggle-indicator-visibility-btn');
-        const btnText = document.getElementById('indicator-visibility-btn-text');
-        const currentState = this.currentEditingIndicator.is_active !== false;
-        const newState = !currentState;
-
-        if (btn) {
-            btn.disabled = true;
-            btnText.textContent = newState ? 'Showing...' : 'Hiding...';
-        }
-
-        try {
-            await window.adminService.updateIndicator(this.currentEditingIndicator.id, { is_active: newState });
-
-            this.currentEditingIndicator.is_active = newState;
-            this.updateIndicatorVisibilityButtonState(newState);
-
-            window.showToast?.(
-                newState ? 'Indicator is now visible!' : 'Indicator is now hidden.',
-                'success'
-            );
-
-            if (this.currentTab === 'indicators') {
-                await this.loadIndicators();
-            }
-
-        } catch (error) {
-            console.error('Error toggling indicator visibility:', error);
-            window.showToast?.('Failed to update indicator visibility.', 'error');
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                this.updateIndicatorVisibilityButtonState(this.currentEditingIndicator.is_active);
-            }
-        }
-    }
 
     // =====================================================
     // DELETE INDICATOR CONFIRMATION
