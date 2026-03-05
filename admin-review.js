@@ -2321,7 +2321,7 @@ class AdminReviewPage {
             btn.innerHTML = '<span class="loading-spinner" style="width: 20px; height: 20px;"></span> Exporting...';
 
             await window.adminService.exportData();
-            window.showToast('Approved reviews exported successfully!', 'success');
+            window.showToast('✅ Full data exported successfully!', 'success');  // Updated message
         } catch (error) {
             console.error('Export error:', error);
             window.showToast(error.message || 'Failed to export data.', 'error');
