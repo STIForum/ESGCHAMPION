@@ -38,6 +38,7 @@ class AdminReviewPage {
         this.selectedPanelReview = null;
         this.currentEditingPanel = null;
         this.currentEditingIndicator = null;
+        this.currentEditingFramework = null;
         this.panelsList = [];
         this.indicatorsList = [];
         this.championsList = [];
@@ -107,6 +108,268 @@ class AdminReviewPage {
                 optional: 'Optional'
             }
         };
+    }
+    async editFramework(frameworkId) {
+        const backdrop = document.getElementById('edit-framework-modal-backdrop');
+        const modal = document.getElementById('edit-framework-modal');
+        
+        if (!backdrop || !modal) return;
+
+        // Show modal with loading state
+        backdrop.classList.add('active');
+        modal.classList.add('active');
+
+        try {
+            // Find the framework from the list
+            const framework = this.frameworksList.find(f => f.id === frameworkId);
+            
+            if (!framework) {
+                window.showToast?.('Framework not found.', 'error');
+                this.closeEditFrameworkModal();
+                return;
+            }
+
+            this.currentEditingFramework = framework;
+
+            // Populate form fields
+            document.getElementById('edit-framework-id').value = framework.id;
+            document.getElementById('edit-framework-name').value = framework.name || '';
+            document.getElementById('edit-framework-code').value = framework.code || '';
+            document.getElementById('edit-framework-version').value = framework.version || '';
+            document.getElementById('edit-framework-owner').value = framework.owner_publisher || '';
+            document.getElementById('edit-framework-status').value = framework.status || 'draft';
+            document.getElementById('edit-framework-order').value = framework.order_index || 0;
+
+            // Focus first input
+            setTimeout(() => document.getElementById('edit-framework-name').focus(), 100);
+
+        } catch (error) {
+            console.error('Error loading framework:', error);
+            window.showToast?.('Failed to load framework data.', 'error');
+            this.closeEditFrameworkModal();
+        }
+    }
+    // =====================================================
+    // EDIT FRAMEWORK MODAL
+    // =====================================================
+
+    closeEditFrameworkModal() {
+        const backdrop = document.getElementById('edit-framework-modal-backdrop');
+        const modal = document.getElementById('edit-framework-modal');
+        
+        if (backdrop && modal) {
+            backdrop.classList.remove('active');
+            modal.classList.remove('active');
+            this.resetEditFrameworkForm();
+            this.currentEditingFramework = null;
+        }
+    }
+
+    resetEditFrameworkForm() {
+        const form = document.getElementById('edit-framework-form');
+        if (form) {
+            form.reset();
+            form.querySelectorAll('.form-input, .form-select').forEach(field => {
+                field.classList.remove('error');
+            });
+            form.querySelectorAll('.form-error').forEach(error => {
+                error.textContent = '';
+            });
+        }
+    }
+
+    validateEditFrameworkForm() {
+        const requiredFields = [
+            { id: 'edit-framework-name', label: 'Framework Name' },
+            { id: 'edit-framework-code', label: 'Framework Code' },
+            { id: 'edit-framework-version', label: 'Version / Edition' },
+            { id: 'edit-framework-owner', label: 'Owner / Publisher' },
+            { id: 'edit-framework-status', label: 'Status' }
+        ];
+
+        let isValid = true;
+        requiredFields.forEach(({ id, label }) => {
+            const field = document.getElementById(id);
+            if (!field || !String(field.value || '').trim()) {
+                this.showFieldError(id, `${label} is required`);
+                isValid = false;
+            } else {
+                this.clearFieldError(field);
+            }
+        });
+
+        return isValid;
+    }
+
+    async updateFramework() {
+        if (!this.validateEditFrameworkForm()) {
+            return;
+        }
+
+        const updateBtn = document.getElementById('update-framework-btn');
+        if (updateBtn) {
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = '<span class="loading-spinner-sm" style="width: 16px; height: 16px; margin-right: var(--space-2);"></span> Updating...';
+        }
+
+        try {
+            const frameworkId = document.getElementById('edit-framework-id').value;
+            const name = document.getElementById('edit-framework-name').value.trim();
+            const code = document.getElementById('edit-framework-code').value.trim().toLowerCase().replace(/\s+/g, '_');
+            const version = document.getElementById('edit-framework-version').value.trim();
+            const owner = document.getElementById('edit-framework-owner').value.trim();
+            const status = document.getElementById('edit-framework-status').value;
+            const orderIndex = parseInt(document.getElementById('edit-framework-order').value) || 0;
+
+            const updates = {
+                name,
+                code,
+                version,
+                owner_publisher: owner,
+                status,
+                order_index: orderIndex,
+                is_active: status === 'active' // Set is_active based on status
+            };
+
+            await window.adminService.updateFramework(frameworkId, updates);
+
+            window.showToast?.('Framework updated successfully!', 'success');
+            
+            this.closeEditFrameworkModal();
+
+            // Refresh frameworks list
+            if (this.currentTab === 'frameworks') {
+                await this.loadFrameworks();
+            }
+            // Also refresh panels tab if open (since frameworks appear in dropdowns)
+            if (this.currentTab === 'panels') {
+                this.populateFrameworkSelects();
+                this.populateFrameworkFilterSelects();
+            }
+
+        } catch (error) {
+            console.error('Error updating framework:', error);
+            if (String(error.message || '').toLowerCase().includes('duplicate')) {
+                this.showFieldError('edit-framework-code', 'Framework Code already exists');
+            }
+            window.showToast?.('Failed to update framework. Please try again.', 'error');
+        } finally {
+            if (updateBtn) {
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = 'Update Framework';
+            }
+        }
+    }
+
+
+    // =====================================================
+    // DELETE FRAMEWORK CONFIRMATION
+    // =====================================================
+
+    deleteCurrentFramework() {
+        if (!this.currentEditingFramework) return;
+        this.openDeleteFrameworkConfirmModal();
+    }
+
+    openDeleteFrameworkConfirmModal() {
+        const backdrop = document.getElementById('delete-framework-confirm-modal-backdrop');
+        const modal = document.getElementById('delete-framework-confirm-modal');
+        const nameEl = document.getElementById('delete-framework-name');
+        const confirmInput = document.getElementById('delete-framework-confirm-input');
+        const confirmBtn = document.getElementById('delete-framework-confirm-btn');
+        const errorEl = document.getElementById('delete-framework-confirm-error');
+
+        if (backdrop && modal && this.currentEditingFramework) {
+            nameEl.textContent = this.currentEditingFramework.name;
+            confirmInput.value = '';
+            confirmBtn.disabled = true;
+            errorEl.textContent = '';
+
+            backdrop.classList.add('active');
+            modal.classList.add('active');
+
+            setTimeout(() => confirmInput.focus(), 100);
+        }
+    }
+
+    closeDeleteFrameworkConfirmModal() {
+        const backdrop = document.getElementById('delete-framework-confirm-modal-backdrop');
+        const modal = document.getElementById('delete-framework-confirm-modal');
+        const confirmInput = document.getElementById('delete-framework-confirm-input');
+
+        if (backdrop && modal) {
+            backdrop.classList.remove('active');
+            modal.classList.remove('active');
+            confirmInput.value = '';
+        }
+    }
+
+    async confirmDeleteFramework() {
+        const confirmInput = document.getElementById('delete-framework-confirm-input');
+        const confirmBtn = document.getElementById('delete-framework-confirm-btn');
+        const errorEl = document.getElementById('delete-framework-confirm-error');
+
+        if (confirmInput.value.toUpperCase() !== 'DELETE') {
+            errorEl.textContent = 'Please type DELETE to confirm';
+            return;
+        }
+
+        if (!this.currentEditingFramework) return;
+
+        // Store the ID before any modal closing might nullify it
+        const frameworkId = this.currentEditingFramework.id;
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="loading-spinner-sm" style="width: 16px; height: 16px; margin-right: var(--space-2);"></span> Deleting...';
+
+        try {
+            const result = await window.adminService.permanentlyDeleteFramework(frameworkId);
+            
+            console.log('Delete result:', result); // For debugging
+            
+            window.showToast?.('Framework permanently deleted!', 'success');
+            
+            this.closeDeleteFrameworkConfirmModal();
+            this.closeEditFrameworkModal();
+
+            // Force a fresh reload of the frameworks list
+            if (this.currentTab === 'frameworks') {
+                await this.loadFrameworks();
+                
+                // Double-check that the framework is gone using the stored ID
+                const stillExists = this.frameworksList.some(f => f.id === frameworkId);
+                if (stillExists) {
+                    console.warn('Framework still exists after delete, forcing reload...');
+                    // Force another reload if it's still there
+                    setTimeout(async () => {
+                        await this.loadFrameworks();
+                    }, 500);
+                }
+            }
+
+        } catch (error) {
+            console.error('Error deleting framework:', error);
+            
+            // Display a more specific error message
+            let errorMessage = 'Failed to delete framework. ';
+            if (error.message) {
+                errorMessage = error.message;
+            } else {
+                errorMessage += 'Please try again.';
+            }
+            
+            window.showToast?.(errorMessage, 'error');
+            errorEl.textContent = errorMessage;
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete Framework
+            `;
+        }
     }
     async init() {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -690,7 +953,67 @@ class AdminReviewPage {
                 }
             });
         }
+        // Edit Framework Modal
+        const editFrameworkModalClose = document.getElementById('edit-framework-modal-close');
+        const editFrameworkModalBackdrop = document.getElementById('edit-framework-modal-backdrop');
+        const updateFrameworkBtn = document.getElementById('update-framework-btn');
+        const cancelEditFrameworkBtn = document.getElementById('cancel-edit-framework-btn');
+        const deleteFrameworkBtn = document.getElementById('delete-framework-btn');
+        const toggleFrameworkVisibilityBtn = document.getElementById('toggle-framework-visibility-btn');
 
+        if (editFrameworkModalClose) {
+            editFrameworkModalClose.addEventListener('click', () => this.closeEditFrameworkModal());
+        }
+        if (editFrameworkModalBackdrop) {
+            editFrameworkModalBackdrop.addEventListener('click', (e) => {
+                if (e.target === editFrameworkModalBackdrop) {
+                    this.closeEditFrameworkModal();
+                }
+            });
+        }
+        if (updateFrameworkBtn) {
+            updateFrameworkBtn.addEventListener('click', () => this.updateFramework());
+        }
+        if (cancelEditFrameworkBtn) {
+            cancelEditFrameworkBtn.addEventListener('click', () => this.closeEditFrameworkModal());
+        }
+        if (deleteFrameworkBtn) {
+            deleteFrameworkBtn.addEventListener('click', () => this.deleteCurrentFramework());
+        }
+
+
+        // Delete Framework Confirmation Modal
+        const deleteFrameworkConfirmModalClose = document.getElementById('delete-framework-confirm-modal-close');
+        const deleteFrameworkConfirmModalBackdrop = document.getElementById('delete-framework-confirm-modal-backdrop');
+        const deleteFrameworkConfirmCancelBtn = document.getElementById('delete-framework-confirm-cancel-btn');
+        const deleteFrameworkConfirmBtn = document.getElementById('delete-framework-confirm-btn');
+        const deleteFrameworkConfirmInput = document.getElementById('delete-framework-confirm-input');
+
+        if (deleteFrameworkConfirmModalClose) {
+            deleteFrameworkConfirmModalClose.addEventListener('click', () => this.closeDeleteFrameworkConfirmModal());
+        }
+        if (deleteFrameworkConfirmModalBackdrop) {
+            deleteFrameworkConfirmModalBackdrop.addEventListener('click', (e) => {
+                if (e.target === deleteFrameworkConfirmModalBackdrop) {
+                    this.closeDeleteFrameworkConfirmModal();
+                }
+            });
+        }
+        if (deleteFrameworkConfirmCancelBtn) {
+            deleteFrameworkConfirmCancelBtn.addEventListener('click', () => this.closeDeleteFrameworkConfirmModal());
+        }
+        if (deleteFrameworkConfirmBtn) {
+            deleteFrameworkConfirmBtn.addEventListener('click', () => this.confirmDeleteFramework());
+        }
+        if (deleteFrameworkConfirmInput) {
+            deleteFrameworkConfirmInput.addEventListener('input', (e) => {
+                const isValid = e.target.value.toUpperCase() === 'DELETE';
+                deleteFrameworkConfirmBtn.disabled = !isValid;
+                if (isValid) {
+                    document.getElementById('delete-framework-confirm-error').textContent = '';
+                }
+            });
+        }
         // Add Panel Modal
         const addPanelBtn = document.getElementById('add-panel-btn');
         const addFrameworkBtn = document.getElementById('add-framework-btn');
@@ -750,6 +1073,8 @@ class AdminReviewPage {
                 this.closePanelReviewModal();
                 this.closeAddPanelModal();
                 this.closeAddFrameworkModal();
+                this.closeEditFrameworkModal(); // Add this
+                this.closeDeleteFrameworkConfirmModal(); // Add this
                 this.closeEditPanelModal();
                 this.closeDeleteConfirmModal();
                 this.closeAddIndicatorModal();
@@ -1371,6 +1696,7 @@ class AdminReviewPage {
 
         try {
             const frameworks = await window.adminService.getAllFrameworks();
+            console.log('Frameworks loaded:', frameworks); // Debug log
             this.frameworksList = frameworks || [];
 
             // Keep global labels in sync for other pages/components
@@ -1415,6 +1741,7 @@ class AdminReviewPage {
                             <th>Version</th>
                             <th>Owner / Publisher</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1424,9 +1751,17 @@ class AdminReviewPage {
                                 <td><span class="badge badge-primary">${String(fw.code || '').toUpperCase()}</span></td>
                                 <td>${fw.version || '-'}</td>
                                 <td>${fw.owner_publisher || '-'}</td>
-                                <td><span class="badge badge-${fw.status === 'active'? 'success': fw.status === 'draft'? 'warning': 'error'}">${fw.status === 'deprecated' ? 'inactive' : (fw.status || '-')}</span></td>
-
-                                </tr>
+                                <td><span class="badge badge-${fw.status === 'active' ? 'success' : fw.status === 'draft' ? 'warning' : 'error'}">${fw.status === 'deprecated' ? 'inactive' : (fw.status || '-')}</span></td>
+                                <td>
+                                    <button class="btn btn-ghost btn-sm" onclick="adminPage.editFramework('${fw.id}')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+                                            <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
+                                        </svg>
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
                         `).join('')}
                     </tbody>
                 </table>
@@ -1434,7 +1769,6 @@ class AdminReviewPage {
             ${this.renderPagination('frameworks', pageMeta)}
         `;
     }
-
     populateFrameworkSelects() {
         const selects = [
             document.getElementById('panel-framework'),
