@@ -488,7 +488,22 @@ class ChampionIndicators {
             window.championDB.logActivity('view_indicator', indicator.panel_id, indicatorId);
         }
     }
+    // Add this new helper inside ChampionIndicators class
+    clearRejectedIndicatorsFromReviewed(panelId, rejectedIndicatorIds = []) {
+        if (!panelId || !rejectedIndicatorIds.length) return;
 
+        const keyPrefix = `${panelId}:`;
+        let reviewedIndicators = JSON.parse(sessionStorage.getItem('reviewedIndicators') || '[]');
+
+        reviewedIndicators = reviewedIndicators.filter(key => {
+            if (!key.startsWith(keyPrefix)) return true;
+            const [, indicatorId] = key.split(':');
+            // Keep only those that are NOT in the rejected list
+            return !rejectedIndicatorIds.includes(indicatorId);
+        });
+
+        sessionStorage.setItem('reviewedIndicators', JSON.stringify(reviewedIndicators));
+    }
     async renderIndicatorDetail(indicator) {
         const container = document.getElementById('indicator-detail');
         const isAuthenticated = window.championAuth?.isAuthenticated() || false;
