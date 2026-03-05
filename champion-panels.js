@@ -450,7 +450,20 @@ class ChampionPanels {
             this.allIndicators = panelData.indicators || [];
             this.acceptedIndicatorIds = acceptedIds || [];
             this.rejectedIndicatorIds = rejectedIds || [];
-            
+            // NEW: clear local "submitted" flags for rejected indicators
+            try {
+                const panelKeyPrefix = `${panelId}:`;
+                let reviewedIndicators = JSON.parse(sessionStorage.getItem('reviewedIndicators') || '[]');
+                reviewedIndicators = reviewedIndicators.filter(key => {
+                    if (!key.startsWith(panelKeyPrefix)) return true;
+                    const [, indicatorId] = key.split(':');
+                    // Drop any reviewed key for rejected indicators so they become editable
+                    return !this.rejectedIndicatorIds.includes(indicatorId);
+                });
+                sessionStorage.setItem('reviewedIndicators', JSON.stringify(reviewedIndicators));
+            } catch (e) {
+                console.warn('Failed to clear rejected indicators from reviewedIndicators:', e);
+            }
             if (this.allIndicators.length === 0) {
                 indicatorsList.innerHTML = `
                     <div class="text-center p-6 text-secondary">
