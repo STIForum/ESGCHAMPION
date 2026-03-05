@@ -192,7 +192,88 @@ class AdminService {
         await this.logAction('create_framework', 'framework', data.id, { code: frameworkData.code, name: frameworkData.name });
         return data;
     }
+    /**
+     * Update a framework
+     */
+    async updateFramework(frameworkId, updates) {
+        const client = window.getSupabase();
+        
+        // First, check if the code already exists (if code is being updated)
+        if (updates.code) {
+            const { data: existing, error: checkError } = await client
+                .from('frameworks')
+                .select('id')
+                .eq('code', updates.code)
+                .neq('id', frameworkId) // Exclude current framework
+                .maybeSingle();
 
+            if (checkError) throw checkError;
+            
+            if (existing) {
+                throw new Error('duplicate key value violates unique constraint');
+            }
+        }
+
+        const { data, error } = await client
+            .from('frameworks')
+            .update(updates)
+            .eq('id', frameworkId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase update error:', error);
+            throw error;
+        }
+        
+        await this.logAction('update_framework', 'framework', frameworkId, updates);
+        return data;
+    }
+
+    /**
+     * Permanently delete a framework from the database
+     */
+    async permanentlyDeleteFramework(frameworkId) {
+        const client = window.getSupabase();
+        
+        try {
+            // First check if any panels are using this framework
+            const { data: panels, error: checkError } = await client
+                .from('panels')
+                .select('id')
+                .eq('primary_framework', frameworkId);
+
+            if (checkError) throw checkError;
+
+            if (panels && panels.length > 0) {
+                throw new Error(`Cannot delete framework that is in use by ${panels.length} panel(s). Please reassign these panels first.`);
+            }
+
+            // Then delete the framework
+            const { data, error, status } = await client
+                .from('frameworks')
+                .delete()
+                .eq('id', frameworkId)
+                .select();
+
+            if (error) {
+                console.error('Delete error:', error);
+                throw error;
+            }
+
+            // Check if any records were actually deleted
+            if (!data || data.length === 0) {
+                throw new Error('No framework was deleted. The framework may not exist.');
+            }
+
+            await this.logAction('permanent_delete_framework', 'framework', frameworkId);
+            return data[0];
+            
+        } catch (error) {
+            console.error('Error in permanentlyDeleteFramework:', error);
+            throw error;
+        }
+    }
     // =====================================================
     // INDICATORS
     // =====================================================
@@ -715,4 +796,3 @@ class AdminService {
 // Create and export singleton instance
 window.AdminService = AdminService;
 window.adminService = new AdminService();
-
