@@ -2840,6 +2840,11 @@ class AdminReviewPage {
             backdrop.classList.add('active');
             modal.classList.add('active');
             
+            // Load frameworks first (for display names)
+            if (!this.frameworksList || this.frameworksList.length === 0) {
+                await this.loadFrameworks();
+            }
+            
             // Load panels for dropdown
             await this.loadPanelDropdown();
             
@@ -2865,40 +2870,57 @@ class AdminReviewPage {
         try {
             const panels = await window.adminService.getAllPanels();
             
+            // Clear and set default option
             panelSelect.innerHTML = '<option value="">Select a panel for this indicator</option>';
             
             if (panels && panels.length > 0) {
-                // Group by framework
-                const frameworks = { gri: [], esrs: [], ifrs: [], other: [] };
-                panels.forEach(panel => {
-                    if (panel.is_active !== false) {
-                        const fw = (panel.primary_framework || '').toLowerCase();
-                        if (frameworks[fw]) {
-                            frameworks[fw].push(panel);
-                        } else {
-                            frameworks.other.push(panel);
-                        }
+                // Filter only active panels and sort by name
+                const activePanels = panels
+                    .filter(panel => panel.is_active !== false)
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                
+                // Simple dropdown without grouping (more reliable)
+                activePanels.forEach(panel => {
+                    const option = document.createElement('option');
+                    option.value = panel.id;
+                    
+                    // Get framework display name
+                    let frameworkDisplay = '';
+                    if (panel.primary_framework) {
+                        // Try to get from frameworks list first
+                        const framework = this.frameworksList?.find(
+                            f => f.code?.toLowerCase() === panel.primary_framework.toLowerCase()
+                        );
+                        frameworkDisplay = framework?.name || panel.primary_framework.toUpperCase();
                     }
+                    
+                    // Set option text with framework if available
+                    option.textContent = frameworkDisplay 
+                        ? `${panel.name} (${frameworkDisplay})`
+                        : panel.name;
+                    
+                    panelSelect.appendChild(option);
                 });
-
-                // Add options grouped by framework
-                for (const [fw, fwPanels] of Object.entries(frameworks)) {
-                    if (fwPanels.length > 0) {
-                        const optgroup = document.createElement('optgroup');
-                        optgroup.label = fw.toUpperCase() || 'Other';
-                        fwPanels.forEach(panel => {
-                            const option = document.createElement('option');
-                            option.value = panel.id;
-                            option.textContent = panel.name;
-                            optgroup.appendChild(option);
-                        });
-                        panelSelect.appendChild(optgroup);
-                    }
-                }
+                
+                console.log(`Loaded ${activePanels.length} panels into dropdown`);
+            } else {
+                console.log('No panels found');
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No panels available';
+                option.disabled = true;
+                panelSelect.appendChild(option);
             }
         } catch (error) {
             console.error('Error loading panels for dropdown:', error);
             panelSelect.innerHTML = '<option value="">Error loading panels</option>';
+            
+            // Add a retry option
+            const retryOption = document.createElement('option');
+            retryOption.value = '';
+            retryOption.textContent = 'Click to retry';
+            retryOption.onclick = () => this.loadPanelDropdown();
+            panelSelect.appendChild(retryOption);
         }
     }
 
