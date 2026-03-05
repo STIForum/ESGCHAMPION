@@ -118,7 +118,21 @@ class AdminService {
      * Update a panel
      */
     async updatePanel(panelId, updates) {
-        const data = await this.supabase.updatePanel(panelId, updates);
+        const client = window.getSupabase();
+
+        // IMPORTANT: send all fields (including status + is_active) directly to Supabase
+        const { data, error } = await client
+            .from('panels')
+            .update(updates)
+            .eq('id', panelId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase updatePanel error:', error);
+            throw error;
+        }
+
         await this.logAction('update_panel', 'panel', panelId, updates);
         return data;
     }
