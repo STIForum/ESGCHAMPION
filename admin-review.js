@@ -375,21 +375,24 @@ class AdminReviewPage {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const isAdmin = await window.championAuth.isAdmin();
-        console.log('Admin check result:', isAdmin); // ← ADD THIS
+        console.log('Admin check result:', isAdmin);
         
         if (!isAdmin) {
             window.location.href = '/champion-dashboard.html';
             return;
         }
 
+        // ✅ Load frameworks first so filter dropdowns are populated correctly
+        await this.loadFrameworks();
+        await this.loadPanels();
         // Load initial data
         await this.loadPanelReviewQueue();
         
         // Setup event listeners
         this.setupEventListeners();
-        this.populateFrameworkFilterSelects();
+        // populateFrameworkFilterSelects() is already called inside loadFrameworks()
         
-        // Show content using centralized utility
+        // Show content
         _hideLoading('loading-state');
         document.getElementById('admin-content').classList.remove('hidden');
     }
@@ -1467,19 +1470,35 @@ class AdminReviewPage {
         `;
     }
 
+    // Replace your existing getFilteredPanelReviews() with this version
+
     getFilteredPanelReviews() {
         const { search = '', framework = 'all' } = this.tabFilters['panel-reviews'] || {};
-        const q = search.toLowerCase();
+        const q = String(search || '').toLowerCase().trim();
+
+        // Build a lookup map: panel_id -> primary_framework (lowercase)
+        const panelFrameworkById = new Map(
+            (this.panelsList || []).map(p => [
+                p.id,
+                String(p.primary_framework || p.framework || '').toLowerCase()
+            ])
+        );
+
         return (this.panelReviews || []).filter((review) => {
-            const fw = String(review.panels?.primary_framework || review.panels?.framework || '').toLowerCase();
+            // 1) Determine framework reliably
+            const fwFromJoin = String(review.panels?.primary_framework || review.panels?.framework || '').toLowerCase();
+            const fwFromLookup = panelFrameworkById.get(review.panel_id) || '';
+            const fw = fwFromJoin || fwFromLookup;
+
             const panelName = String(review.panels?.name || review.panelName || '').toLowerCase();
             const championName = String(review.champions?.full_name || review.championName || '').toLowerCase();
-            const frameworkMatch = framework === 'all' || fw === framework;
+
+            const frameworkMatch = framework === 'all' || fw === String(framework).toLowerCase();
             const searchMatch = !q || panelName.includes(q) || championName.includes(q);
+
             return frameworkMatch && searchMatch;
         });
     }
-
     getFilteredFrameworks() {
         const { search = '', status = 'all' } = this.tabFilters.frameworks || {};
         const q = search.toLowerCase();
