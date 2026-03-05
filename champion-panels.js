@@ -235,8 +235,9 @@ class ChampionPanels {
             let buttonHtml = `<button class="btn btn-primary" style="width: 100%;">Review Panel</button>`;
             
             if (isAwaitingApproval) {
-                statusBadge = '<span class="status-badge status-in-progress">⏳ Awaiting Approval</span>';
-                buttonHtml = `<button class="btn btn-secondary" style="width: 100%;" disabled>Review Submitted</button>`;
+                statusBadge = '<span class="status-badge status-in-progress">⏳ Pending Review</span>';
+                // or: 'Pending Review / Awaiting Admin'
+                buttonHtml = `<button class="btn btn-secondary" style="width: 100%;" disabled>Pending Review / Awaiting Admin Approval</button>`;
             } else if (isApproved) {
                 statusBadge = '<span class="status-badge status-completed">✓ Approved</span>';
                 buttonHtml = `<button class="btn btn-ghost" style="width: 100%;">View Review</button>`;
