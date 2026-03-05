@@ -1323,6 +1323,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
+    <div class="modal-backdrop" id="delete-confirm-modal-backdrop">
         <div class="modal" id="delete-confirm-modal" style="max-width: 450px;">
             <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
                 <h3 class="modal-title" style="color: var(--error);">
@@ -1342,9 +1343,7 @@
                 <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
                     <strong style="color: var(--error);">Warning:</strong> This action will permanently delete the panel and all its associated indicators from the database. This action <strong>cannot be undone</strong>.
                 </p>
-                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
-                    💡 <em>Tip: To hide a panel without deleting it, use the "Hide" button instead.</em>
-                </p>
+
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">Type <strong>"DELETE"</strong> to confirm:</label>
                     <input type="text" class="form-input" id="delete-confirm-input" placeholder="Type DELETE here" autocomplete="off">
