@@ -343,7 +343,20 @@ class AdminService {
      * Update an indicator
      */
     async updateIndicator(indicatorId, updates) {
-        const data = await this.supabase.updateIndicator(indicatorId, updates);
+        const client = window.getSupabase();
+
+        const { data, error } = await client
+            .from('indicators')
+            .update(updates)
+            .eq('id', indicatorId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase updateIndicator error:', error);
+            throw error;
+        }
+
         await this.logAction('update_indicator', 'indicator', indicatorId, updates);
         return data;
     }
