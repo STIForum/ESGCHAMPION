@@ -671,6 +671,7 @@
             </div>
         </div>
     </div>
+<!-- Full replacement for the Edit Panel Modal block only -->
     <!-- Edit Panel Modal -->
     <div class="modal-backdrop" id="edit-panel-modal-backdrop">
         <div class="modal" id="edit-panel-modal" style="max-width: 700px; max-height: 90vh;">
@@ -835,13 +836,16 @@
                     <!-- Status -->
                     <div class="form-group">
                         <label class="form-label">Status</label>
-                        <div style="display: flex; align-items: center; gap: var(--space-3);">
-                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
-                                <input type="checkbox" id="edit-panel-active" name="isActive" checked>
-                                <span>Active</span>
-                            </label>
-                            <span class="text-secondary" style="font-size: var(--text-sm);">Inactive panels won't appear in the champion panels list</span>
-                        </div>
+                        <select class="form-select" id="edit-panel-status" name="status">
+                            <option value="draft">Draft</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <span class="form-error" id="edit-panel-status-error"></span>
+                        <p class="form-helper">
+                            Draft panels are only visible to admins. Inactive panels are hidden from all users.
+                            Active panels are visible to champions and business users.
+                        </p>
                     </div>
                 </form>
             </div>
@@ -853,13 +857,6 @@
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
                         Delete
-                    </button>
-                    <button type="button" class="btn" id="toggle-panel-visibility-btn" style="background: var(--gray-100); color: var(--gray-700);">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="visibility-icon">
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                            <line x1="1" y1="1" x2="23" y2="23"></line>
-                        </svg>
-                        <span id="visibility-btn-text">Hide</span>
                     </button>
                 </div>
                 <div style="display: flex; gap: var(--space-3);">
