@@ -49,7 +49,7 @@ class AdminReviewPage {
         this.tabFilters = {
             'panel-reviews': { search: '', framework: 'all', page: 1 },
             frameworks: { search: '', status: 'all', page: 1 },
-            panels: { search: '', framework: 'all', page: 1 },
+            panels: { search: '', framework: 'all', status: 'all', page: 1 },  // ← added status
             indicators: { search: '', framework: 'all', page: 1 },
             champions: { search: '', role: 'all', page: 1 },
             'business-users': { search: '', subscription: 'all', page: 1 }
@@ -1385,7 +1385,8 @@ class AdminReviewPage {
 
         bindInput('panel-search', 'panels', 'search');
         bindSelect('panel-filter-framework', 'panels', 'framework');
-
+        // NEW: bind status filter
+        bindSelect('panel-filter-status', 'panels', 'status');
         bindInput('indicator-search-filter', 'indicators', 'search');
         bindSelect('indicator-filter-framework', 'indicators', 'framework');
 
@@ -1501,13 +1502,24 @@ class AdminReviewPage {
     }
 
     getFilteredPanels() {
-        const { search = '', framework = 'all' } = this.tabFilters.panels || {};
+        const { search = '', framework = 'all', status = 'all' } = this.tabFilters.panels || {};
         const q = search.toLowerCase();
         return (this.panelsList || []).filter((panel) => {
+            // Framework filter
             const fw = String(panel.primary_framework || panel.framework || '').toLowerCase();
             const frameworkMatch = framework === 'all' || fw === framework;
+
+            // Status filter
+            let statusMatch = true;
+            if (status !== 'all') {
+                const isActiveFilter = status === 'active';   // true for active, false for inactive
+                statusMatch = panel.is_active === isActiveFilter;
+            }
+
+            // Search filter
             const searchMatch = !q || String(panel.name || '').toLowerCase().includes(q);
-            return frameworkMatch && searchMatch;
+
+            return frameworkMatch && statusMatch && searchMatch;
         });
     }
 
