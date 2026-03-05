@@ -22,19 +22,24 @@ class AdminService {
     }
 
     /**
-     * Get all reviews with filters
+     * Get all reviews (for export/admin). Uses explicit aliases to avoid ambiguous joins.
      */
     async getAllReviews(options = {}) {
         const client = window.getSupabase();
         let query = client
             .from('reviews')
-            .select('*, champions(id, full_name, email, avatar_url), indicators(name), panels(name, category)')
+            .select(`
+                *,
+                champion:champion_id ( id, full_name, email, company ),
+                reviewer:reviewed_by ( id, full_name ),
+                indicators ( id, name, code ),
+                panels ( id, name, category )
+            `)
             .order('created_at', { ascending: false });
 
         if (options.status) {
             query = query.eq('status', options.status);
         }
-
         if (options.limit) {
             query = query.limit(options.limit);
         }
@@ -742,70 +747,98 @@ class AdminService {
         return csv;
     }
 
-    /**
-     * Legacy export - exports all data
-     */
-    async exportAllData() {
+    // =====================================================
+    // EXPORT – FULL DATA (including frameworks)
+    // =====================================================
+
+    async exportData() {
         try {
-            const [reviews, panels, indicators, champions] = await Promise.all([
-                this.getAllReviews(),
+            console.log('📤 Starting full data export...');
+
+            const [frameworks, panels, indicators, champions, reviews] = await Promise.all([
+                this.getAllFrameworks(),
                 this.getAllPanels(),
                 this.getAllIndicators(),
-                this.getAllChampions()
+                this.getAllChampions(),
+                this.getAllReviews()
             ]);
 
-            // Create CSV content
+            console.log(`✅ Frameworks fetched: ${frameworks.length}`);
+            console.log(`✅ Panels fetched: ${panels.length}`);
+            console.log(`✅ Indicators fetched: ${indicators.length}`);
+            console.log(`✅ Champions fetched: ${champions.length}`);
+            console.log(`✅ Reviews fetched: ${reviews.length}`);
+
             const csvContent = this.generateFullExportCSV({
-                reviews,
+                frameworks,
                 panels,
                 indicators,
-                champions
+                champions,
+                reviews
             });
 
-            // Download file
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `esg-champions-full-export-${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', `stif-full-export-${new Date().toISOString().split('T')[0]}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
+            console.log('✅ Export completed successfully');
             return true;
         } catch (error) {
-            console.error('Export error:', error);
+            console.error('❌ Export error:', error);
             throw error;
         }
     }
 
+    /**
+     * Generate a multi‑section CSV from all fetched data.
+     * @param {Object} data - Contains frameworks, panels, indicators, champions, reviews.
+     */
     generateFullExportCSV(data) {
         let csv = '';
 
-        // Reviews section
+        // --- FRAMEWORKS section ---
+        csv += '=== FRAMEWORKS ===\n';
+        csv += 'ID,Name,Code,Version,Owner/Publisher,Status,Order Index,Created At,Updated At\n';
+        (data.frameworks || []).forEach(fw => {
+            csv += `"${fw.id}","${fw.name || ''}","${fw.code || ''}","${fw.version || ''}","${fw.owner_publisher || ''}","${fw.status || ''}","${fw.order_index || 0}","${fw.created_at || ''}","${fw.updated_at || ''}"\n`;
+        });
+        csv += '\n';
+
+        // --- REVIEWS section (UPDATED: uses champion.full_name from alias) ---
         csv += '=== REVIEWS ===\n';
         csv += 'ID,Champion,Email,Indicator,Panel,Status,Rating,Created At\n';
-        data.reviews.forEach(r => {
-            csv += `"${r.id}","${r.champions?.full_name || ''}","${r.champions?.email || ''}","${r.indicators?.name || ''}","${r.panels?.name || ''}","${r.status}","${r.rating || ''}","${r.created_at}"\n`;
+        (data.reviews || []).forEach(r => {
+            csv += `"${r.id}","${r.champion?.full_name || ''}","${r.champion?.email || ''}","${r.indicators?.name || ''}","${r.panels?.name || ''}","${r.status || ''}","${r.rating || ''}","${r.created_at || ''}"\n`;
         });
+        csv += '\n';
 
-        csv += '\n=== PANELS ===\n';
-        csv += 'ID,Name,Framework,Active\n';
-        data.panels.forEach(p => {
-            csv += `"${p.id}","${p.name}","${p.primary_framework || ''}","${p.is_active}"\n`;
+        // --- PANELS section ---
+        csv += '=== PANELS ===\n';
+        csv += 'ID,Name,Framework,ESG Classification,Status,Active,Created At\n';
+        (data.panels || []).forEach(p => {
+            csv += `"${p.id}","${p.name || ''}","${p.primary_framework || ''}","${p.esg_classification || ''}","${p.status || ''}","${p.is_active}","${p.created_at || ''}"\n`;
         });
+        csv += '\n';
 
-        csv += '\n=== INDICATORS ===\n';
-        csv += 'ID,Name,Panel,Framework,Active\n';
-        data.indicators.forEach(i => {
-            csv += `"${i.id}","${i.name}","${i.panels?.name || ''}","${i.primary_framework || ''}","${i.is_active}"\n`;
+        // --- INDICATORS section ---
+        csv += '=== INDICATORS ===\n';
+        csv += 'ID,Name,Panel,Framework,Status,Active,Created At\n';
+        (data.indicators || []).forEach(i => {
+            csv += `"${i.id}","${i.name || ''}","${i.panels?.name || ''}","${i.primary_framework || ''}","${i.status || ''}","${i.is_active}","${i.created_at || ''}"\n`;
         });
+        csv += '\n';
 
-        csv += '\n=== CHAMPIONS ===\n';
-        csv += 'ID,Name,Email,Company,Credits,Reviews,Admin,Created At\n';
-        data.champions.forEach(c => {
-            csv += `"${c.id}","${c.full_name || ''}","${c.email}","${c.company || ''}","${c.credits || 0}","${c.total_reviews || 0}","${c.is_admin}","${c.created_at}"\n`;
+        // --- CHAMPIONS section ---
+        csv += '=== CHAMPIONS ===\n';
+        csv += 'ID,Name,Email,Company,Credits,Admin,Created At\n';
+        (data.champions || []).forEach(c => {
+            csv += `"${c.id}","${c.full_name || ''}","${c.email}","${c.company || ''}","${c.credits || 0}","${c.is_admin}","${c.created_at || ''}"\n`;
         });
 
         return csv;
