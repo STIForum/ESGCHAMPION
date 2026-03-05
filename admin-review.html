@@ -243,24 +243,30 @@
                 <div id="tab-panels" class="tab-content hidden">
                     <div class="flex-between mb-4">
                         <h3>ESG Panels</h3>
-                        <button class="btn btn-primary" id="add-panel-btn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Panel
-                        </button>
+                        <button class="btn btn-primary" id="add-panel-btn">Add Panel</button>
                     </div>
                     <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
                         <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
+                            <!-- Search -->
                             <div style="min-width: 240px; flex: 1;">
                                 <label class="form-label">Search</label>
                                 <input type="text" class="form-input" id="panel-search" placeholder="Search panel by name">
                             </div>
+                            <!-- Framework Filter -->
                             <div style="min-width: 200px;">
                                 <label class="form-label">Framework</label>
                                 <select class="form-select" id="panel-filter-framework">
                                     <option value="all">All Frameworks</option>
+                                </select>
+                            </div>
+                            <!-- Status Filter -->
+                            <div style="min-width: 200px;">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="panel-filter-status">
+                                    <option value="all">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="inactive">Inactive</option>
                                 </select>
                             </div>
                         </div>
