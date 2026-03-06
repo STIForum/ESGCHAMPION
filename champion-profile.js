@@ -311,8 +311,69 @@ class ChampionProfile {
 
         // Delete account
         document.getElementById('delete-account-btn').addEventListener('click', () => this.deleteAccount());
-    }
+        
+        // Character limit + digit blocking + space warning for name & role fields
+        ['first_name', 'last_name', 'job_title'].forEach(id => {
+            const input = document.getElementById(id);
+            const errorChar = document.getElementById(`error-${id}`);
+            const errorDigit = document.getElementById(`error-${id}_digit`);
+            const errorSpace = document.getElementById(`error-${id}_space`);
+            if (input && errorChar && errorDigit && errorSpace) {
+                input.addEventListener('input', () => {
+                    // 1. Filter out digits
+                    const filtered = input.value.replace(/\d/g, '');
+                    if (filtered !== input.value) {
+                        input.value = filtered;
+                        // Show digit error
+                        errorDigit.style.display = 'block';
+                        // Hide it after 2 seconds
+                        setTimeout(() => {
+                            errorDigit.style.display = 'none';
+                        }, 2000);
+                    } else {
+                        // If no digits, hide digit error immediately
+                        errorDigit.style.display = 'none';
+                    }
 
+                    // 2. Check character limit
+                    if (input.value.length > 265) {
+                        errorChar.style.display = 'block';
+                    } else {
+                        errorChar.style.display = 'none';
+                    }
+
+                    // 3. Check leading/trailing spaces
+                    if (input.value !== input.value.trim()) {
+                        errorSpace.style.display = 'block';
+                    } else {
+                        errorSpace.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        // Space warning for company (no digit check)
+        const companyInput = document.getElementById('company');
+        const companyErrorChar = document.getElementById('error-company');
+        const companyErrorSpace = document.getElementById('error-company_space');
+        if (companyInput && companyErrorChar && companyErrorSpace) {
+            companyInput.addEventListener('input', () => {
+                // Character limit
+                if (companyInput.value.length > 265) {
+                    companyErrorChar.style.display = 'block';
+                } else {
+                    companyErrorChar.style.display = 'none';
+                }
+
+                // Leading/trailing spaces
+                if (companyInput.value !== companyInput.value.trim()) {
+                    companyErrorSpace.style.display = 'block';
+                } else {
+                    companyErrorSpace.style.display = 'none';
+                }
+            });
+        }
+    }
     switchTab(tabName) {
         // Update tab buttons
         document.querySelectorAll('.profile-tab').forEach(tab => {
@@ -417,7 +478,62 @@ class ChampionProfile {
         const competence = document.getElementById('competence_esg').value;
         const sector = document.getElementById('sectors_focus').value;
         const panelExpertise = document.getElementById('expertise_panels').value;
+        // Character limit validation (existing)
+        const longFields = [];
+        ['first_name', 'last_name', 'company', 'job_title'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input && input.value.length > 265) {
+                longFields.push(id.replace('_', ' '));
+                document.getElementById(`error-${id}`).style.display = 'block';
+            }
+        });
+        // Space validation (leading/trailing)
+        const spaceFields = [];
+        ['first_name', 'last_name', 'company', 'job_title'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input && input.value !== input.value.trim()) {
+                spaceFields.push(id.replace('_', ' '));
+                document.getElementById(`error-${id}_space`).style.display = 'block';
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    document.getElementById(`error-${id}_space`).style.display = 'none';
+                }, 3000);
+            }
+        });
 
+        if (spaceFields.length > 0) {
+            window.showToast?.(`Fields cannot start or end with a space: ${spaceFields.join(', ')}`, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+            return;
+        }
+        if (longFields.length > 0) {
+            window.showToast?.(`Fields exceed 265 characters: ${longFields.join(', ')}`, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+            return;
+        }
+
+        // Digit validation (new)
+        const digitFields = [];
+        ['first_name', 'last_name', 'job_title'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input && /\d/.test(input.value)) {
+                digitFields.push(id.replace('_', ' '));
+                document.getElementById(`error-${id}_digit`).style.display = 'block';
+                // Hide after 2 seconds (optional, but user will see the error on submit)
+                setTimeout(() => {
+                    document.getElementById(`error-${id}_digit`).style.display = 'none';
+                }, 2000);
+            }
+        });
+
+        if (digitFields.length > 0) {
+            window.showToast?.(`Digits are not allowed in: ${digitFields.join(', ')}`, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+            return;
+        }
         // Build updates object with dedicated columns
         const updates = {
             full_name: fullName,
