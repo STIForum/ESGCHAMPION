@@ -12,70 +12,112 @@ function setContent(html) {
 }
 
 async function verifyEmail() {
-  // Extract the token and type from the URL
-  const params = new URLSearchParams(window.location.search);
-  const token_hash = params.get('token_hash');
-  const type = params.get('type'); // usually 'signup' or 'email'
+  // Check for PKCE flow (token_hash in query string)
+  const queryParams = new URLSearchParams(window.location.search);
+  const token_hash = queryParams.get('token_hash');
+  const type = queryParams.get('type'); // 'signup' or 'email'
 
-  if (!token_hash || !type) {
-    setContent(`
-      <h1>Invalid verification link</h1>
-      <p>The link is missing required parameters.</p>
-      <a class="button" href="index.html">Go to login</a>
-    `);
-    return;
-  }
+  // Check for implicit flow (access_token in URL fragment)
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const access_token = hashParams.get('access_token');
+  const refresh_token = hashParams.get('refresh_token');
+  const fragmentType = hashParams.get('type'); // usually 'signup'
 
-  // Show a loading message while we verify
-  setContent(`<p class="loading">Verifying your email...</p>`);
+  if (token_hash && type) {
+    // PKCE flow
+    setContent(`<p class="loading">Verifying your email...</p>`);
 
-  // Attempt to verify the OTP
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash,
-    type,
-  });
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type,
+    });
 
-  if (error) {
-    console.error('Verification error:', error);
+    if (error) {
+      console.error('Verification error:', error);
+      if (error.message.includes('Email link is invalid or has expired') || error.status === 403) {
+        setContent(`
+          <h1>Verification link no longer valid</h1>
+          <p>The link you clicked may have already been used or has expired.</p>
+          <p>If you still need to verify your email, please request a new confirmation email from the app.</p>
+          <a class="button" href="index.html">Go to login</a>
+        `);
+      } else {
+        setContent(`
+          <h1>Verification failed</h1>
+          <p class="error">${error.message}</p>
+          <a class="button" href="index.html">Try again</a>
+        `);
+      }
+      return;
+    }
 
-    // Check the error message or status to give a user-friendly response
-    if (error.message.includes('Email link is invalid or has expired') || error.status === 403) {
-      // This happens when the token was already used or has expired
-      setContent(`
-        <h1>Verification link no longer valid</h1>
-        <p>The link you clicked may have already been used or has expired.</p>
-        <p>If you still need to verify your email, please request a new confirmation email from the app.</p>
-        <a class="button" href="index.html">Go to login</a>
-      `);
-    } else {
-      // Some other error (network, server issue, etc.)
+    // Verification successful – get session
+    const { data: { session } } = await supabase.auth.getSession();
+    await handleSuccessfulVerification(session);
+
+  } else if (access_token && refresh_token && fragmentType === 'signup') {
+    // Implicit flow
+    setContent(`<p class="loading">Verifying your email...</p>`);
+
+    const { error } = await supabase.auth.setSession({
+      access_token,
+      refresh_token,
+    });
+
+    if (error) {
+      console.error('Session error:', error);
       setContent(`
         <h1>Verification failed</h1>
         <p class="error">${error.message}</p>
         <a class="button" href="index.html">Try again</a>
       `);
+      return;
     }
-    return;
-  }
 
-  // Verification successful – get the updated session
-  const { data: { session } } = await supabase.auth.getSession();
+    // Get the updated session
+    const { data: { session } } = await supabase.auth.getSession();
+    await handleSuccessfulVerification(session);
 
-  if (session?.user?.email_confirmed_at) {
+  } else {
     setContent(`
-      <h1>Email verified successfully!</h1>
-      <p>Your email <span class="email">${session.user.email}</span> has been confirmed.</p>
-      <p>You can now close this page and return to the app.</p>
+      <h1>Invalid verification link</h1>
+      <p>The link is missing required parameters.</p>
       <a class="button" href="index.html">Go to login</a>
     `);
-  } else {
-    // Shouldn't happen, but just in case
+  }
+}
+
+async function handleSuccessfulVerification(session) {
+  if (!session?.user) {
     setContent(`
       <h1>Verification completed</h1>
       <p>Your email has been verified. You may now log in.</p>
       <a class="button" href="index.html">Go to login</a>
     `);
+    return;
   }
+
+  const user = session.user;
+  const metadata = user.user_metadata || {};
+  const userType = metadata.user_type || 'champion'; // default to champion
+
+  // Determine dashboard URL based on user type
+  let dashboardUrl = '/champion-dashboard.html';
+  if (userType === 'business') {
+    dashboardUrl = '/business-dashboard.html';
+  }
+
+  setContent(`
+    <h1>Email verified successfully!</h1>
+    <p>Your email <span class="email">${user.email}</span> has been confirmed.</p>
+    <p>You will be redirected to your dashboard shortly...</p>
+    <a class="button" href="${dashboardUrl}">Go to dashboard</a>
+  `);
+
+  // Redirect after 3 seconds
+  setTimeout(() => {
+    window.location.href = dashboardUrl;
+  }, 3000);
 }
 
 // Start the verification process
