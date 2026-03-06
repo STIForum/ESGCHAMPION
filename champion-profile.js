@@ -174,6 +174,11 @@ class ChampionProfile {
         }
     }
 
+    /**
+     * Populate all form fields from the champion object.
+     * For backward compatibility, if dedicated columns are empty but bio contains structured data,
+     * parse the bio to fill the fields.
+     */
     populateForm() {
         const fullName = this.champion.full_name || '';
         const parts = fullName.trim().split(' ');
@@ -187,58 +192,111 @@ class ChampionProfile {
         document.getElementById('company').value = this.champion.company || '';
         document.getElementById('job_title').value = this.champion.job_title || '';
         document.getElementById('linkedin_url').value = this.champion.linkedin_url || '';
+
+        // Set values from dedicated columns (if they exist)
         document.getElementById('mobile_number').value = this.champion.mobile_number || '';
         document.getElementById('office_phone').value = this.champion.office_phone || '';
+        document.getElementById('website').value = this.champion.website || '';
+        document.getElementById('competence_esg').value = this.champion.competence_esg || '';
+        document.getElementById('sectors_focus').value = this.champion.sectors_focus || '';
+        document.getElementById('expertise_panels').value = this.champion.expertise_panels || '';
 
-        // Parse bio to extract structured data
-        this.parseBioData();
+        // For Key ESG Contributions, we use the bio field (but only the part before any structured data)
+        // However, if we have already parsed bio below, we'll override this.
+        let keyContributions = this.champion.bio || '';
+
+        // If dedicated fields are empty and bio exists, try to parse bio to fill them
+        const needsParsing = 
+            !this.champion.mobile_number &&
+            !this.champion.office_phone &&
+            !this.champion.website &&
+            !this.champion.competence_esg &&
+            !this.champion.sectors_focus &&
+            !this.champion.expertise_panels &&
+            this.champion.bio;
+
+        if (needsParsing) {
+            const parsed = this.parseBio(this.champion.bio);
+            // Only set fields that are currently empty in the champion object
+            if (!this.champion.mobile_number && parsed.mobile_number) {
+                document.getElementById('mobile_number').value = parsed.mobile_number;
+            }
+            if (!this.champion.office_phone && parsed.office_phone) {
+                document.getElementById('office_phone').value = parsed.office_phone;
+            }
+            if (!this.champion.website && parsed.website) {
+                document.getElementById('website').value = parsed.website;
+            }
+            if (!this.champion.competence_esg && parsed.competence_esg) {
+                document.getElementById('competence_esg').value = parsed.competence_esg;
+            }
+            if (!this.champion.sectors_focus && parsed.sectors_focus) {
+                document.getElementById('sectors_focus').value = parsed.sectors_focus;
+            }
+            if (!this.champion.expertise_panels && parsed.expertise_panels) {
+                document.getElementById('expertise_panels').value = parsed.expertise_panels;
+            }
+            // Use the extracted key contributions (first part of bio)
+            if (parsed.keyContributions) {
+                keyContributions = parsed.keyContributions;
+            }
+        }
+
+        // Set the Key ESG Contributions field
+        document.getElementById('key_contributions').value = keyContributions;
     }
 
     /**
-     * Parse bio data and populate form fields
+     * Parse the legacy bio string to extract structured fields.
+     * Expected format (example):
+     *   "gygyiuv\n\nESG Competence: beginner | Sector Focus: healthcare | Panel Expertise: environmental\n\nMobile: 12345654321 | Sector Focus: manufacturing"
+     * Returns an object with possible keys: keyContributions, mobile_number, office_phone, website,
+     * competence_esg, sectors_focus, expertise_panels.
      */
-    parseBioData() {
-        const bio = this.champion.bio || '';
+    parseBio(bio) {
+        const result = {};
+        if (!bio) return result;
+
+        // Split by double newline to separate sections
+        const sections = bio.split(/\n\s*\n/);
         
-        // Split bio into parts
-        const parts = bio.split('\n\n');
-        let keyContributions = '';
-        let structuredData = '';
-        
-        if (parts.length >= 2) {
-            keyContributions = parts[0];
-            structuredData = parts[1];
-        } else {
-            keyContributions = bio;
+        // First non-empty section is likely the key contributions (free text)
+        if (sections.length > 0 && sections[0].trim()) {
+            result.keyContributions = sections[0].trim();
         }
-        
-        // Set key contributions
-        document.getElementById('key_contributions').value = keyContributions;
-        
-        // Parse structured data
-        if (structuredData) {
-            const dataItems = structuredData.split(' | ');
-            dataItems.forEach(item => {
-                const [key, value] = item.split(': ');
-                if (key && value) {
-                    switch (key.trim()) {
-                        case 'Website':
-                            document.getElementById('website').value = value;
-                            break;
-                        case 'ESG Competence':
-                            document.getElementById('competence_esg').value = value;
-                            break;
-                        case 'Sector Focus':
-                            document.getElementById('sectors_focus').value = value;
-                            break;
-                        case 'Panel Expertise':
-                            document.getElementById('expertise_panels').value = value;
-                            break;
-                    }
+
+        // Process remaining sections for key-value pairs
+        for (let i = 1; i < sections.length; i++) {
+            const section = sections[i].trim();
+            // Split by '|' to get individual key-value pairs
+            const pairs = section.split('|').map(p => p.trim());
+            pairs.forEach(pair => {
+                const colonIndex = pair.indexOf(':');
+                if (colonIndex === -1) return;
+                const key = pair.substring(0, colonIndex).trim().toLowerCase();
+                const value = pair.substring(colonIndex + 1).trim();
+
+                // Map known keys to field names
+                if (key.includes('mobile')) {
+                    result.mobile_number = value;
+                } else if (key.includes('office')) {
+                    result.office_phone = value;
+                } else if (key.includes('website')) {
+                    result.website = value;
+                } else if (key.includes('esg competence')) {
+                    result.competence_esg = value;
+                } else if (key.includes('sector focus')) {
+                    // If there are multiple, take the last one (or could handle as array, but for now last wins)
+                    result.sectors_focus = value;
+                } else if (key.includes('panel expertise')) {
+                    result.expertise_panels = value;
                 }
             });
         }
+
+        return result;
     }
+
     setupEventListeners() {
         // Tab switching
         document.querySelectorAll('.profile-tab').forEach(tab => {
@@ -350,7 +408,7 @@ class ChampionProfile {
         const firstName = document.getElementById('first_name').value.trim();
         const lastName = document.getElementById('last_name').value.trim();
         const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
-        document.getElementById('full_name').value = fullName;
+        document.getElementById('full_name').value = fullName; // keep hidden field in sync
 
         const keyContributions = document.getElementById('key_contributions').value.trim();
         const mobile = document.getElementById('mobile_number').value.trim();
@@ -360,23 +418,19 @@ class ChampionProfile {
         const sector = document.getElementById('sectors_focus').value;
         const panelExpertise = document.getElementById('expertise_panels').value;
 
-        // Only add non-phone fields to extras
-        const extras = [];
-        if (website) extras.push(`Website: ${website}`);
-        if (competence) extras.push(`ESG Competence: ${competence}`);
-        if (sector) extras.push(`Sector Focus: ${sector}`);
-        if (panelExpertise) extras.push(`Panel Expertise: ${panelExpertise}`);
-
-        const bioCombined = [keyContributions, extras.join(' | ')].filter(Boolean).join('\n\n');
-
+        // Build updates object with dedicated columns
         const updates = {
             full_name: fullName,
             company: document.getElementById('company').value,
             job_title: document.getElementById('job_title').value,
             linkedin_url: document.getElementById('linkedin_url').value,
-            bio: bioCombined,
-            mobile_number: mobile,      // ✅ Save as separate field
-            office_phone: officePhone   // ✅ Save as separate field
+            mobile_number: mobile || null,
+            office_phone: officePhone || null,
+            website: website || null,
+            competence_esg: competence || null,
+            sectors_focus: sector || null,
+            expertise_panels: panelExpertise || null,
+            bio: keyContributions || null   // store only key contributions in bio
         };
 
         try {
@@ -488,4 +542,3 @@ document.addEventListener('DOMContentLoaded', () => {
     const profile = new ChampionProfile();
     profile.init();
 });
-
