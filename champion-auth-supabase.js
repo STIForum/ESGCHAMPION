@@ -465,6 +465,9 @@ class ChampionAuth {
         }
 
         try {
+            // Ensure that this.service.updateChampion accepts all fields you want to save,
+            // including: competence_esg, sectors_focus, expertise_panels, website.
+            // If it uses a whitelist, add these column names to that list.
             this.currentChampion = await this.service.updateChampion(this.currentUser.id, updates);
             return {
                 success: true,
