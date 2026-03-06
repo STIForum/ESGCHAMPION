@@ -351,8 +351,10 @@
         // Check if already logged in
         document.addEventListener('DOMContentLoaded', async () => {
             await new Promise(resolve => setTimeout(resolve, 500));
-            if (window.championAuth.isAuthenticated()) {
-                window.location.href = '/champion-dashboard.html';
+            if (window.championAuth && typeof window.championAuth.isAuthenticated === 'function') {
+                if (window.championAuth.isAuthenticated()) {
+                    window.location.href = '/champion-dashboard.html';
+                }
             }
         });
     </script>
