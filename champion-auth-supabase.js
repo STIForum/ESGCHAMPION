@@ -1,690 +1,720 @@
 /**
- * Champion Database Service
+ * Champion Authentication Service
  * ESG Champions Platform
  * 
- * Database helper functions for champion-related operations
+ * Handles user authentication, registration, and session management
  */
-
-class ChampionDB {
+const MAX_ATTEMPTS = 5;
+const LOCK_MINUTES = 1;
+class ChampionAuth {
     constructor() {
         this.service = window.supabaseService;
-    }
-
-    // =====================================================
-    // PANELS & INDICATORS
-    // =====================================================
-
-    /**
-     * Get all panels with indicator counts
-     */
-    async getPanelsWithCounts() {
-        try {
-            const panels = await this.service.getPanels();
-            
-            // Get indicator counts for each panel
-            const panelsWithCounts = await Promise.all(
-                panels.map(async (panel) => {
-                    const indicators = await this.service.getIndicatorsByPanel(panel.id);
-                    return {
-                        ...panel,
-                        indicator_count: indicators.length
-                    };
-                })
-            );
-
-            return panelsWithCounts;
-        } catch (error) {
-            console.error('Error getting panels with counts:', error);
-            throw error;
-        }
+        this.currentUser = null;
+        this.currentChampion = null;
+        this.authListeners = [];
     }
 
     /**
-     * Get panel with its indicators
+     * Initialize authentication
      */
-    async getPanelWithIndicators(panelId) {
+    async init() {
         try {
-            const [panel, indicators] = await Promise.all([
-                this.service.getPanel(panelId),
-                this.service.getIndicatorsByPanel(panelId)
-            ]);
+            // Check for existing session
+            const session = await this.service.getSession();
+            if (session) {
+                this.currentUser = session.user;
+                await this.loadChampionProfile();
+            }
 
-            return {
-                ...panel,
-                indicators
-            };
-        } catch (error) {
-            console.error('Error getting panel with indicators:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get ALL indicators (system-wide, not panel-specific)
-     */
-    async getAllIndicators() {
-        try {
-            return await this.service.getAllIndicators();
-        } catch (error) {
-            console.error('Error getting all indicators:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get indicators by their IDs
-     */
-    async getIndicatorsByIds(ids) {
-        try {
-            return await this.service.getIndicatorsByIds(ids);
-        } catch (error) {
-            console.error('Error getting indicators by IDs:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get indicator with reviews and stats
-     */
-    async getIndicatorWithReviews(indicatorId) {
-        try {
-            const [indicator, reviews] = await Promise.all([
-                this.service.getIndicator(indicatorId),
-                this.service.getReviewsByIndicator(indicatorId)
-            ]);
-
-            // Get votes for each review
-            const reviewsWithVotes = await Promise.all(
-                reviews.map(async (review) => {
-                    const votes = await this.service.getVotes(review.id);
-                    const upvotes = votes.filter(v => v.vote_type === 'upvote').length;
-                    const downvotes = votes.filter(v => v.vote_type === 'downvote').length;
-                    return {
-                        ...review,
-                        upvotes,
-                        downvotes,
-                        score: upvotes - downvotes
-                    };
-                })
-            );
-
-            return {
-                ...indicator,
-                reviews: reviewsWithVotes,
-                review_count: reviews.length
-            };
-        } catch (error) {
-            console.error('Error getting indicator with reviews:', error);
-            throw error;
-        }
-    }
-
-    // =====================================================
-    // REVIEWS
-    // =====================================================
-
-    /**
-     * Submit a new review
-     */
-    async submitReview(indicatorId, content, rating) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated to submit a review');
-        }
-
-        const champion = auth.getChampion();
-        const indicator = await this.service.getIndicator(indicatorId);
-
-        try {
-            const review = await this.service.createReview({
-                champion_id: champion.id,
-                indicator_id: indicatorId,
-                panel_id: indicator.panel_id,
-                content: content,
-                rating: rating,
-                status: 'pending'
+            // Listen for auth changes
+            this.service.onAuthStateChange(async (event, session) => {
+                console.log('Auth state changed:', event);
+                
+                if (event === 'SIGNED_IN' && session) {
+                    this.currentUser = session.user;
+                    await this.loadChampionProfile();
+                    this.notifyListeners('signed_in', session);
+                } else if (event === 'SIGNED_OUT') {
+                    this.currentUser = null;
+                    this.currentChampion = null;
+                    this.notifyListeners('signed_out', null);
+                } else if (event === 'TOKEN_REFRESHED') {
+                    this.notifyListeners('token_refreshed', session);
+                } else if (event === 'PASSWORD_RECOVERY') {
+                    this.notifyListeners('password_recovery', session);
+                }
             });
 
-            // Update progress tracking
-            await this.service.updateProgress(champion.id, indicator.panel_id, indicatorId);
-
-            return review;
+            return this.currentUser;
         } catch (error) {
-            console.error('Error submitting review:', error);
-            throw error;
+            console.error('Auth init error:', error);
+            return null;
         }
     }
 
     /**
-     * Get champion's reviews with stats
+     * Load champion profile from database
      */
-    async getMyReviews() {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated');
-        }
+    async loadChampionProfile() {
+        if (!this.currentUser) return null;
 
         try {
-            const reviews = await this.service.getReviewsByChampion(auth.getUser().id);
+            this.currentChampion = await this.service.getChampion(this.currentUser.id);
             
-            // Get vote counts for each review
-            const reviewsWithVotes = await Promise.all(
-                reviews.map(async (review) => {
-                    const votes = await this.service.getVotes(review.id);
-                    return {
-                        ...review,
-                        upvotes: votes.filter(v => v.vote_type === 'upvote').length,
-                        downvotes: votes.filter(v => v.vote_type === 'downvote').length
-                    };
-                })
-            );
-
-            return reviewsWithVotes;
+            // Check if profile needs to be populated from registration metadata
+            if (this.currentChampion && this.shouldPopulateFromMetadata(this.currentChampion)) {
+                console.log('Profile incomplete, populating from metadata...');
+                await this.populateProfileFromMetadata();
+            }
+            
         } catch (error) {
-            console.error('Error getting my reviews:', error);
-            throw error;
+            // Champion might not exist yet, create basic profile
+            if (error.code === 'PGRST116') {
+                await this.createInitialProfile();
+            } else {
+                console.error('Error loading champion profile:', error);
+            }
+        }
+
+        return this.currentChampion;
+    }
+
+    /**
+     * Check if profile should be populated from metadata
+     */
+    shouldPopulateFromMetadata(champion) {
+        const metadata = this.currentUser.user_metadata || {};
+        
+        // If user has registration_complete flag but profile is missing key fields
+        if (metadata.registration_complete) {
+            const hasBasicInfo = champion.company && champion.job_title && champion.mobile_number;
+            if (!hasBasicInfo) {
+                console.log('Profile missing registration data, should populate from metadata');
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Populate profile from user metadata (after email confirmation)
+     */
+    async populateProfileFromMetadata() {
+        const metadata = this.currentUser.user_metadata || {};
+        console.log('Populating profile from metadata:', metadata);
+        
+        const updates = {
+            full_name: metadata.full_name || '',
+            company: metadata.company || '',
+            job_title: metadata.job_title || '',
+            mobile_number: metadata.mobile_number || '',
+            office_phone: metadata.office_phone || '',
+            linkedin_url: metadata.linkedin_url || '',
+            bio: this.buildRegistrationBio(metadata),
+            // Mark that profile has been populated
+            profile_populated_from_metadata: true,
+            profile_populated_at: new Date().toISOString()
+        };
+        
+        try {
+            console.log('Updating profile with metadata:', updates);
+            this.currentChampion = await this.service.updateChampion(this.currentUser.id, updates);
+            console.log('Profile populated from metadata successfully');
+        } catch (error) {
+            console.error('Error populating profile from metadata:', error);
         }
     }
 
     /**
-     * Get review with comments
+     * Create initial champion profile after registration
      */
-    async getReviewWithComments(reviewId) {
-        try {
-            const comments = await this.service.getComments(reviewId);
-            const votes = await this.service.getVotes(reviewId);
+    async createInitialProfile() {
+        if (!this.currentUser) return null;
 
-            return {
-                comments,
-                votes,
-                upvotes: votes.filter(v => v.vote_type === 'upvote').length,
-                downvotes: votes.filter(v => v.vote_type === 'downvote').length
+        const metadata = this.currentUser.user_metadata || {};
+        
+        const profileData = {
+            id: this.currentUser.id,
+            email: this.currentUser.email,
+            full_name: metadata.full_name || metadata.name || '',
+            company: metadata.company || '',
+            job_title: metadata.job_title || '',
+            mobile_number: metadata.mobile_number || '',           // ✅ Add missing field
+            office_phone: metadata.office_phone || '',             // ✅ Add missing field
+            linkedin_url: metadata.linkedin_url || '',             // ✅ Add missing field
+            avatar_url: metadata.avatar_url || this.currentUser.user_metadata?.picture || '',
+            is_verified: this.currentUser.email_confirmed_at ? true : false,
+            cla_accepted: metadata.cla_accepted || false,
+            nda_accepted: metadata.nda_accepted || false,
+            cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
+            nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null,
+            bio: this.buildRegistrationBio(metadata)               // ✅ Add structured bio
+        };
+
+        try {
+            this.currentChampion = await this.service.upsertChampion(profileData);
+            return this.currentChampion;
+        } catch (error) {
+            console.error('Error creating champion profile:', error);
+            return null;
+        }
+    }
+
+
+    /**
+     * Register a new champion
+     */
+    async register(email, password, metadata = {}) {
+        try {
+            // Store ALL registration data in user metadata so it survives email confirmation
+            const enrichedMetadata = {
+                ...metadata,
+                // Ensure all form fields are in metadata
+                registration_complete: true,
+                registration_timestamp: new Date().toISOString()
             };
-        } catch (error) {
-            console.error('Error getting review with comments:', error);
-            throw error;
-        }
-    }
 
-    // =====================================================
-    // VOTING
-    // =====================================================
+            console.log('Registering with metadata:', enrichedMetadata);
 
-    /**
-     * Upvote a review
-     */
-    async upvote(reviewId) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated to vote');
-        }
-
-        return await this.service.vote(reviewId, auth.getUser().id, 'upvote');
-    }
-
-    /**
-     * Downvote a review
-     */
-    async downvote(reviewId) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated to vote');
-        }
-
-        return await this.service.vote(reviewId, auth.getUser().id, 'downvote');
-    }
-
-    /**
-     * Remove vote
-     */
-    async removeVote(reviewId) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated');
-        }
-
-        return await this.service.removeVote(reviewId, auth.getUser().id);
-    }
-
-    // =====================================================
-    // COMMENTS
-    // =====================================================
-
-    /**
-     * Add a comment to a review
-     */
-    async addComment(reviewId, content, parentId = null) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated to comment');
-        }
-
-        return await this.service.createComment({
-            review_id: reviewId,
-            champion_id: auth.getUser().id,
-            content: content,
-            parent_id: parentId
-        });
-    }
-
-    // =====================================================
-    // DASHBOARD STATS
-    // =====================================================
-
-    /**
-     * Get champion dashboard stats
-     */
-    async getDashboardStats() {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated');
-        }
-
-        const championId = auth.getUser().id;
-
-        try {
-            const [champion, reviews, acceptedReviews, resumePoint, panelSubmissions] = await Promise.all([
-                this.service.getChampion(championId),
-                this.service.getReviewsByChampion(championId),
-                this.service.getAcceptedReviews({ championId }),
-                this.service.getResumePoint(championId),
-                this.service.getUserPanelReviewSubmissions(championId)
-            ]);
-
-            // Get indicator reviews from panel submissions
-            let panelIndicatorReviews = [];
-            if (panelSubmissions && panelSubmissions.length > 0) {
-                for (const submission of panelSubmissions) {
-                    try {
-                        const fullSubmission = await this.service.getSubmissionWithIndicatorReviews(submission.id);
-                        if (fullSubmission && fullSubmission.indicatorReviews) {
-                            // Map panel reviews to match the format expected by the dashboard
-                            const mappedReviews = fullSubmission.indicatorReviews.map(review => ({
-                                id: review.id,
-                                indicator_id: review.indicator_id || review.indicators?.id,
-                                panel_id: submission.panel_id || fullSubmission.panel_id,
-                                status: submission.status, // Use submission status
-                                created_at: review.created_at || submission.created_at,
-                                indicators: review.indicators,
-                                panels: fullSubmission.panels,
-                                rating: review.clarity_rating,
-                                content: review.analysis
-                            }));
-                            panelIndicatorReviews.push(...mappedReviews);
-                        }
-                    } catch (err) {
-                        console.warn('Error fetching submission details:', err);
-                    }
+            const data = await this.service.signUp(email, password, enrichedMetadata);
+            
+            if (data.user) {
+                // Try to update champion profile with additional metadata
+                // This may fail if email confirmation is required (RLS blocks it)
+                try {
+                    const profileData = {
+                        id: data.user.id,
+                        email: email,
+                        full_name: metadata.full_name || '',
+                        company: metadata.company || '',
+                        job_title: metadata.job_title || '',
+                        mobile_number: metadata.mobile_number || '',
+                        office_phone: metadata.office_phone || '',
+                        linkedin_url: metadata.linkedin_url || '',
+                        cla_accepted: metadata.cla_accepted || false,
+                        nda_accepted: metadata.nda_accepted || false,
+                        cla_accepted_at: metadata.cla_accepted ? new Date().toISOString() : null,
+                        nda_accepted_at: metadata.nda_accepted ? new Date().toISOString() : null,
+                        bio: this.buildRegistrationBio(metadata)
+                    };
+                    
+                    console.log('Attempting to save profile data:', profileData);
+                    await this.service.upsertChampion(profileData);
+                    console.log('Profile data saved successfully during registration');
+                } catch (profileError) {
+                    // This is expected if email confirmation is required
+                    console.log('Profile will be updated after email confirmation:', profileError.message);
                 }
             }
 
-            // Combine old reviews and panel reviews
-            const allReviews = [...reviews, ...panelIndicatorReviews];
-            
-            // Sort by created_at descending
-            allReviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            const pendingReviews = allReviews.filter(r => r.status === 'pending');
-            const approvedReviews = allReviews.filter(r => r.status === 'approved');
-            const rejectedReviews = allReviews.filter(r => r.status === 'rejected');
-
             return {
-                champion,
-                stats: {
-                    totalReviews: allReviews.length,
-                    pendingReviews: pendingReviews.length,
-                    approvedReviews: approvedReviews.length,
-                    rejectedReviews: rejectedReviews.length,
-                    credits: champion.credits || 0,
-                    acceptedReviewsCount: acceptedReviews.length
-                },
-                recentReviews: allReviews.slice(0, 5),
-                resumePoint
+                success: true,
+                data: data,
+                message: 'Registration successful! Please check your email to confirm your account.'
             };
         } catch (error) {
-            console.error('Error getting dashboard stats:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get STIF score breakdown
-     */
-    async getSTIFScore() {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('Must be authenticated');
-        }
-
-        try {
-            const champion = await this.service.getChampion(auth.getUser().id);
-            const reviews = await this.service.getReviewsByChampion(auth.getUser().id);
-            const acceptedReviews = await this.service.getAcceptedReviews({ championId: auth.getUser().id });
-
-            // Calculate STIF score components
-            const reviewCredits = acceptedReviews.reduce((sum, r) => sum + (r.credits_awarded || 0), 0);
-            
-            // Get vote stats
-            let totalUpvotes = 0;
-            for (const review of reviews) {
-                const votes = await this.service.getVotes(review.id);
-                totalUpvotes += votes.filter(v => v.vote_type === 'upvote').length;
-            }
-
-            const voteCredits = totalUpvotes * 2;
-            
+            console.error('Registration error:', error);
             return {
-                totalScore: champion.credits || 0,
-                breakdown: {
-                    reviews: reviewCredits,
-                    votes: voteCredits,
-                    participation: champion.credits - reviewCredits - voteCredits
-                },
-                rank: await this.getChampionRank(champion.id)
+                success: false,
+                error: error.message || 'Registration failed'
             };
-        } catch (error) {
-            console.error('Error getting STIF score:', error);
-            throw error;
         }
     }
 
     /**
-     * Get champion's rank
+     * Build bio from registration metadata
      */
-    async getChampionRank(championId) {
-        try {
-            const leaderboard = await this.service.getLeaderboard(1000);
-            const rank = leaderboard.findIndex(c => c.id === championId) + 1;
-            return rank || null;
-        } catch (error) {
-            console.error('Error getting champion rank:', error);
-            return null;
+    buildRegistrationBio(metadata) {
+        const bioParts = [];
+        
+        // Add ESG contributions if provided
+        if (metadata.esg_contributions) {
+            bioParts.push(metadata.esg_contributions);
         }
+        
+        // Add other metadata as structured info
+        const extras = [];
+        if (metadata.website) extras.push(`Website: ${metadata.website}`);
+        if (metadata.competence_level) extras.push(`ESG Competence: ${metadata.competence_level}`);
+        if (metadata.primary_sector) extras.push(`Sector Focus: ${metadata.primary_sector}`);
+        if (metadata.expertise_area) extras.push(`Panel Expertise: ${metadata.expertise_area}`);
+        
+        if (extras.length > 0) {
+            bioParts.push(extras.join(' | '));
+        }
+        
+        return bioParts.filter(Boolean).join('\n\n');
     }
 
-    // =====================================================
-    // LEADERBOARD
-    // =====================================================
-
     /**
-     * Get leaderboard data
+     * Login with email and password
      */
-    async getLeaderboard(period = '30days', limit = 50) {
-        try {
-            return await this.service.getLeaderboard(limit, period);
-        } catch (error) {
-            console.error('Error getting leaderboard:', error);
-            throw error;
-        }
-    }
+    async login(email, password) {
+        const MAX_ATTEMPTS = 5;
+        const LOCK_MINUTES = 1; // or 15, etc.
 
-    // =====================================================
-    // NOTIFICATIONS
-    // =====================================================
-
-    /**
-     * Get notifications
-     */
-    async getNotifications() {
         try {
-            const auth = window.championAuth;
-            if (!auth || !auth.isAuthenticated()) {
-                console.log('getNotifications: not authenticated');
-                return [];
+            // 1) Check if account is locked before attempting auth
+            let champion = null;
+            try {
+                champion = await this.service.getChampionByEmail(email);
+            } catch (e) {
+                // If champion record doesn't exist yet, we still let Supabase handle auth error
+                champion = null;
             }
 
-            const userId = auth.getUser()?.id;
-            if (!userId) {
-                console.log('getNotifications: no user ID');
-                return [];
+            if (champion && champion.locked_until) {
+                const lockedUntil = new Date(champion.locked_until);
+                const now = new Date();
+                if (lockedUntil > now) {
+                    const minutesLeft = Math.ceil((lockedUntil - now) / 60000);
+                    return {
+                        success: false,
+                        error: `Your account is locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`
+                    };
+                }
             }
 
-            return await this.service.getNotifications(userId);
-        } catch (error) {
-            console.warn('getNotifications error:', error.message);
-            return [];
-        }
-    }
+            // 2) Try Supabase authentication
+            const data = await this.service.signIn(email, password);
+            this.currentUser = data.user;
+            await this.loadChampionProfile();
 
-    /**
-     * Get unread count
-     */
-    async getUnreadCount() {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            return 0;
-        }
-
-        return await this.service.getUnreadNotificationCount(auth.getUser().id);
-    }
-
-    /**
-     * Mark notification as read
-     */
-    async markAsRead(notificationId) {
-        return await this.service.markNotificationRead(notificationId);
-    }
-
-    /**
-     * Mark all as read
-     */
-    async markAllAsRead() {
-        return await this.service.markAllNotificationsRead();
-    }
-
-    /**
-     * Create a notification
-     */
-    async createNotification(championId, type, title, message, link = null, data = null) {
-        return await this.service.createNotification(championId, type, title, message, link, data);
-    }
-
-    // =====================================================
-    // PROGRESS
-    // =====================================================
-
-    /**
-     * Get resume point for "Continue where you left off"
-     */
-    async getResumePoint() {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            return null;
-        }
-
-        return await this.service.getResumePoint(auth.getUser().id);
-    }
-
-    /**
-     * Log activity
-     */
-    async logActivity(activityType, panelId = null, indicatorId = null, reviewId = null, metadata = null) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            return;
-        }
-
-        try {
-            await this.service.logActivity(
-                auth.getUser().id,
-                activityType,
-                panelId,
-                indicatorId,
-                reviewId,
-                metadata
-            );
-        } catch (error) {
-            console.error('Error logging activity:', error);
-        }
-    }
-
-    // =====================================================
-    // PANEL REVIEW SUBMISSIONS
-    // =====================================================
-
-    /**
-     * Create a panel review submission with all indicator reviews
-     */
-    async createPanelReviewSubmission(panelId, indicatorReviews) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            throw new Error('User must be authenticated');
-        }
-
-        if (!indicatorReviews || indicatorReviews.length === 0) {
-            throw new Error('No indicator reviews provided');
-        }
-
-        try {
-            const userId = auth.getUser().id;
-            
-            console.log('Creating panel review submission:', { panelId, userId, reviewCount: indicatorReviews.length });
-            console.log('Indicator reviews data:', indicatorReviews);
-            
-            // Create the submission
-            const submission = await this.service.createPanelReviewSubmission(panelId, userId);
-            console.log('Submission created:', submission);
-            
-            if (!submission || !submission.id) {
-                throw new Error('Failed to create submission - no ID returned');
+            // 3) On successful login, reset failed attempts & lock state
+            if (this.currentChampion) {
+                try {
+                    await this.service.updateChampion(this.currentChampion.id, {
+                        failed_login_attempts: 0,
+                        locked_until: null
+                    });
+                } catch (e) {
+                    console.error('Failed to reset login attempts:', e);
+                }
             }
-            
-            // Add indicator reviews
-            const reviews = await this.service.addIndicatorReviewsToSubmission(
-                submission.id,
-                indicatorReviews,
-                userId
-            );
-            
-            console.log('Indicator reviews inserted:', reviews);
-            
-            if (!reviews || reviews.length === 0) {
-                console.warn('Warning: No indicator reviews were inserted');
+
+            // 4) Log login activity
+            if (this.currentUser) {
+                await this.service.logActivity(this.currentUser.id, 'login');
             }
 
             return {
-                submission,
-                indicatorReviews: reviews || []
+                success: true,
+                data
             };
         } catch (error) {
-            console.error('Error creating panel review submission:', error);
-            throw error;
+            console.error('Login error:', error);
+
+            // 5) On failed login, increment failed_login_attempts and maybe lock
+            try {
+                const champion = await this.service.getChampionByEmail(email);
+                if (champion) {
+                    const currentAttempts = champion.failed_login_attempts || 0;
+                    const newAttempts = currentAttempts + 1;
+
+                    const updates = { failed_login_attempts: newAttempts };
+
+                    if (newAttempts >= MAX_ATTEMPTS) {
+                        const lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000).toISOString();
+                        updates.locked_until = lockUntil;
+                    }
+
+                    await this.service.updateChampion(champion.id, updates);
+                }
+            } catch (updateError) {
+                // Don't break login flow if we can't update counters
+                console.error('Error updating failed login attempts:', updateError);
+            }
+
+            // 6) Build appropriate error message
+            let message = this.getAuthErrorMessage(error);
+
+            // If account is now locked, override with lock message (dynamic time)
+            try {
+                const champion = await this.service.getChampionByEmail(email);
+                if (champion && champion.locked_until) {
+                    const lockedUntil = new Date(champion.locked_until);
+                    const now = new Date();
+                    if (lockedUntil > now) {
+                        const minutesLeft = Math.ceil((lockedUntil - now) / 60000);
+                        message = `Your account is locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`;
+                    }
+                }
+            } catch (_) {
+                // ignore
+            }
+
+            return {
+                success: false,
+                error: message
+            };
         }
     }
 
     /**
-     * Get all panel review submissions for admin
+     * Login with LinkedIn OAuth
      */
-    async getAdminPanelReviewSubmissions(status = null) {
+    async loginWithLinkedIn() {
         try {
-            return await this.service.getAdminPanelReviewSubmissions(status);
+            const data = await this.service.signInWithOAuth('linkedin_oidc');
+            return {
+                success: true,
+                data: data
+            };
         } catch (error) {
-            console.error('Error getting admin panel submissions:', error);
-            throw error;
+            console.error('LinkedIn login error:', error);
+            return {
+                success: false,
+                error: error.message || 'LinkedIn login failed'
+            };
         }
     }
 
     /**
-     * Get submission with indicator reviews
+     * Logout
      */
-    async getSubmissionWithIndicatorReviews(submissionId) {
+    async logout() {
         try {
-            return await this.service.getSubmissionWithIndicatorReviews(submissionId);
+            await this.service.signOut();
+            this.currentUser = null;
+            this.currentChampion = null;
+            return { success: true };
         } catch (error) {
-            console.error('Error getting submission with reviews:', error);
-            throw error;
+            console.error('Logout error:', error);
+            return {
+                success: false,
+                error: error.message || 'Logout failed'
+            };
         }
     }
 
     /**
-     * Update submission status
+     * Send password reset email
      */
-    async updateSubmissionStatus(submissionId, status) {
+    async sendPasswordReset(email) {
         try {
-            return await this.service.updateSubmissionStatus(submissionId, status);
+            await this.service.resetPassword(email);
+            return {
+                success: true,
+                message: 'Password reset email sent. Please check your inbox.'
+            };
         } catch (error) {
-            console.error('Error updating submission status:', error);
-            throw error;
+            console.error('Password reset error:', error);
+            return {
+                success: false,
+                error: error.message || 'Failed to send reset email'
+            };
         }
     }
 
     /**
-     * Approve submission with admin comment - updates both submission and indicator reviews
+     * Update password
      */
-    async approveSubmissionWithComment(submissionId, adminComment, adminId) {
+    async updatePassword(newPassword) {
         try {
-            return await this.service.approveSubmissionWithComment(submissionId, adminComment, adminId);
+            await this.service.updatePassword(newPassword);
+            return {
+                success: true,
+                message: 'Password updated successfully'
+            };
         } catch (error) {
-            console.error('Error approving submission with comment:', error);
-            throw error;
+            console.error('Update password error:', error);
+            return {
+                success: false,
+                error: error.message || 'Failed to update password'
+            };
         }
     }
 
     /**
-     * Reject submission with admin comment
+     * Check if user is authenticated
      */
-    async rejectSubmissionWithComment(submissionId, adminComment, adminId) {
+    isAuthenticated() {
+        return this.currentUser !== null;
+    }
+
+    /**
+     * Check if user is admin
+     */
+    async isAdmin() {
+        if (!this.currentChampion) {
+            await this.loadChampionProfile();
+        }
+        return this.currentChampion?.is_admin === true;
+    }
+
+    /**
+     * Get current user
+     */
+    getUser() {
+        return this.currentUser;
+    }
+
+    /**
+     * Get current champion profile
+     */
+    getChampion() {
+        return this.currentChampion;
+    }
+
+    /**
+     * Update champion profile
+     */
+    async updateProfile(updates) {
+        if (!this.currentUser) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
         try {
-            return await this.service.rejectSubmissionWithComment(submissionId, adminComment, adminId);
+            this.currentChampion = await this.service.updateChampion(this.currentUser.id, updates);
+            return {
+                success: true,
+                data: this.currentChampion
+            };
         } catch (error) {
-            console.error('Error rejecting submission with comment:', error);
-            throw error;
+            console.error('Update profile error:', error);
+            return {
+                success: false,
+                error: error.message || 'Failed to update profile'
+            };
         }
     }
 
     /**
-     * Get user's panel review submissions
+     * Add auth state listener
      */
-    async getUserPanelReviewSubmissions() {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            return [];
+    addAuthListener(callback) {
+        this.authListeners.push(callback);
+    }
+
+    /**
+     * Remove auth state listener
+     */
+    removeAuthListener(callback) {
+        this.authListeners = this.authListeners.filter(cb => cb !== callback);
+    }
+
+    /**
+     * Notify all listeners of auth state change
+     */
+    notifyListeners(event, session) {
+        this.authListeners.forEach(callback => {
+            try {
+                callback(event, session);
+            } catch (error) {
+                console.error('Auth listener error:', error);
+            }
+        });
+    }
+
+    /**
+     * Get user-friendly auth error message
+     */
+    getAuthErrorMessage(error) {
+        const errorMessages = {
+            'Invalid login credentials': 'Invalid email or password. Please try again.',
+            'Email not confirmed': 'Please confirm your email address before logging in.',
+            'User already registered': 'An account with this email already exists.',
+            'Password should be at least 6 characters': 'Password must be at least 6 characters long.',
+            'Invalid email': 'Please enter a valid email address.',
+            'Email rate limit exceeded': 'Too many attempts. Please try again later.',
+            'User not found': 'No account found with this email address.'
+        };
+
+        return errorMessages[error.message] || error.message || 'An unexpected error occurred';
+    }
+
+    /**
+     * Require authentication - redirect to login if not authenticated
+     */
+    requireAuth(redirectUrl = '/champion-login.html') {
+        if (!this.isAuthenticated()) {
+            const currentPath = window.location.pathname + window.location.search;
+            window.location.href = `${redirectUrl}?redirect=${encodeURIComponent(currentPath)}`;
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Require admin - redirect if not admin
+     */
+    async requireAdmin(redirectUrl = '/champion-dashboard.html') {
+        if (!this.isAuthenticated()) {
+            window.location.href = '/champion-login.html';
+            return false;
         }
 
-        try {
-            return await this.service.getUserPanelReviewSubmissions(auth.getUser().id);
-        } catch (error) {
-            console.error('Error getting user submissions:', error);
-            return [];
+        const isAdmin = await this.isAdmin();
+        if (!isAdmin) {
+            window.location.href = redirectUrl;
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if profile is complete
+     * Returns an object with isComplete flag and list of missing fields
+     */
+    getProfileCompletionStatus() {
+        if (!this.currentChampion) {
+            return { isComplete: false, missingFields: ['profile'], message: 'Profile not loaded' };
+        }
+
+        const requiredFields = [
+            { key: 'full_name', label: 'Full Name' },
+            { key: 'company', label: 'Company/Organization' },
+            { key: 'job_title', label: 'Job Title' }
+        ];
+
+        const missingFields = [];
+
+        for (const field of requiredFields) {
+            const value = this.currentChampion[field.key];
+            if (!value || value.trim() === '') {
+                missingFields.push(field.label);
+            }
+        }
+
+        const isComplete = missingFields.length === 0;
+
+        return {
+            isComplete,
+            missingFields,
+            message: isComplete 
+                ? 'Profile is complete' 
+                : `Please complete your profile: ${missingFields.join(', ')}`
+        };
+    }
+
+    /**
+     * Check profile completion and redirect to profile page if incomplete
+     * @param {boolean} showModal - Whether to show a modal message
+     * @returns {boolean} - Returns true if profile is complete, false if redirecting
+     */
+    requireCompleteProfile(showModal = true) {
+        console.log('requireCompleteProfile called, currentChampion:', this.currentChampion);
+        
+        const status = this.getProfileCompletionStatus();
+        console.log('Profile completion status:', status);
+
+        if (!status.isComplete) {
+            // Store the intended destination for after profile completion
+            const currentPath = window.location.pathname + window.location.search;
+            sessionStorage.setItem('profileRedirectAfter', currentPath);
+
+            if (showModal) {
+                // Show styled modal instead of browser alert
+                console.log('Showing profile completion modal for fields:', status.missingFields);
+                this.showProfileCompletionModal(status.missingFields);
+            } else {
+                // Redirect directly
+                window.location.href = '/champion-profile.html?complete=true';
+            }
+            return false;
+        }
+
+        console.log('Profile is complete, continuing...');
+        return true;
+    }
+
+    /**
+     * Show a styled modal prompting user to complete their profile
+     */
+    showProfileCompletionModal(missingFields) {
+        console.log('showProfileCompletionModal called');
+        
+        // Wait for DOM to be ready before inserting modal
+        const insertModal = () => {
+            console.log('insertModal executing, body exists:', !!document.body);
+            
+            // Hide any loading spinners first
+            const loadingState = document.getElementById('loading-state');
+            if (loadingState) {
+                loadingState.classList.add('hidden');
+                console.log('Hidden loading state');
+            }
+
+            // Remove existing modal if any
+            const existing = document.getElementById('profile-complete-modal-backdrop');
+            if (existing) existing.remove();
+
+            const missingList = missingFields.map(field => `
+                <div style="display: flex; gap: 12px; margin-bottom: 8px; align-items: center;">
+                    <div style="width: 20px; height: 20px; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <span style="color: #f59e0b; font-weight: bold;">!</span>
+                    </div>
+                    <span>${field}</span>
+                </div>
+            `).join('');
+
+            const modalHTML = `
+                <div id="profile-complete-modal-backdrop" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 99999;">
+                    <div style="max-width: 480px; width: 90%; background: white; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;">
+                        <div style="padding: 20px 24px 0; display: flex; justify-content: flex-end;">
+                            <button onclick="window.location.href='/champion-profile.html?complete=true'" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #9ca3af; line-height: 1;">&times;</button>
+                        </div>
+                        <div style="padding: 0 32px 32px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            
+                            <h2 style="margin: 0 0 12px; color: #111827; font-size: 24px; font-weight: 700;">Welcome to ESG Champions!</h2>
+                            <p style="color: #6b7280; margin: 0 0 24px; font-size: 16px; line-height: 1.5;">
+                                Please complete your profile to get started. This helps us personalize your experience.
+                            </p>
+                            
+                            <div style="text-align: left; background: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                                <p style="font-weight: 600; margin: 0 0 16px; color: #374151; font-size: 14px;">Missing information:</p>
+                                ${missingList}
+                            </div>
+                            
+                            <button onclick="window.location.href='/champion-profile.html?complete=true'" style="width: 100%; padding: 16px 24px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                                Complete My Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            console.log('Modal inserted into DOM');
+        };
+
+        // Ensure DOM is ready
+        if (document.readyState === 'loading') {
+            console.log('DOM still loading, waiting...');
+            document.addEventListener('DOMContentLoaded', insertModal);
+        } else {
+            console.log('DOM ready, inserting modal immediately');
+            insertModal();
         }
     }
 
     /**
-     * Get user's accepted indicator IDs for a specific panel
+     * Check if user just completed their profile and should be redirected back
+     * Call this on the profile page after successful save
      */
-    async getUserAcceptedIndicatorIds(panelId) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            return [];
+    handleProfileCompletionRedirect() {
+        const redirectTo = sessionStorage.getItem('profileRedirectAfter');
+        if (redirectTo) {
+            sessionStorage.removeItem('profileRedirectAfter');
+            window.location.href = redirectTo;
+            return true;
         }
-
-        try {
-            return await this.service.getUserAcceptedIndicatorIds(auth.getUser().id, panelId);
-        } catch (error) {
-            console.error('Error getting user accepted indicators:', error);
-            return [];
-        }
-    }
-
-    /**
-     * Get user's rejected indicator IDs for a specific panel
-     */
-    async getUserRejectedIndicatorIds(panelId) {
-        const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            return [];
-        }
-
-        try {
-            return await this.service.getUserRejectedIndicatorIds(auth.getUser().id, panelId);
-        } catch (error) {
-            console.error('Error getting user rejected indicators:', error);
-            return [];
-        }
+        return false;
     }
 }
 
 // Create and export singleton instance
-window.ChampionDB = ChampionDB;
-window.championDB = new ChampionDB();
+window.ChampionAuth = ChampionAuth;
+window.championAuth = new ChampionAuth();
 
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.championAuth.init();
+});
