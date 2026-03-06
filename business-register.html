@@ -403,64 +403,57 @@
     </main>
 
     <script src="supabase-service.js"></script>
+    <script src="business-auth.js"></script>
     <script src="mobile-menu.js"></script>
     <script>
-        document.getElementById('business-register-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="loading-spinner-sm"></span> Creating...';
-            
-            try {
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirm_password').value;
-                
-                if (password !== confirmPassword) throw new Error('Passwords do not match');
-                if (password.length < 8) throw new Error('Password must be at least 8 characters');
-                
-                const email = document.getElementById('email').value;
-                const supabase = window.getSupabase();
-                
-                const { data: authData, error: authError } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: { data: { user_type: 'business' } }
-                });
-                if (authError) throw authError;
-                
-                const { error: profileError } = await supabase.from('business_users').insert({
-                    auth_user_id: authData.user.id,
-                    first_name: document.getElementById('first_name').value,
-                    last_name: document.getElementById('last_name').value,
-                    company_name: document.getElementById('company_name').value,
-                    company_registration_number: document.getElementById('registration_number').value || null,
-                    role_designation: document.getElementById('role').value || null,
-                    industry: document.getElementById('industry').value || null,
-                    reporting_year: parseInt(document.getElementById('reporting_year').value) || new Date().getFullYear(),
-                    business_email: email,
-                    mobile_number: document.getElementById('mobile').value || null,
-                    office_phone: document.getElementById('office_phone').value || null,
-                    linkedin_url: document.getElementById('linkedin').value || null,
-                    website: document.getElementById('website').value || null,
-                    company_size: document.getElementById('company_size').value || null,
-                    country: document.getElementById('country').value || null,
-                    business_address: document.getElementById('address').value || null,
-                    primary_esg_focus: document.getElementById('esg_focus').value || null,
-                    ongoing_esg_initiatives: document.getElementById('esg_initiatives').value || null,
-                    subscription_status: 'active',
-                    account_status: 'complete'
-                });
-                if (profileError) throw profileError;
-                
+    document.getElementById('business-register-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading-spinner-sm"></span> Creating...';
+
+        try {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            if (password !== confirmPassword) throw new Error('Passwords do not match');
+            if (password.length < 8) throw new Error('Password must be at least 8 characters');
+
+            const businessData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                company_name: document.getElementById('company_name').value,
+                company_registration_number: document.getElementById('registration_number').value,
+                role_designation: document.getElementById('role').value,
+                industry: document.getElementById('industry').value,
+                reporting_year: parseInt(document.getElementById('reporting_year').value),
+                mobile_number: document.getElementById('mobile').value,
+                office_phone: document.getElementById('office_phone').value,
+                linkedin_url: document.getElementById('linkedin').value,
+                website: document.getElementById('website').value,
+                company_size: document.getElementById('company_size').value,
+                country: document.getElementById('country').value,
+                business_address: document.getElementById('address').value,
+                primary_esg_focus: document.getElementById('esg_focus').value,
+                ongoing_esg_initiatives: document.getElementById('esg_initiatives').value
+            };
+
+            const email = document.getElementById('email').value;
+            const result = await window.businessAuth.register(email, password, businessData);
+
+            if (result.success) {
                 document.getElementById('register-form-container').classList.add('hidden');
                 document.getElementById('success-message').classList.remove('hidden');
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert(error.message || 'Registration failed. Please try again.');
+            } else {
+                alert(result.error);
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Create Account`;
+                submitBtn.innerHTML = 'Create Account';
             }
-        });
+        } catch (error) {
+            alert(error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Create Account';
+        }
+    });
     </script>
 </body>
 </html>
