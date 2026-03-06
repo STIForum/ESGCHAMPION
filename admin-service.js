@@ -410,8 +410,16 @@ class AdminService {
     /**
      * Get all champions
      */
+    // Replace the current getAllChampions method (around line 216)
     async getAllChampions() {
-        return await this.supabase.getChampions({ orderBy: 'created_at' });
+        const client = window.getSupabase();
+        const { data, error } = await client
+            .from('champions')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
     }
 
     /**
@@ -469,42 +477,6 @@ class AdminService {
         return await this.supabase.getAdminActions(limit);
     }
 
-    // =====================================================
-    // EXPORT
-    // =====================================================
-
-    /**
-     * Export approved indicator reviews to CSV
-     */
-    async exportData() {
-        try {
-            // Get approved panel review submissions with related data
-            const approvedReviews = await this.getApprovedIndicatorReviews();
-            
-            if (!approvedReviews || approvedReviews.length === 0) {
-                throw new Error('No approved reviews found to export');
-            }
-
-            // Generate CSV content
-            const csvContent = this.generateApprovedReviewsCSV(approvedReviews);
-
-            // Download file
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `approved-indicator-reviews-${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            return true;
-        } catch (error) {
-            console.error('Export error:', error);
-            throw error;
-        }
-    }
 
     /**
      * Get all approved indicator reviews with full details
@@ -755,12 +727,13 @@ class AdminService {
         try {
             console.log('📤 Starting full data export...');
 
-            const [frameworks, panels, indicators, champions, reviews] = await Promise.all([
+            const [frameworks, panels, indicators, champions, reviews, businessUsers] = await Promise.all([
                 this.getAllFrameworks(),
                 this.getAllPanels(),
                 this.getAllIndicators(),
                 this.getAllChampions(),
-                this.getAllReviews()
+                this.getAllReviews(),
+                this.getAllBusinessUsers()
             ]);
 
             console.log(`✅ Frameworks fetched: ${frameworks.length}`);
@@ -768,13 +741,15 @@ class AdminService {
             console.log(`✅ Indicators fetched: ${indicators.length}`);
             console.log(`✅ Champions fetched: ${champions.length}`);
             console.log(`✅ Reviews fetched: ${reviews.length}`);
+            console.log(`✅ Business Users fetched: ${businessUsers.length}`);
 
             const csvContent = this.generateFullExportCSV({
                 frameworks,
                 panels,
                 indicators,
                 champions,
-                reviews
+                reviews,
+                businessUsers
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -797,7 +772,7 @@ class AdminService {
 
     /**
      * Generate a multi‑section CSV from all fetched data.
-     * @param {Object} data - Contains frameworks, panels, indicators, champions, reviews.
+     * @param {Object} data - Contains frameworks, panels, indicators, champions, reviews, businessUsers.
      */
     generateFullExportCSV(data) {
         let csv = '';
@@ -810,7 +785,7 @@ class AdminService {
         });
         csv += '\n';
 
-        // --- REVIEWS section (UPDATED: uses champion.full_name from alias) ---
+        // --- REVIEWS section ---
         csv += '=== REVIEWS ===\n';
         csv += 'ID,Champion,Email,Indicator,Panel,Status,Rating,Created At\n';
         (data.reviews || []).forEach(r => {
@@ -839,6 +814,15 @@ class AdminService {
         csv += 'ID,Name,Email,Company,Credits,Admin,Created At\n';
         (data.champions || []).forEach(c => {
             csv += `"${c.id}","${c.full_name || ''}","${c.email}","${c.company || ''}","${c.credits || 0}","${c.is_admin}","${c.created_at || ''}"\n`;
+        });
+        csv += '\n';
+
+        // --- BUSINESS USERS section ---
+        csv += '=== BUSINESS USERS ===\n';
+        csv += 'ID,Name,Email,Company,Industry,Subscription Status,Account Status,Created At\n';
+        (data.businessUsers || []).forEach(u => {
+            const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim() || '';
+            csv += `"${u.id}","${fullName}","${u.business_email || ''}","${u.company_name || ''}","${u.industry || ''}","${u.subscription_status || ''}","${u.account_status || ''}","${u.created_at || ''}"\n`;
         });
 
         return csv;
