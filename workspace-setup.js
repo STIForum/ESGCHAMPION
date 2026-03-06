@@ -1,62 +1,29 @@
-(async function () {
-    const messageEl = document.getElementById('setup-message');
-    const spinnerEl = document.getElementById('setup-spinner');
-    const goBtn = document.getElementById('go-workspace-btn');
-    const errorEl = document.getElementById('setup-error');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setting Up Workspace | STIF</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body>
+    <main class="flex-center" style="min-height:100vh;background:var(--gray-50);padding:24px;">
+        <div class="widget" style="max-width:560px;width:100%;">
+            <div class="widget-body" style="text-align:center;">
+                <h1 style="margin-bottom:12px;">Setting up your workspace</h1>
+                <p id="setup-message" class="text-secondary" style="margin-bottom:18px;">We are setting up your reporting workspace.</p>
+                <div id="setup-spinner" class="loading-spinner" style="margin:0 auto 18px;"></div>
+                <a id="go-workspace-btn" class="btn btn-primary hidden" href="#">Go to reporting workspace</a>
+                <div id="setup-error" class="alert alert-error hidden" style="margin-top:16px;">Workspace setup failed. Please contact support.</div>
+            </div>
+        </div>
+    </main>
 
-    const POLL_MS = 5000;
-    let pollTimer = null;
-
-    function setState(state, sharepointUrl = '') {
-        if (state === 'completed') {
-            messageEl.textContent = 'Your reporting workspace is ready.';
-            spinnerEl.classList.add('hidden');
-            errorEl.classList.add('hidden');
-            goBtn.classList.remove('hidden');
-            goBtn.href = sharepointUrl || '#';
-            if (pollTimer) clearInterval(pollTimer);
-            return;
-        }
-
-        if (state === 'failed') {
-            messageEl.textContent = 'Workspace setup encountered a problem.';
-            spinnerEl.classList.add('hidden');
-            goBtn.classList.add('hidden');
-            errorEl.classList.remove('hidden');
-            if (pollTimer) clearInterval(pollTimer);
-            return;
-        }
-
-        // in_progress default
-        messageEl.textContent = 'We are setting up your reporting workspace.';
-        spinnerEl.classList.remove('hidden');
-        goBtn.classList.add('hidden');
-        errorEl.classList.add('hidden');
-    }
-
-    async function checkProvisioning() {
-        try {
-            const businessUser = await window.businessReportingFlow.requireBusinessAuth();
-            if (!businessUser) return;
-
-            const { provisioningStatus, sharepointFolderUrl } = window.businessReportingFlow.normalizeState(businessUser);
-
-            if (provisioningStatus === 'completed') {
-                setState('completed', sharepointFolderUrl);
-                return;
-            }
-
-            if (provisioningStatus === 'failed') {
-                setState('failed');
-                return;
-            }
-
-            setState('in_progress');
-        } catch (error) {
-            setState('failed');
-        }
-    }
-
-    await checkProvisioning();
-    pollTimer = setInterval(checkProvisioning, POLL_MS);
-})();
+    <script src="supabase-service.js"></script>
+    <script src="business-auth.js"></script>
+    <script src="business-reporting-flow.js"></script>
+    <script src="workspace-setup.js"></script>
+</body>
+</html>
