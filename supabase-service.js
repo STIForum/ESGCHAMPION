@@ -45,7 +45,7 @@ const CHAMPION_FIELDS = [
     'credits', 'is_admin', 'is_active', 'last_login_at', 'email_notifications',
     'marketing_emails', 'review_reminders', 'mobile_number', 'office_phone',
     // ➕ add these:
-    'failed_login_attempts', 'locked_until'
+    'failed_login_attempts', 'locked_until','competence_esg', 'sectors_focus', 'expertise_panels', 'website'
 ];
 
 const PANEL_FIELDS = [
