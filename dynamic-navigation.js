@@ -18,19 +18,30 @@ class DynamicNavigation {
      */
     async init() {
         if (this.initialized) return;
-        
-        // Wait for auth to be ready
+
+        // Try to grab auth instance
         this.auth = window.championAuth;
 
-        // Initial render
+        // If auth is not ready yet, retry shortly
+        if (!this.auth) {
+            console.warn('[DynamicNavigation] championAuth not ready, retrying init in 100ms');
+            setTimeout(() => this.init(), 100);
+            return;
+        }
+
+        // Initial render based on current auth state
         await this.updateNavigation();
 
-        // Listen for auth changes
-        this.auth.addAuthListener(async () => {
-            await this.updateNavigation();
-            this.userType = await this.detectCurrentUserType();
-            await this.enforceCurrentPageByUserType();
-        });
+        // Listen for auth changes if supported
+        if (typeof this.auth.addAuthListener === 'function') {
+            this.auth.addAuthListener(async () => {
+                await this.updateNavigation();
+                this.userType = await this.detectCurrentUserType();
+                await this.enforceCurrentPageByUserType();
+            });
+        } else {
+            console.warn('[DynamicNavigation] championAuth.addAuthListener is not a function');
+        }
 
         // Set up mobile menu
         this.setupMobileMenu();
@@ -45,7 +56,6 @@ class DynamicNavigation {
 
         this.initialized = true;
     }
-
             /**
              * Update navigation based on auth state
              */
