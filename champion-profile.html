@@ -104,21 +104,55 @@
                                 <div class="section" style="margin-bottom: var(--space-6);">
                                     <h4 style="margin-bottom: var(--space-3);">1.1 Basic Information</h4>
                                     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-5);">
-                                        <div class="form-group">
-                                            <label class="form-label" for="first_name">First Name *</label>
-                                            <input type="text" id="first_name" class="form-input" required>
+                                    <!-- First Name -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="first_name">First Name *</label>
+                                        <input type="text" id="first_name" class="form-input" required maxlength="265">
+                                        <div class="field-error" id="error-first_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                            Maximum 265 characters allowed.
                                         </div>
-                                        <div class="form-group">
-                                            <label class="form-label" for="last_name">Last Name *</label>
-                                            <input type="text" id="last_name" class="form-input" required>
+                                        <div class="field-error" id="error-first_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                            Digits are not allowed. Only letters, spaces, hyphens, and apostrophes.
                                         </div>
+                                        <div class="field-error" id="error-first_name_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                            Cannot start or end with a space.
+                                        </div>
+                                    </div>
+                                    <!-- Last Name -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="last_name">Last Name *</label>
+                                        <input type="text" id="last_name" class="form-input" required maxlength="265">
+                                        <div class="field-error" id="error-last_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                            Maximum 265 characters allowed.
+                                        </div>
+                                        <div class="field-error" id="error-last_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                            Digits are not allowed. Only letters, spaces, hyphens, and apostrophes.
+                                        </div>
+                                        <div class="field-error" id="error-last_name_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                            Cannot start or end with a space.
+                                        </div>
+                                    </div>
                                         <div class="form-group">
                                             <label class="form-label" for="company">Company / Organisation Name *</label>
-                                            <input type="text" id="company" class="form-input" required>
+                                            <input type="text" id="company" class="form-input" required maxlength="265">
+                                            <div class="field-error" id="error-company" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                                Maximum 265 characters allowed.
+                                            </div>
+                                            <div class="field-error" id="error-company_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                                Cannot start or end with a space.
+                                            </div>
                                         </div>
+                                        <!-- Role / Designation -->
                                         <div class="form-group">
                                             <label class="form-label" for="job_title">Role / Designation *</label>
-                                            <input type="text" id="job_title" class="form-input" required>
+                                            <input type="text" id="job_title" class="form-input" required maxlength="265">
+                                            <div class="field-error" id="error-job_title" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                                Maximum 265 characters allowed.
+                                            </div>
+                                            <div class="field-error" id="error-job_title_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                                Digits are not allowed. Only letters, spaces, hyphens, and apostrophes.
+                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
