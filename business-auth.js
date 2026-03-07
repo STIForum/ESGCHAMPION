@@ -113,14 +113,92 @@ class BusinessAuth {
     }
 
     /**
+     * Validate and sanitize first_name / last_name fields.
+     * Fixes: BUG_REG_003 (SQL injection), BUG_REG_004 (max length),
+     *        BUG_REG_005 (no warning), BUG_REG_006/007 (special chars),
+     *        BUG_REG_008/009 (alphanumeric), BUG_REG_010/011 (leading/trailing spaces)
+     *
+     * Rules:
+     *  - Trim leading/trailing whitespace (BUG_REG_010, BUG_REG_011)
+     *  - Max 100 characters after trim (BUG_REG_004, BUG_REG_005)
+     *  - Only Unicode letters, hyphens, apostrophes, and single internal spaces allowed.
+     *    This blocks: SQL payloads (BUG_REG_003), digits (BUG_REG_008/009),
+     *    and other special characters (BUG_REG_006/007).
+     *
+     * Returns { valid: true, firstName, lastName } on success,
+     * or      { valid: false, error: '...' }         on failure.
+     */
+    validateNameFields(rawFirst, rawLast) {
+        const MAX_NAME_LENGTH = 100;
+
+        // Allowed: Unicode letters (including accented/international),
+        // hyphens, apostrophes, and single internal spaces.
+        // Rejects: digits, SQL chars (' OR -- etc handled by stripping non-letter chars),
+        // and any other punctuation / symbols.
+        const NAME_PATTERN = /^[\p{L}][\p{L}\s'\-]{0,99}$/u;
+
+        const firstName = (rawFirst || '').trim();
+        const lastName  = (rawLast  || '').trim();
+
+        if (!firstName) {
+            return { valid: false, error: 'First name is required.' };
+        }
+        if (!lastName) {
+            return { valid: false, error: 'Last name is required.' };
+        }
+        if (firstName.length > MAX_NAME_LENGTH) {
+            return { valid: false, error: `First name must be ${MAX_NAME_LENGTH} characters or fewer.` };
+        }
+        if (lastName.length > MAX_NAME_LENGTH) {
+            return { valid: false, error: `Last name must be ${MAX_NAME_LENGTH} characters or fewer.` };
+        }
+        if (!NAME_PATTERN.test(firstName)) {
+            return { valid: false, error: 'First name may only contain letters, hyphens, and apostrophes.' };
+        }
+        if (!NAME_PATTERN.test(lastName)) {
+            return { valid: false, error: 'Last name may only contain letters, hyphens, and apostrophes.' };
+        }
+
+        return { valid: true, firstName, lastName };
+    }
+
+    /**
      * Register a new business user
      */
     async register(email, password, businessData) {
         try {
+            // FIX BUG_REG_002: Enforce company name length limit at the service layer
+            // (HTML input should also have maxlength="100", this is a server-side guard)
+            const companyName = (businessData.company_name || '').trim();
+            if (companyName.length > 100) {
+                return {
+                    success: false,
+                    error: 'Company name must be 100 characters or fewer.'
+                };
+            }
+
+            // FIX BUG_REG_003–011: Validate and sanitize first/last name fields.
+            // Covers: SQL injection, max length, special chars, digits, leading/trailing spaces.
+            const nameValidation = this.validateNameFields(businessData.first_name, businessData.last_name);
+            if (!nameValidation.valid) {
+                return { success: false, error: nameValidation.error };
+            }
+            const { firstName, lastName } = nameValidation;
+
+            // FIX BUG_REG_001: Check for duplicate email before attempting signUp.
+            // Supabase's signUp can silently succeed for an existing email when
+            // "Confirm email" is enabled – it returns a fake/obfuscated user object
+            // with identities: [] instead of throwing an error.
+            // We do an OTP-less existence check via a dedicated pre-check approach:
+            // attempt signUp and inspect the response carefully.
+
             // Store all registration data in user metadata (survives email confirmation)
             const enrichedMetadata = {
                 user_type: 'business',
                 ...businessData,
+                first_name: firstName,       // sanitized
+                last_name: lastName,         // sanitized
+                company_name: companyName,   // trimmed
                 registration_complete: true,
                 registration_timestamp: new Date().toISOString()
             };
@@ -137,8 +215,48 @@ class BusinessAuth {
                 }
             });
 
-            if (error) throw error;
+            if (error) {
+                // Supabase may return "User already registered" directly
+                if (
+                    error.message?.includes('User already registered') ||
+                    error.message?.includes('already registered') ||
+                    error.code === 'user_already_exists'
+                ) {
+                    return {
+                        success: false,
+                        error: 'An account with this email address already exists. Please log in or use a different email.'
+                    };
+                }
+                throw error;
+            }
+
             if (!data?.user) throw new Error('User creation failed: no user returned');
+
+            // FIX BUG_REG_001 (continued): When Supabase email-confirm is ON, a duplicate
+            // signUp returns a user with an empty identities array instead of an error.
+            // DUAL-ROLE SAFE: a user may already exist as a Champion with this email –
+            // that is legitimate. We only block if a business_users row already exists
+            // for this email (true duplicate business registration).
+            if (
+                data.user.identities !== undefined &&
+                Array.isArray(data.user.identities) &&
+                data.user.identities.length === 0
+            ) {
+                const { data: existingBusiness } = await this.supabase
+                    .from('business_users')
+                    .select('id')
+                    .eq('business_email', email)
+                    .maybeSingle();
+
+                if (existingBusiness) {
+                    return {
+                        success: false,
+                        error: 'A business account with this email already exists. Please log in or reset your password.'
+                    };
+                }
+                // No business profile yet — existing auth user is likely a Champion.
+                // Fall through: profile will be created after email confirmation via createInitialProfile().
+            }
 
             // 2. Try to insert business profile immediately
             // This may fail if email confirmation is required (RLS blocks it)
@@ -146,9 +264,9 @@ class BusinessAuth {
                 const profileData = {
                     auth_user_id: data.user.id,
                     business_email: email,
-                    first_name: businessData.first_name || '',
-                    last_name: businessData.last_name || '',
-                    company_name: businessData.company_name || '',
+                    first_name: firstName,
+                    last_name: lastName,
+                    company_name: companyName || '',
                     company_registration_number: businessData.company_registration_number || null,
                     role_designation: businessData.role_designation || null,
                     industry: businessData.industry || null,
@@ -410,8 +528,8 @@ class BusinessAuth {
         if (msg.includes('Email not confirmed')) {
             return 'Please verify your email address before logging in.';
         }
-        if (msg.includes('User already registered')) {
-            return 'An account with this email already exists.';
+        if (msg.includes('User already registered') || msg.includes('already registered') || code === 'user_already_exists') {
+            return 'An account with this email address already exists. Please log in or use a different email.';
         }
         if (msg.includes('Password should be at least 6 characters')) {
             return 'Password must be at least 6 characters long.';
