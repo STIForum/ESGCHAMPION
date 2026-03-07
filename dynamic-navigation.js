@@ -54,10 +54,13 @@ class DynamicNavigation {
                 const isAdmin = isAuthenticated ? await this.auth.isAdmin() : false;
                 let champion = isAuthenticated ? this.auth.getChampion() : null;
 
-                // Detect business user
+            // Detect business user — but only if login_context says 'business'
+                // (or is unset). Never treat a champion-login session as business
+                // even if the same email exists in business_users.
                 let isBusinessUser = false;
                 let businessUser = null;
-                if (window.getSupabase && isAuthenticated) {
+                const loginContext = localStorage.getItem('login_context');
+                if (window.getSupabase && isAuthenticated && loginContext !== 'champion') {
                     const supabase = window.getSupabase();
                     try {
                         const { data: { session } } = await supabase.auth.getSession();
@@ -1005,10 +1008,19 @@ class DynamicNavigation {
     }
 
     /**
-     * Detect signed-in user type
+     * Detect signed-in user type.
+     * login_context (set at login time) is the authoritative source of truth.
+     * For users registered in both tables, this prevents the business_users
+     * query from overriding a champion login (and vice-versa).
      */
     async detectCurrentUserType() {
         try {
+            // 1. login_context is set at login time and is always correct.
+            const loginContext = localStorage.getItem('login_context');
+            if (loginContext === 'champion') return 'champion';
+            if (loginContext === 'business') return 'business';
+
+            // 2. No login_context — fall back to DB detection (fresh session, etc.)
             if (!window.getSupabase) {
                 if (this.auth?.isAuthenticated?.() && this.auth.getChampion?.()?.id) return 'champion';
                 return null;
@@ -1520,4 +1532,3 @@ document.addEventListener('DOMContentLoaded', () => {
         window.dynamicNav.init();
     }, 100);
 });
-
