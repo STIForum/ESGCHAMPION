@@ -184,12 +184,15 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="first_name">First Name <span class="text-error">*</span></label>
-                                <input type="text" id="first_name" name="first_name" class="form-input" placeholder="John" required maxlength="265">
+                                <input type="text" id="first_name" name="first_name" class="form-input" placeholder="John" required maxlength="100" pattern="[^\W\d_][\p{L}\s'\-]{0,99}" title="Only letters, hyphens, and apostrophes are allowed.">
                                 <div class="field-error" id="error-first_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
-                                    Maximum 265 characters allowed.
+                                    Maximum 100 characters allowed.
                                 </div>
                                 <div class="field-error" id="error-first_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
-                                    Digits are not allowed. Only letters, spaces, hyphens, and apostrophes.
+                                    Digits are not allowed. Only letters, hyphens, and apostrophes.
+                                </div>
+                                <div class="field-error" id="error-first_name_special" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Special characters are not allowed. Only letters, hyphens, and apostrophes.
                                 </div>
                                 <div class="field-error" id="error-first_name_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
                                     Name cannot start or end with a space.
@@ -197,12 +200,15 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="last_name">Last Name <span class="text-error">*</span></label>
-                                <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe" required maxlength="265">
+                                <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe" required maxlength="100" pattern="[^\W\d_][\p{L}\s'\-]{0,99}" title="Only letters, hyphens, and apostrophes are allowed.">
                                 <div class="field-error" id="error-last_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
-                                    Maximum 265 characters allowed.
+                                    Maximum 100 characters allowed.
                                 </div>
                                 <div class="field-error" id="error-last_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
-                                    Digits are not allowed. Only letters, spaces, hyphens, and apostrophes.
+                                    Digits are not allowed. Only letters, hyphens, and apostrophes.
+                                </div>
+                                <div class="field-error" id="error-last_name_special" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Special characters are not allowed. Only letters, hyphens, and apostrophes.
                                 </div>
                                 <div class="field-error" id="error-last_name_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
                                     Name cannot start or end with a space.
@@ -216,7 +222,13 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="registration_number">Company Registration Number</label>
-                                <input type="text" id="registration_number" name="registration_number" class="form-input">
+                                <input type="text" id="registration_number" name="registration_number" class="form-input" maxlength="50">
+                                <div class="field-error" id="error-registration_number" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Maximum 50 characters allowed.
+                                </div>
+                                <div class="field-error" id="error-registration_number_special" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Invalid characters. Only letters, numbers, hyphens, and forward slashes are allowed.
+                                </div>
                             </div>
                         </div>
                         <div class="form-row">
@@ -429,10 +441,11 @@
     // =====================================================================
     function setupFieldValidation() {
         ['first_name', 'last_name'].forEach(id => {
-            const input      = document.getElementById(id);
-            const errorChar  = document.getElementById('error-' + id);
-            const errorDigit = document.getElementById('error-' + id + '_digit');
-            const errorSpace = document.getElementById('error-' + id + '_space');
+            const input        = document.getElementById(id);
+            const errorChar    = document.getElementById('error-' + id);
+            const errorDigit   = document.getElementById('error-' + id + '_digit');
+            const errorSpecial = document.getElementById('error-' + id + '_special');
+            const errorSpace   = document.getElementById('error-' + id + '_space');
 
             if (input && errorChar && errorDigit && errorSpace) {
                 // Handle both typing and paste events
@@ -441,19 +454,31 @@
                         // For paste the value isn't updated yet — defer one tick
                         setTimeout(() => {
                             // 1. Filter out digits
-                            const filtered = input.value.replace(/\d/g, '');
-                            if (filtered !== input.value) {
-                                input.value = filtered;
+                            const noDigits = input.value.replace(/\d/g, '');
+                            if (noDigits !== input.value) {
+                                input.value = noDigits;
                                 errorDigit.style.display = 'block';
                                 setTimeout(() => { errorDigit.style.display = 'none'; }, 2000);
                             } else {
                                 errorDigit.style.display = 'none';
                             }
 
-                            // 2. Character limit
-                            errorChar.style.display = input.value.length > 265 ? 'block' : 'none';
+                            // 2. Filter out special characters (BUG_REG_006 / BUG_REG_007)
+                            const noSpecial = input.value.replace(/[^\p{L}\s'\-]/gu, '');
+                            if (noSpecial !== input.value) {
+                                input.value = noSpecial;
+                                if (errorSpecial) {
+                                    errorSpecial.style.display = 'block';
+                                    setTimeout(() => { errorSpecial.style.display = 'none'; }, 2000);
+                                }
+                            } else {
+                                if (errorSpecial) errorSpecial.style.display = 'none';
+                            }
 
-                            // 3. Leading/trailing spaces
+                            // 3. Character limit
+                            errorChar.style.display = input.value.length > 100 ? 'block' : 'none';
+
+                            // 4. Leading/trailing spaces
                             errorSpace.style.display = input.value !== input.value.trim() ? 'block' : 'none';
                         }, 0);
                     });
@@ -461,6 +486,39 @@
             }
         });
     }
+
+        // Registration number validation (BUG_REG_021–023)
+        (function() {
+            const input        = document.getElementById('registration_number');
+            const errorChar    = document.getElementById('error-registration_number');
+            const errorSpecial = document.getElementById('error-registration_number_special');
+            // Allowed: letters, digits, hyphens, forward slashes (covers formats like
+            // UK: SC123456, US: 12-3456789, MY: 202301012345, etc.)
+            // Rejects: SQL chars (=, ;, --, ', spaces, <, >), other symbols
+            const REG_ALLOWED = /[^\p{L}0-9\-\/]/gu;
+
+            if (input) {
+                ['input', 'paste'].forEach(evt => {
+                    input.addEventListener(evt, () => {
+                        setTimeout(() => {
+                            // 1. Strip disallowed characters (BUG_REG_021, BUG_REG_023)
+                            const cleaned = input.value.replace(REG_ALLOWED, '');
+                            if (cleaned !== input.value) {
+                                input.value = cleaned;
+                                if (errorSpecial) {
+                                    errorSpecial.style.display = 'block';
+                                    setTimeout(() => { errorSpecial.style.display = 'none'; }, 2500);
+                                }
+                            } else {
+                                if (errorSpecial) errorSpecial.style.display = 'none';
+                            }
+                            // 2. Character limit (BUG_REG_022)
+                            if (errorChar) errorChar.style.display = input.value.length > 50 ? 'block' : 'none';
+                        }, 0);
+                    });
+                });
+            }
+        })();
 
     setupFieldValidation();
     // =====================================================================
@@ -484,7 +542,7 @@
 
             ['first_name', 'last_name'].forEach(id => {
                 const input = document.getElementById(id);
-                if (input && input.value.length > 265) {
+                if (input && input.value.length > 100) {
                     longFields.push(id.replace('_', ' '));
                     document.getElementById('error-' + id).style.display = 'block';
                 }
@@ -512,14 +570,45 @@
                 }
             });
 
+            // BUG_REG_006 / BUG_REG_007: final special character guard
+            const specialFields = [];
+            const NAME_SPECIAL_PATTERN = /[^\p{L}\s'\-]/u;
+            ['first_name', 'last_name'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input && NAME_SPECIAL_PATTERN.test(input.value)) {
+                    specialFields.push(id.replace('_', ' '));
+                    const errEl = document.getElementById('error-' + id + '_special');
+                    if (errEl) errEl.style.display = 'block';
+                    setTimeout(() => { if (errEl) errEl.style.display = 'none'; }, 3000);
+                }
+            });
+
             if (longFields.length > 0) {
-                throw new Error('Fields exceed 265 characters: ' + longFields.join(', '));
+                throw new Error('Fields exceed 100 characters: ' + longFields.join(', '));
             }
             if (spaceFields.length > 0) {
                 throw new Error('Fields cannot start or end with a space: ' + spaceFields.join(', '));
             }
             if (digitFields.length > 0) {
                 throw new Error('Digits are not allowed in: ' + digitFields.join(', '));
+            }
+            if (specialFields.length > 0) {
+                throw new Error('Special characters are not allowed in: ' + specialFields.join(', ') + '. Use only letters, hyphens, and apostrophes.');
+            }
+
+            // BUG_REG_021–023: Registration number validation
+            const regNumInput = document.getElementById('registration_number');
+            const regNumVal   = regNumInput ? regNumInput.value.trim() : '';
+            const REG_INVALID = /[^\p{L}0-9\-\/]/u;
+            if (regNumVal.length > 50) {
+                const el = document.getElementById('error-registration_number');
+                if (el) el.style.display = 'block';
+                throw new Error('Company registration number must be 50 characters or fewer.');
+            }
+            if (regNumVal.length > 0 && REG_INVALID.test(regNumVal)) {
+                const el = document.getElementById('error-registration_number_special');
+                if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
+                throw new Error('Company registration number contains invalid characters. Only letters, numbers, hyphens, and forward slashes are allowed.');
             }
 
             const businessData = {
