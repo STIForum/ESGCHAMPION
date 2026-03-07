@@ -297,6 +297,11 @@ class ChampionAuth {
                 await this.service.logActivity(this.currentUser.id, 'login');
             }
 
+            // 5) Record which portal this session belongs to.
+            //    This is the single source of truth used by all auth guards
+            //    to handle users registered in both tables.
+            localStorage.setItem('login_context', 'champion');
+
             return {
                 success: true,
                 data
@@ -355,6 +360,8 @@ class ChampionAuth {
      */
     async loginWithLinkedIn() {
         try {
+            // Mark context before the OAuth redirect so it survives the round-trip.
+            localStorage.setItem('login_context', 'champion');
             const data = await this.service.signInWithOAuth('linkedin_oidc');
             return {
                 success: true,
@@ -374,6 +381,7 @@ class ChampionAuth {
      */
     async logout() {
         try {
+            localStorage.removeItem('login_context');
             await this.service.signOut();
             this.currentUser = null;
             this.currentChampion = null;
