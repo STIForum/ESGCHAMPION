@@ -51,6 +51,14 @@ class ChampionDashboard {
     }
 
     async init() {
+        // If this session belongs to a business user, send them to the right place
+        // immediately — before loading any champion auth — to prevent redirect loops.
+        const loginContext = localStorage.getItem('login_context');
+        if (loginContext === 'business') {
+            window.location.href = '/business-dashboard.html';
+            return;
+        }
+
         // Ensure auth service exists
         if (!window.championAuth || !window.championAuth.init) {
             console.error('championAuth not initialized');
@@ -259,4 +267,3 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboard = new ChampionDashboard();
     dashboard.init();
 });
-
