@@ -117,23 +117,6 @@ class BusinessAuth {
      */
     async register(email, password, businessData) {
         try {
-            // 0. Check for duplicate email BEFORE calling signUp().
-            // Supabase auth.signUp() silently "succeeds" for duplicate emails
-            // (returns a user but sends no confirmation email), so we must
-            // detect this ourselves by querying business_users first.
-            const { data: existingUser } = await this.supabase
-                .from('business_users')
-                .select('id')
-                .eq('business_email', email.toLowerCase().trim())
-                .maybeSingle();
-
-            if (existingUser?.id) {
-                return {
-                    success: false,
-                    error: 'An account with this email already exists. Please log in or use a different email.'
-                };
-            }
-
             // Store all registration data in user metadata (survives email confirmation)
             const enrichedMetadata = {
                 user_type: 'business',
@@ -156,16 +139,6 @@ class BusinessAuth {
 
             if (error) throw error;
             if (!data?.user) throw new Error('User creation failed: no user returned');
-
-            // Supabase silently "succeeds" for duplicate auth emails —
-            // the returned user has an empty identities array.
-            if (data.user.identities && data.user.identities.length === 0) {
-                return {
-                    success: false,
-                    error: 'An account with this email already exists. Please log in or use a different email.'
-                };
-            }
-
 
             // 2. Try to insert business profile immediately
             // This may fail if email confirmation is required (RLS blocks it)
