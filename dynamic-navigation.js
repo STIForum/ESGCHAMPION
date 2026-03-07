@@ -1165,10 +1165,23 @@ class DynamicNavigation {
         }
 
         if (rules.blockedPaths.includes(currentPath)) {
-            this.showUserTypeRedirectModal(
-                `This page is not available for ${userType} accounts. Redirecting to your dashboard.`,
-                rules.dashboard
-            );
+            // Only redirect if the user has an active session.
+            // A stale login_context after logout must not block someone
+            // from logging in as the other account type.
+            let hasActiveSession = false;
+            try {
+                if (window.getSupabase) {
+                    const { data: { session } } = await window.getSupabase().auth.getSession();
+                    hasActiveSession = !!(session?.user?.id);
+                }
+            } catch (e) { /* ignore */ }
+
+            if (hasActiveSession) {
+                this.showUserTypeRedirectModal(
+                    `This page is not available for ${userType} accounts. Redirecting to your dashboard.`,
+                    rules.dashboard
+                );
+            }
         }
     }
 
