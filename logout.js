@@ -9,7 +9,14 @@ async function handleLogout(event) {
     }
 
     try {
-        const auth = window.championAuth;
+        // Always clear login_context on logout, regardless of which auth object handles it
+        localStorage.removeItem('login_context');
+
+        // Use whichever auth service is available — business pages may not have championAuth
+        const auth = window.businessAuth?.isAuthenticated?.()
+            ? window.businessAuth
+            : window.championAuth;
+
         if (!auth) {
             console.error('Auth not available');
             window.location.href = '/';
@@ -164,4 +171,3 @@ document.head.appendChild(toastStyles);
 // Export
 window.handleLogout = handleLogout;
 window.showToast = showToast;
-
