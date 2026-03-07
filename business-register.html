@@ -184,11 +184,29 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="first_name">First Name <span class="text-error">*</span></label>
-                                <input type="text" id="first_name" name="first_name" class="form-input" required>
+                                <input type="text" id="first_name" name="first_name" class="form-input" placeholder="John" required maxlength="265">
+                                <div class="field-error" id="error-first_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Maximum 265 characters allowed.
+                                </div>
+                                <div class="field-error" id="error-first_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Digits are not allowed. Only letters, spaces, hyphens, and apostrophes.
+                                </div>
+                                <div class="field-error" id="error-first_name_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Name cannot start or end with a space.
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="last_name">Last Name <span class="text-error">*</span></label>
-                                <input type="text" id="last_name" name="last_name" class="form-input" required>
+                                <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe" required maxlength="265">
+                                <div class="field-error" id="error-last_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Maximum 265 characters allowed.
+                                </div>
+                                <div class="field-error" id="error-last_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Digits are not allowed. Only letters, spaces, hyphens, and apostrophes.
+                                </div>
+                                <div class="field-error" id="error-last_name_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Name cannot start or end with a space.
+                                </div>
                             </div>
                         </div>
                         <div class="form-row">
@@ -406,6 +424,47 @@
     <script src="business-auth.js"></script>
     <script src="mobile-menu.js"></script>
     <script>
+
+    // Real-time validation for name fields (mirrors champion-register.html)
+    // =====================================================================
+    function setupFieldValidation() {
+        ['first_name', 'last_name'].forEach(id => {
+            const input      = document.getElementById(id);
+            const errorChar  = document.getElementById('error-' + id);
+            const errorDigit = document.getElementById('error-' + id + '_digit');
+            const errorSpace = document.getElementById('error-' + id + '_space');
+
+            if (input && errorChar && errorDigit && errorSpace) {
+                // Handle both typing and paste events
+                ['input', 'paste'].forEach(evt => {
+                    input.addEventListener(evt, () => {
+                        // For paste the value isn't updated yet — defer one tick
+                        setTimeout(() => {
+                            // 1. Filter out digits
+                            const filtered = input.value.replace(/\d/g, '');
+                            if (filtered !== input.value) {
+                                input.value = filtered;
+                                errorDigit.style.display = 'block';
+                                setTimeout(() => { errorDigit.style.display = 'none'; }, 2000);
+                            } else {
+                                errorDigit.style.display = 'none';
+                            }
+
+                            // 2. Character limit
+                            errorChar.style.display = input.value.length > 265 ? 'block' : 'none';
+
+                            // 3. Leading/trailing spaces
+                            errorSpace.style.display = input.value !== input.value.trim() ? 'block' : 'none';
+                        }, 0);
+                    });
+                });
+            }
+        });
+    }
+
+    setupFieldValidation();
+    // =====================================================================
+
     document.getElementById('business-register-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         const submitBtn = document.getElementById('submit-btn');
@@ -417,6 +476,51 @@
             const confirmPassword = document.getElementById('confirm_password').value;
             if (password !== confirmPassword) throw new Error('Passwords do not match');
             if (password.length < 8) throw new Error('Password must be at least 8 characters');
+
+            // Submit-time validation — mirrors champion-register.html
+            const longFields  = [];
+            const spaceFields = [];
+            const digitFields = [];
+
+            ['first_name', 'last_name'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input && input.value.length > 265) {
+                    longFields.push(id.replace('_', ' '));
+                    document.getElementById('error-' + id).style.display = 'block';
+                }
+            });
+
+            ['first_name', 'last_name'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input && input.value !== input.value.trim()) {
+                    spaceFields.push(id.replace('_', ' '));
+                    document.getElementById('error-' + id + '_space').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('error-' + id + '_space').style.display = 'none';
+                    }, 3000);
+                }
+            });
+
+            ['first_name', 'last_name'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input && /\d/.test(input.value)) {
+                    digitFields.push(id.replace('_', ' '));
+                    document.getElementById('error-' + id + '_digit').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('error-' + id + '_digit').style.display = 'none';
+                    }, 2000);
+                }
+            });
+
+            if (longFields.length > 0) {
+                throw new Error('Fields exceed 265 characters: ' + longFields.join(', '));
+            }
+            if (spaceFields.length > 0) {
+                throw new Error('Fields cannot start or end with a space: ' + spaceFields.join(', '));
+            }
+            if (digitFields.length > 0) {
+                throw new Error('Digits are not allowed in: ' + digitFields.join(', '));
+            }
 
             const businessData = {
                 first_name: document.getElementById('first_name').value,
