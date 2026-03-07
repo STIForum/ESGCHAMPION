@@ -177,6 +177,33 @@ class ChampionAuth {
             console.log('Registering with metadata:', enrichedMetadata);
 
             const data = await this.service.signUp(email, password, enrichedMetadata);
+
+            // DUAL-ROLE SAFE duplicate check: when Supabase email-confirm is ON,
+            // signUp silently returns identities: [] for an existing auth user.
+            // Only block if a champions row already exists for this email –
+            // the user may legitimately be registering as a Champion after
+            // already having a Business account.
+            if (
+                data.user &&
+                Array.isArray(data.user.identities) &&
+                data.user.identities.length === 0
+            ) {
+                let existingChampion = null;
+                try {
+                    existingChampion = await this.service.getChampionByEmail(email);
+                } catch (e) {
+                    existingChampion = null;
+                }
+
+                if (existingChampion) {
+                    return {
+                        success: false,
+                        error: 'A Champion account with this email already exists. Please log in or reset your password.'
+                    };
+                }
+                // No champion profile yet — existing auth user is likely a Business user.
+                // Fall through: profile will be created after email confirmation.
+            }
             
             if (data.user) {
                 // Try to update champion profile with additional metadata
