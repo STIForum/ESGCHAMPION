@@ -163,6 +163,37 @@ class BusinessAuth {
     }
 
     /**
+     * Validate company registration number.
+     * Fixes: BUG_REG_021 (special chars), BUG_REG_022 (max length), BUG_REG_023 (SQL injection)
+     *
+     * Field is optional — empty string passes.
+     * Allowed: letters, digits, hyphens, forward slashes.
+     * Covers formats: UK (SC123456), US EIN (12-3456789), MY SSM (202301012345), etc.
+     * Rejects: spaces, SQL operators (=, ;, --, ', <, >), and all other symbols.
+     *
+     * Returns { valid: true, regNumber } or { valid: false, error: '...' }
+     */
+    validateRegistrationNumber(raw) {
+        const MAX_LENGTH = 50;
+        const REG_PATTERN = /^[\p{L}0-9][\p{L}0-9\-\/]{0,49}$/u;
+
+        const regNumber = (raw || '').trim();
+
+        // Field is optional — blank is fine
+        if (!regNumber) {
+            return { valid: true, regNumber: '' };
+        }
+        if (regNumber.length > MAX_LENGTH) {
+            return { valid: false, error: `Company registration number must be ${MAX_LENGTH} characters or fewer.` };
+        }
+        if (!REG_PATTERN.test(regNumber)) {
+            return { valid: false, error: 'Company registration number contains invalid characters. Only letters, numbers, hyphens, and forward slashes are allowed.' };
+        }
+
+        return { valid: true, regNumber };
+    }
+
+    /**
      * Register a new business user
      */
     async register(email, password, businessData) {
@@ -184,6 +215,12 @@ class BusinessAuth {
                 return { success: false, error: nameValidation.error };
             }
             const { firstName, lastName } = nameValidation;
+
+            // FIX BUG_REG_021–023: Validate registration number (optional field)
+            const regValidation = this.validateRegistrationNumber(businessData.company_registration_number);
+            if (!regValidation.valid) {
+                return { success: false, error: regValidation.error };
+            }
 
             // FIX BUG_REG_001: Check for duplicate email before attempting signUp.
             // Supabase's signUp can silently succeed for an existing email when
