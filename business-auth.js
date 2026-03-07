@@ -163,34 +163,94 @@ class BusinessAuth {
     }
 
     /**
-     * Validate company registration number.
-     * Fixes: BUG_REG_021 (special chars), BUG_REG_022 (max length), BUG_REG_023 (SQL injection)
-     *
-     * Field is optional — empty string passes.
-     * Allowed: letters, digits, hyphens, forward slashes.
-     * Covers formats: UK (SC123456), US EIN (12-3456789), MY SSM (202301012345), etc.
-     * Rejects: spaces, SQL operators (=, ;, --, ', <, >), and all other symbols.
-     *
-     * Returns { valid: true, regNumber } or { valid: false, error: '...' }
+     * Validate role / designation field.
+     * Fixes: BUG_REG_024 (max length), BUG_REG_025 (special chars)
+     * Optional field — blank passes.
+     */
+    validateRoleDesignation(raw) {
+        const MAX_LENGTH = 100;
+        const ROLE_PATTERN = /^[\p{L}0-9][\p{L}0-9\s'\-.,()&]{0,99}$/u;
+        const role = (raw || '').trim();
+        if (!role) return { valid: true, role: '' };
+        if (role.length > MAX_LENGTH) {
+            return { valid: false, error: `Role / Designation must be ${MAX_LENGTH} characters or fewer.` };
+        }
+        if (!ROLE_PATTERN.test(role)) {
+            return { valid: false, error: 'Role / Designation contains invalid characters. Only letters, numbers, spaces, hyphens, and apostrophes are allowed.' };
+        }
+        return { valid: true, role };
+    }
+
+    /**
+     * Validate email format strictly.
+     * Fixes: BUG_REG_026 — rejects malformed addresses like TEST#.@GMAIL.COM
+     * Browser type="email" is too permissive; this enforces RFC-like rules.
+     */
+    validateEmail(raw) {
+        const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+        const email = (raw || '').trim().toLowerCase();
+        if (!email) return { valid: false, error: 'Email address is required.' };
+        if (!EMAIL_RE.test(email)) {
+            return { valid: false, error: 'Please enter a valid email address (e.g. name@company.com).' };
+        }
+        return { valid: true, email };
+    }
+
+    /**
+     * Validate phone number fields (mobile and office phone).
+     * Fixes: BUG_REG_027 (mobile accepts alphabets), BUG_REG_028 (office phone accepts alphabets)
+     * Optional fields — blank passes.
+     * Allowed: digits, spaces, +, hyphens, brackets.
+     */
+    validatePhone(raw, label = 'Phone number') {
+        const PHONE_RE = /^[0-9\s+\-()\[\]]{0,20}$/;
+        const phone = (raw || '').trim();
+        if (!phone) return { valid: true, phone: '' };
+        if (!PHONE_RE.test(phone)) {
+            return { valid: false, error: `${label} contains invalid characters. Only digits, spaces, +, hyphens, and brackets are allowed.` };
+        }
+        return { valid: true, phone };
+    }
+
+    /**
+     * Validate company_name. Fixes BUG_REG_014–020.
+     * Rules: ≥1 Unicode letter; max 100 chars; only letters/digits/spaces/-/'&.,() allowed.
+     */
+    validateCompanyName(raw) {
+        const name = (raw || '').trim();
+        if (!name) return { valid: false, error: 'Company name is required.' };
+        if (name.length > 100) return { valid: false, error: 'Company name must be 100 characters or fewer.' };
+        if (!/\p{L}/u.test(name)) return { valid: false, error: 'Company name must contain at least one letter.' };
+        if (/[^\p{L}0-9\s'\-&.,()]/u.test(name)) return { valid: false, error: 'Company name contains invalid characters. Only letters, numbers, spaces, hyphens, apostrophes, and & are allowed.' };
+        return { valid: true, companyName: name };
+    }
+
+    /**
+     * Validate company registration number. Fixes BUG_REG_021–023.
+     * Optional; max 50 chars; only letters/digits/hyphens/forward-slashes.
      */
     validateRegistrationNumber(raw) {
-        const MAX_LENGTH = 50;
-        const REG_PATTERN = /^[\p{L}0-9][\p{L}0-9\-\/]{0,49}$/u;
+        const reg = (raw || '').trim();
+        if (!reg) return { valid: true, regNumber: '' };
+        if (reg.length > 50) return { valid: false, error: 'Registration number must be 50 characters or fewer.' };
+        if (/[^\p{L}0-9\-\/]/u.test(reg)) return { valid: false, error: 'Registration number may only contain letters, numbers, hyphens, and forward slashes.' };
+        return { valid: true, regNumber: reg };
+    }
 
-        const regNumber = (raw || '').trim();
-
-        // Field is optional — blank is fine
-        if (!regNumber) {
-            return { valid: true, regNumber: '' };
-        }
-        if (regNumber.length > MAX_LENGTH) {
-            return { valid: false, error: `Company registration number must be ${MAX_LENGTH} characters or fewer.` };
-        }
-        if (!REG_PATTERN.test(regNumber)) {
-            return { valid: false, error: 'Company registration number contains invalid characters. Only letters, numbers, hyphens, and forward slashes are allowed.' };
-        }
-
-        return { valid: true, regNumber };
+    /**
+     * Validate password strength. Fixes BUG_REG_029–035.
+     * Rules: no leading/trailing spaces; 8–128 chars; uppercase; lowercase; digit; special char.
+     */
+    validatePassword(password) {
+        if (!password || password.length === 0) return { valid: false, error: 'Password is required.' };
+        if (password !== password.trim())         return { valid: false, error: 'Password must not start or end with a space.' };
+        if (password.length < 8)                  return { valid: false, error: 'Password must be at least 8 characters.' };
+        if (password.length > 128)                return { valid: false, error: 'Password must be 128 characters or fewer.' };
+        if (!/[A-Z]/.test(password))              return { valid: false, error: 'Password must contain at least one uppercase letter (A–Z).' };
+        if (!/[a-z]/.test(password))              return { valid: false, error: 'Password must contain at least one lowercase letter (a–z).' };
+        if (!/[0-9]/.test(password))              return { valid: false, error: 'Password must contain at least one number (0–9).' };
+        if (!/[^A-Za-z0-9\s]/.test(password))   return { valid: false, error: 'Password must contain at least one special character (e.g. !@#$%^&*).' };
+        return { valid: true };
     }
 
     /**
@@ -198,15 +258,18 @@ class BusinessAuth {
      */
     async register(email, password, businessData) {
         try {
-            // FIX BUG_REG_002: Enforce company name length limit at the service layer
-            // (HTML input should also have maxlength="100", this is a server-side guard)
-            const companyName = (businessData.company_name || '').trim();
-            if (companyName.length > 100) {
-                return {
-                    success: false,
-                    error: 'Company name must be 100 characters or fewer.'
-                };
-            }
+            // FIX BUG_REG_029–035: Password validation — fail fast, no DB calls on bad password
+            const pwValidation = this.validatePassword(password);
+            if (!pwValidation.valid) return { success: false, error: pwValidation.error };
+
+            // FIX BUG_REG_014–020: Company name validation (replaces bare BUG_REG_002 check)
+            const companyValidation = this.validateCompanyName(businessData.company_name);
+            if (!companyValidation.valid) return { success: false, error: companyValidation.error };
+            const companyName = companyValidation.companyName;
+
+            // FIX BUG_REG_021–023: Registration number validation
+            const regValidation = this.validateRegistrationNumber(businessData.company_registration_number);
+            if (!regValidation.valid) return { success: false, error: regValidation.error };
 
             // FIX BUG_REG_003–011: Validate and sanitize first/last name fields.
             // Covers: SQL injection, max length, special chars, digits, leading/trailing spaces.
@@ -216,10 +279,28 @@ class BusinessAuth {
             }
             const { firstName, lastName } = nameValidation;
 
-            // FIX BUG_REG_021–023: Validate registration number (optional field)
-            const regValidation = this.validateRegistrationNumber(businessData.company_registration_number);
-            if (!regValidation.valid) {
-                return { success: false, error: regValidation.error };
+            // FIX BUG_REG_026: Strict email validation
+            const emailValidation = this.validateEmail(email);
+            if (!emailValidation.valid) {
+                return { success: false, error: emailValidation.error };
+            }
+
+            // FIX BUG_REG_024/025: Role / Designation validation
+            const roleValidation = this.validateRoleDesignation(businessData.role_designation);
+            if (!roleValidation.valid) {
+                return { success: false, error: roleValidation.error };
+            }
+
+            // FIX BUG_REG_027: Mobile number validation
+            const mobileValidation = this.validatePhone(businessData.mobile_number, 'Mobile number');
+            if (!mobileValidation.valid) {
+                return { success: false, error: mobileValidation.error };
+            }
+
+            // FIX BUG_REG_028: Office phone validation
+            const officePhoneValidation = this.validatePhone(businessData.office_phone, 'Office phone');
+            if (!officePhoneValidation.valid) {
+                return { success: false, error: officePhoneValidation.error };
             }
 
             // FIX BUG_REG_001: Check for duplicate email before attempting signUp.
