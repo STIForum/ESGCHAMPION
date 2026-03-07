@@ -687,4 +687,3 @@ class ChampionDB {
 // Create and export singleton instance
 window.ChampionDB = ChampionDB;
 window.championDB = new ChampionDB();
-
