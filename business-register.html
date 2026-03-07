@@ -218,7 +218,19 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="company_name">Company Name <span class="text-error">*</span></label>
-                                <input type="text" id="company_name" name="company_name" class="form-input" required>
+                                <input type="text" id="company_name" name="company_name" class="form-input" required maxlength="256">
+                                <div class="field-error" id="error-company_name_alpha" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Company name must contain at least one letter.
+                                </div>
+                                <div class="field-error" id="error-company_name_special" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Company name contains invalid characters. Only letters, numbers, spaces, hyphens, ampersands, commas, and periods are allowed.
+                                </div>
+                                <div class="field-error" id="error-company_name_space" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Company name cannot start or end with a space.
+                                </div>
+                                <div class="field-error" id="error-company_name_length" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Company name must be 256 characters or fewer.
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="registration_number">Company Registration Number</label>
@@ -234,7 +246,13 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="role">Role / Designation</label>
-                                <input type="text" id="role" name="role" class="form-input">
+                                <input type="text" id="role" name="role" class="form-input" maxlength="100">
+                                <div class="field-error" id="error-role_length" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Role / Designation must be 100 characters or fewer.
+                                </div>
+                                <div class="field-error" id="error-role_special" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Invalid characters. Only letters, numbers, spaces, hyphens, ampersands, commas, and periods are allowed.
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="industry">Industry</label>
@@ -283,17 +301,29 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="email">Business Email <span class="text-error">*</span></label>
-                                <input type="email" id="email" name="email" class="form-input" required>
+                                <input type="email" id="email" name="email" class="form-input" required
+                                    autocomplete="email">
+                                <div class="field-error" id="error-email_format" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Please enter a valid email address (e.g. name@domain.com).
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="mobile">Mobile Number</label>
-                                <input type="tel" id="mobile" name="mobile" class="form-input">
+                                <input type="tel" id="mobile" name="mobile" class="form-input"
+                                    placeholder="+60123456789">
+                                <div class="field-error" id="error-mobile_format" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Mobile number may only contain digits, spaces, hyphens, parentheses, and a leading +.
+                                </div>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="office_phone">Office Phone</label>
-                                <input type="tel" id="office_phone" name="office_phone" class="form-input">
+                                <input type="tel" id="office_phone" name="office_phone" class="form-input"
+                                    placeholder="+60312345678">
+                                <div class="field-error" id="error-office_phone_format" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Office phone may only contain digits, spaces, hyphens, parentheses, and a leading +.
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="linkedin">LinkedIn</label>
@@ -390,11 +420,55 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="password">Password <span class="text-error">*</span></label>
-                                <input type="password" id="password" name="password" class="form-input" required minlength="8">
+                                <div style="position: relative;">
+                                    <input type="password" id="password" name="password" class="form-input" required minlength="8" maxlength="128" autocomplete="new-password" style="padding-right: 2.75rem;">
+                                    <button type="button" id="toggle-password" aria-label="Show password" tabindex="-1"
+                                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;color:#6b7280;display:flex;align-items:center;">
+                                        <!-- eye-open icon (visible when password is hidden) -->
+                                        <svg id="icon-pw-show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                            <circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                        <!-- eye-off icon (visible when password is shown) -->
+                                        <svg id="icon-pw-hide" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                            <line x1="1" y1="1" x2="23" y2="23"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="password-strength-bar" style="margin-top: 6px; height: 4px; border-radius: 2px; background: #e5e7eb; overflow: hidden;">
+                                    <div id="password-strength-fill" style="height: 100%; width: 0; border-radius: 2px; transition: width 0.2s, background 0.2s;"></div>
+                                </div>
+                                <ul id="password-rules" style="margin: 6px 0 0 0; padding: 0; list-style: none; font-size: 0.8rem;">
+                                    <li id="rule-length"    style="color:#6b7280;">&#x25CB; 8–128 characters</li>
+                                    <li id="rule-upper"     style="color:#6b7280;">&#x25CB; At least one uppercase letter (A–Z)</li>
+                                    <li id="rule-lower"     style="color:#6b7280;">&#x25CB; At least one lowercase letter (a–z)</li>
+                                    <li id="rule-number"    style="color:#6b7280;">&#x25CB; At least one number (0–9)</li>
+                                    <li id="rule-special"   style="color:#6b7280;">&#x25CB; At least one special character (!@#$…)</li>
+                                    <li id="rule-nospace"   style="color:#6b7280;">&#x25CB; No leading or trailing spaces</li>
+                                </ul>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="confirm_password">Confirm Password <span class="text-error">*</span></label>
-                                <input type="password" id="confirm_password" name="confirm_password" class="form-input" required>
+                                <div style="position: relative;">
+                                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" required maxlength="128" autocomplete="new-password" style="padding-right: 2.75rem;">
+                                    <button type="button" id="toggle-confirm-password" aria-label="Show confirm password" tabindex="-1"
+                                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;color:#6b7280;display:flex;align-items:center;">
+                                        <svg id="icon-cpw-show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                            <circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                        <svg id="icon-cpw-hide" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                            <line x1="1" y1="1" x2="23" y2="23"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="field-error" id="error-confirm_password" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
+                                    Passwords do not match.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -488,39 +562,300 @@
     }
 
         // Registration number validation (BUG_REG_021–023)
+        // Root-cause fix: regex was stored as a module-level /g constant, causing
+        // stateful lastIndex carryover between calls — characters slipped through on
+        // every other event (BUG_REG_021, BUG_REG_023). Paste-bypass of maxlength
+        // also allowed >50 chars (BUG_REG_022). Both fixed below.
         (function() {
             const input        = document.getElementById('registration_number');
             const errorChar    = document.getElementById('error-registration_number');
             const errorSpecial = document.getElementById('error-registration_number_special');
-            // Allowed: letters, digits, hyphens, forward slashes (covers formats like
-            // UK: SC123456, US: 12-3456789, MY: 202301012345, etc.)
-            // Rejects: SQL chars (=, ;, --, ', spaces, <, >), other symbols
-            const REG_ALLOWED = /[^\p{L}0-9\-\/]/gu;
+            // Allowed: letters (unicode), digits, hyphens, forward slashes.
+            // Covers formats like UK: SC123456, US: 12-3456789, MY: 202301012345.
+            // Rejects SQL-dangerous chars: \' ; -- = < > spaces, and all other symbols.
+
+            function validateRegNum() {
+                setTimeout(() => {
+                    // 1. Strip disallowed characters (BUG_REG_021, BUG_REG_023)
+                    //    Regex is a literal inside the call — never reused, so lastIndex
+                    //    is always 0. This is the core fix for the stateful-regex bug.
+                    const cleaned = input.value.replace(/[^\p{L}0-9\-\/]/gu, '');
+                    if (cleaned !== input.value) {
+                        input.value = cleaned;
+                        if (errorSpecial) {
+                            errorSpecial.style.display = 'block';
+                            setTimeout(() => { errorSpecial.style.display = 'none'; }, 2500);
+                        }
+                    } else {
+                        if (errorSpecial) errorSpecial.style.display = 'none';
+                    }
+
+                    // 2. Enforce 50-char limit after paste (BUG_REG_022)
+                    //    HTML maxlength blocks typing but browsers may not trim
+                    //    pasted text before the paste event fires, so we clamp here.
+                    if (input.value.length > 50) {
+                        input.value = input.value.slice(0, 50);
+                    }
+                    if (errorChar) errorChar.style.display = input.value.length > 50 ? 'block' : 'none';
+                }, 0);
+            }
 
             if (input) {
-                ['input', 'paste'].forEach(evt => {
-                    input.addEventListener(evt, () => {
-                        setTimeout(() => {
-                            // 1. Strip disallowed characters (BUG_REG_021, BUG_REG_023)
-                            const cleaned = input.value.replace(REG_ALLOWED, '');
-                            if (cleaned !== input.value) {
-                                input.value = cleaned;
-                                if (errorSpecial) {
-                                    errorSpecial.style.display = 'block';
-                                    setTimeout(() => { errorSpecial.style.display = 'none'; }, 2500);
-                                }
-                            } else {
-                                if (errorSpecial) errorSpecial.style.display = 'none';
-                            }
-                            // 2. Character limit (BUG_REG_022)
-                            if (errorChar) errorChar.style.display = input.value.length > 50 ? 'block' : 'none';
-                        }, 0);
-                    });
-                });
+                ['input', 'paste'].forEach(evt => input.addEventListener(evt, validateRegNum));
             }
         })();
 
+        // Role / Designation validation (BUG_REG_024, BUG_REG_025)
+        (function() {
+            const input      = document.getElementById('role');
+            const errLength  = document.getElementById('error-role_length');
+            const errSpecial = document.getElementById('error-role_special');
+            // Allowed: letters (unicode), digits, spaces, hyphens, ampersands,
+            // commas, periods — sufficient for titles like "Head of R&D, APAC"
+            // Rejects SQL-dangerous and other unexpected symbols (BUG_REG_025).
+
+            function validateRole() {
+                setTimeout(() => {
+                    // 1. Strip disallowed characters (BUG_REG_025)
+                    //    Inline regex literal — no stateful lastIndex.
+                    const cleaned = input.value.replace(/[^\p{L}0-9 \-&,\.]/gu, '');
+                    if (cleaned !== input.value) {
+                        input.value = cleaned;
+                        if (errSpecial) {
+                            errSpecial.style.display = 'block';
+                            setTimeout(() => { errSpecial.style.display = 'none'; }, 2500);
+                        }
+                    } else {
+                        if (errSpecial) errSpecial.style.display = 'none';
+                    }
+
+                    // 2. Enforce 100-char limit (BUG_REG_024)
+                    //    Clamp here to catch paste-bypass of HTML maxlength.
+                    if (input.value.length > 100) {
+                        input.value = input.value.slice(0, 100);
+                    }
+                    if (errLength) errLength.style.display = input.value.length > 100 ? 'block' : 'none';
+                }, 0);
+            }
+
+            if (input) {
+                ['input', 'paste'].forEach(evt => input.addEventListener(evt, validateRole));
+            }
+        })();
+
+    // =====================================================================
+    // Password validation (BUG_REG_029–035)
+    (function() {
+        const pwInput   = document.getElementById('password');
+        const cpInput   = document.getElementById('confirm_password');
+        const fill      = document.getElementById('password-strength-fill');
+        const ruleEls   = {
+            length:   document.getElementById('rule-length'),
+            upper:    document.getElementById('rule-upper'),
+            lower:    document.getElementById('rule-lower'),
+            number:   document.getElementById('rule-number'),
+            special:  document.getElementById('rule-special'),
+            nospace:  document.getElementById('rule-nospace'),
+        };
+
+        const PASS_MAX    = 128;
+        const COLORS      = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a'];
+        const FILLED      = '&#x25CF;'; // ●
+        const EMPTY       = '&#x25CB;'; // ○
+        const OK_COLOR    = '#16a34a';
+        const FAIL_COLOR  = '#6b7280';
+
+        function checkRules(val) {
+            return {
+                length:  val.length >= 8 && val.length <= PASS_MAX,
+                upper:   /[A-Z]/.test(val),
+                lower:   /[a-z]/.test(val),
+                number:  /[0-9]/.test(val),
+                special: /[^A-Za-z0-9]/.test(val),
+                nospace: val === val.trim(),
+            };
+        }
+
+        function updateRuleUI(rules) {
+            Object.entries(rules).forEach(([key, pass]) => {
+                const el = ruleEls[key];
+                if (!el) return;
+                el.innerHTML = (pass ? FILLED : EMPTY) + ' ' + el.innerHTML.slice(2);
+                el.style.color = pass ? OK_COLOR : FAIL_COLOR;
+            });
+        }
+
+        function updateStrengthBar(rules) {
+            if (!fill) return;
+            const score = Object.values(rules).filter(Boolean).length; // 0-6
+            const pct   = (score / 6) * 100;
+            fill.style.width     = pct + '%';
+            fill.style.background = COLORS[Math.min(Math.floor(score / 1.5), COLORS.length - 1)];
+        }
+
+        if (pwInput) {
+            pwInput.addEventListener('input', () => {
+                // BUG_REG_029: enforce max length via clamp (paste bypass of maxlength)
+                if (pwInput.value.length > PASS_MAX) {
+                    pwInput.value = pwInput.value.slice(0, PASS_MAX);
+                }
+                const rules = checkRules(pwInput.value);
+                updateRuleUI(rules);
+                updateStrengthBar(rules);
+
+                // Live confirm-match feedback
+                const errConfirm = document.getElementById('error-confirm_password');
+                if (errConfirm && cpInput && cpInput.value.length > 0) {
+                    errConfirm.style.display = cpInput.value !== pwInput.value ? 'block' : 'none';
+                }
+            });
+        }
+
+        if (cpInput) {
+            cpInput.addEventListener('input', () => {
+                if (cpInput.value.length > PASS_MAX) {
+                    cpInput.value = cpInput.value.slice(0, PASS_MAX);
+                }
+                const errConfirm = document.getElementById('error-confirm_password');
+                if (errConfirm && pwInput) {
+                    errConfirm.style.display = cpInput.value !== pwInput.value ? 'block' : 'none';
+                }
+            });
+        }
+
+        // BUG_REG_036–039: Password visibility toggles
+        function makeToggle(btnId, inputEl, showIconId, hideIconId) {
+            const btn      = document.getElementById(btnId);
+            const showIcon = document.getElementById(showIconId);
+            const hideIcon = document.getElementById(hideIconId);
+            if (!btn || !inputEl || !showIcon || !hideIcon) return;
+
+            btn.addEventListener('click', () => {
+                const isHidden = inputEl.type === 'password';
+                inputEl.type   = isHidden ? 'text' : 'password';
+                showIcon.style.display = isHidden ? 'none'  : '';
+                hideIcon.style.display = isHidden ? ''      : 'none';
+                btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            });
+        }
+
+        makeToggle('toggle-password',         pwInput, 'icon-pw-show',  'icon-pw-hide');
+        makeToggle('toggle-confirm-password',  cpInput, 'icon-cpw-show', 'icon-cpw-hide');
+    })();
+    // =====================================================================
+
+    // =====================================================================
+    // Email validation (BUG_REG_026)
+    // type="email" alone accepts malformed addresses like TEST#.@GMAIL.COM
+    // in some browsers. We enforce RFC-5321-inspired pattern explicitly.
+    (function() {
+        const input  = document.getElementById('email');
+        const errEl  = document.getElementById('error-email_format');
+        // Pattern: local@domain.tld
+        //   local  : letters, digits, and . _ % + - (no # or other specials)
+        //   domain : letters, digits, hyphens, dots; TLD >= 2 chars
+        const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+
+        function validateEmail() {
+            if (!input || !errEl) return;
+            const val = input.value.trim();
+            errEl.style.display = (val.length > 0 && !EMAIL_RE.test(val)) ? 'block' : 'none';
+        }
+
+        if (input) {
+            ['input', 'blur', 'paste'].forEach(evt =>
+                input.addEventListener(evt, () => setTimeout(validateEmail, 0))
+            );
+        }
+    })();
+
+    // Phone validation helper — digits, spaces, hyphens, parens, leading + only.
+    // Used for both mobile (BUG_REG_027) and office phone (BUG_REG_028).
+    (function() {
+        [
+            { id: 'mobile',       errId: 'error-mobile_format' },
+            { id: 'office_phone', errId: 'error-office_phone_format' }
+        ].forEach(({ id, errId }) => {
+            const input = document.getElementById(id);
+            const errEl = document.getElementById(errId);
+            if (!input) return;
+
+            function validatePhone() {
+                setTimeout(() => {
+                    // Inline regex literal — no stateful lastIndex (avoids /g reuse bug).
+                    // Strip alphabets and other disallowed characters in-place.
+                    const cleaned = input.value.replace(/[^0-9 ()\-+]/g, '');
+                    if (cleaned !== input.value) {
+                        input.value = cleaned;
+                        if (errEl) {
+                            errEl.style.display = 'block';
+                            setTimeout(() => { errEl.style.display = 'none'; }, 2500);
+                        }
+                    } else {
+                        if (errEl) errEl.style.display = 'none';
+                    }
+                }, 0);
+            }
+
+            ['input', 'paste'].forEach(evt => input.addEventListener(evt, validatePhone));
+        });
+    })();
+    // =====================================================================
+
     setupFieldValidation();
+
+    // =====================================================================
+    // Company Name validation (BUG_REG_014–020)
+    // Rules:
+    //   - Must contain at least one letter (rejects numeric-only: BUG_REG_014)
+    //   - Only letters, digits, spaces, hyphens, ampersands, commas, periods
+    //     allowed — rejects SQL payloads & other specials (BUG_REG_015, BUG_REG_020)
+    //   - Leading/trailing spaces trimmed on blur, warned on input (BUG_REG_016, BUG_REG_017)
+    //   - Max 256 characters (BUG_REG_018, BUG_REG_019)
+    (function() {
+        const input        = document.getElementById('company_name');
+        const errAlpha     = document.getElementById('error-company_name_alpha');
+        const errSpecial   = document.getElementById('error-company_name_special');
+        const errSpace     = document.getElementById('error-company_name_space');
+        const errLength    = document.getElementById('error-company_name_length');
+
+        // Allowed chars: letters (unicode), digits, space, hyphen, ampersand, comma, period
+        const ALLOWED_RE   = /[^\p{L}0-9 \-&,\.]/gu;
+        // Must contain at least one letter
+        const HAS_ALPHA_RE = /\p{L}/u;
+
+        function validateCompanyName() {
+            setTimeout(() => {
+                // 1. Strip disallowed characters (BUG_REG_015, BUG_REG_020)
+                const cleaned = input.value.replace(ALLOWED_RE, '');
+                if (cleaned !== input.value) {
+                    input.value = cleaned;
+                    errSpecial.style.display = 'block';
+                    setTimeout(() => { errSpecial.style.display = 'none'; }, 2500);
+                } else {
+                    errSpecial.style.display = 'none';
+                }
+
+                // 2. Max length (BUG_REG_018, BUG_REG_019)
+                errLength.style.display = input.value.length > 256 ? 'block' : 'none';
+
+                // 3. Leading / trailing spaces (BUG_REG_016, BUG_REG_017)
+                errSpace.style.display = (input.value !== input.value.trim()) ? 'block' : 'none';
+
+                // 4. Must contain at least one letter (BUG_REG_014)
+                errAlpha.style.display = (input.value.trim().length > 0 && !HAS_ALPHA_RE.test(input.value)) ? 'block' : 'none';
+            }, 0);
+        }
+
+        // Auto-trim on blur
+        if (input) {
+            input.addEventListener('blur', () => {
+                input.value = input.value.trim();
+                errSpace.style.display = 'none';
+            });
+            ['input', 'paste'].forEach(evt => input.addEventListener(evt, validateCompanyName));
+        }
+    })();
     // =====================================================================
 
     document.getElementById('business-register-form').addEventListener('submit', async function(e) {
@@ -530,10 +865,32 @@
         submitBtn.innerHTML = '<span class="loading-spinner-sm"></span> Creating...';
 
         try {
-            const password = document.getElementById('password').value;
+            const password        = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
-            if (password !== confirmPassword) throw new Error('Passwords do not match');
-            if (password.length < 8) throw new Error('Password must be at least 8 characters');
+
+            // BUG_REG_034 / BUG_REG_035: reject leading/trailing spaces
+            if (password !== password.trim()) throw new Error('Password must not start or end with a space.');
+
+            // BUG_REG_029: max length
+            if (password.length > 128) throw new Error('Password must be 128 characters or fewer.');
+
+            // Minimum length (existing)
+            if (password.length < 8) throw new Error('Password must be at least 8 characters.');
+
+            // BUG_REG_030: uppercase required
+            if (!/[A-Z]/.test(password)) throw new Error('Password must contain at least one uppercase letter (A–Z).');
+
+            // BUG_REG_031: lowercase required
+            if (!/[a-z]/.test(password)) throw new Error('Password must contain at least one lowercase letter (a–z).');
+
+            // BUG_REG_032: number required
+            if (!/[0-9]/.test(password)) throw new Error('Password must contain at least one number (0–9).');
+
+            // BUG_REG_033: special character required
+            if (!/[^A-Za-z0-9]/.test(password)) throw new Error('Password must contain at least one special character (e.g. !@#$%^&*).');
+
+            // Confirm match
+            if (password !== confirmPassword) throw new Error('Passwords do not match.');
 
             // Submit-time validation — mirrors champion-register.html
             const longFields  = [];
@@ -596,6 +953,31 @@
                 throw new Error('Special characters are not allowed in: ' + specialFields.join(', ') + '. Use only letters, hyphens, and apostrophes.');
             }
 
+            // BUG_REG_014–020: Company name submit-time validation
+            const companyNameInput = document.getElementById('company_name');
+            let companyNameVal     = companyNameInput ? companyNameInput.value.trim() : '';
+            // Auto-trim (BUG_REG_016, BUG_REG_017)
+            if (companyNameInput) companyNameInput.value = companyNameVal;
+
+            const COMPANY_ALLOWED  = /[^\p{L}0-9 \-&,\.]/gu;
+            const COMPANY_HAS_ALPHA = /\p{L}/u;
+
+            if (companyNameVal.length > 256) {
+                const el = document.getElementById('error-company_name_length');
+                if (el) el.style.display = 'block';
+                throw new Error('Company name must be 256 characters or fewer.');
+            }
+            if (COMPANY_ALLOWED.test(companyNameVal)) {
+                const el = document.getElementById('error-company_name_special');
+                if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
+                throw new Error('Company name contains invalid characters. Only letters, numbers, spaces, hyphens, ampersands, commas, and periods are allowed.');
+            }
+            if (companyNameVal.length > 0 && !COMPANY_HAS_ALPHA.test(companyNameVal)) {
+                const el = document.getElementById('error-company_name_alpha');
+                if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
+                throw new Error('Company name must contain at least one letter.');
+            }
+
             // BUG_REG_021–023: Registration number validation
             const regNumInput = document.getElementById('registration_number');
             const regNumVal   = regNumInput ? regNumInput.value.trim() : '';
@@ -609,6 +991,47 @@
                 const el = document.getElementById('error-registration_number_special');
                 if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
                 throw new Error('Company registration number contains invalid characters. Only letters, numbers, hyphens, and forward slashes are allowed.');
+            }
+
+            // BUG_REG_026: Email format validation
+            const emailInput = document.getElementById('email');
+            const emailVal   = emailInput ? emailInput.value.trim() : '';
+            const EMAIL_SUBMIT_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+            if (emailVal.length > 0 && !EMAIL_SUBMIT_RE.test(emailVal)) {
+                const el = document.getElementById('error-email_format');
+                if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 4000); }
+                throw new Error('Please enter a valid email address (e.g. name@domain.com).');
+            }
+
+            // BUG_REG_027 / BUG_REG_028: Phone number validation
+            const PHONE_SUBMIT_RE = /[^0-9 ()\-+]/;
+            [
+                { id: 'mobile',       errId: 'error-mobile_format',       label: 'Mobile number' },
+                { id: 'office_phone', errId: 'error-office_phone_format',  label: 'Office phone'  }
+            ].forEach(({ id, errId, label }) => {
+                const el  = document.getElementById(id);
+                const val = el ? el.value.trim() : '';
+                if (val.length > 0 && PHONE_SUBMIT_RE.test(val)) {
+                    const errEl = document.getElementById(errId);
+                    if (errEl) { errEl.style.display = 'block'; setTimeout(() => { errEl.style.display = 'none'; }, 3000); }
+                    throw new Error(label + ' may only contain digits, spaces, hyphens, parentheses, and a leading +.');
+                }
+            });
+
+            // BUG_REG_024–025: Role / Designation submit-time validation
+            const roleInput = document.getElementById('role');
+            const roleVal   = roleInput ? roleInput.value.trim() : '';
+            if (roleInput) roleInput.value = roleVal;   // auto-trim
+
+            if (roleVal.length > 100) {
+                const el = document.getElementById('error-role_length');
+                if (el) el.style.display = 'block';
+                throw new Error('Role / Designation must be 100 characters or fewer.');
+            }
+            if (roleVal.length > 0 && /[^\p{L}0-9 \-&,\.]/u.test(roleVal)) {
+                const el = document.getElementById('error-role_special');
+                if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
+                throw new Error('Role / Designation contains invalid characters. Only letters, numbers, spaces, hyphens, ampersands, commas, and periods are allowed.');
             }
 
             const businessData = {
