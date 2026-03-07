@@ -29,36 +29,68 @@
         };
     }
 
-    // Utility: Get user type (champion or business)
+    // Utility: Get user type (champion or business).
+    // Priority: login_context set at login time > in-memory auth state > DB lookup.
+    // This prevents dual-account users from always being routed to business.
     async function getUserType() {
-        // Try business user first
+        // 1. Honour the context explicitly stamped when the user logged in.
+        //    Most reliable signal for dual-account users.
+        const loginContext = localStorage.getItem('login_context');
+        if (loginContext === 'champion' || loginContext === 'business') {
+            return loginContext;
+        }
+
+        // 2. Fallback: check in-memory champion auth (champion-first so a champion-only
+        //    user who refreshed the page without a stored context is still detected).
+        //    Always verify a live session exists first — the in-memory object can be
+        //    stale after logout before the page fully reloads.
+        if (window.championAuth && window.championAuth.isAuthenticated && window.championAuth.isAuthenticated()) {
+            // Confirm there is actually an active Supabase session before trusting this
+            if (window.getSupabase) {
+                const supabase = window.getSupabase();
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    const champ = window.championAuth.getChampion && window.championAuth.getChampion();
+                    if (champ && champ.id) return 'champion';
+                }
+            } else {
+                const champ = window.championAuth.getChampion && window.championAuth.getChampion();
+                if (champ && champ.id) return 'champion';
+            }
+        }
+
+        // 3. Last resort: DB lookup for a matching business_users row.
         if (window.getSupabase) {
             const supabase = window.getSupabase();
             const { data: { session } } = await supabase.auth.getSession();
             if (session && session.user) {
-                // Check if business user exists
                 const { data: businessUser, error } = await supabase
                     .from('business_users')
                     .select('id')
                     .eq('auth_user_id', session.user.id)
                     .maybeSingle();
 
-                // No matching row is valid (user is not a business account)
                 if (!error && businessUser && businessUser.id) return 'business';
             }
         }
-        // Then try champion
-        if (window.championAuth && window.championAuth.isAuthenticated && window.championAuth.isAuthenticated()) {
-            const champ = window.championAuth.getChampion && window.championAuth.getChampion();
-            if (champ && champ.id) return 'champion';
-        }
+
         return null;
     }
 
     // Enforce dashboard/page access
     async function enforceUserTypeAccess() {
-        const userType = await getUserType();
+        // Never interfere with login, register, or other auth pages —
+        // the user is actively switching accounts and must be allowed through.
+        const AUTH_PAGES = [
+            '/champion-login.html', '/business-login.html',
+            '/champion-register.html', '/business-register.html',
+            '/forgot-password.html', '/business-reset-password.html',
+            '/verify.html', '/reset-password.html'
+        ];
         const path = window.location.pathname;
+        if (AUTH_PAGES.some(p => path === p || path.endsWith(p))) return true;
+
+        const userType = await getUserType();
         const isDashboardPath = (p) => p === '/business-dashboard.html' || p === '/champion-dashboard.html' || p === '/dashboard.html' || p === '/dashboard';
 
         if (userType === 'champion' && isDashboardPath(path) && path !== '/champion-dashboard.html') {
