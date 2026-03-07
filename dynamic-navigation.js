@@ -1056,18 +1056,17 @@ class DynamicNavigation {
             champion: {
                 dashboard: '/champion-dashboard.html',
                 profile: '/champion-profile.html',
-                blockedPaths: [
-                    '/business-login.html',
-                    '/business-register.html'
-                ]
+                // BUG_HomePage_001 fix: auth/register pages are public entry points.
+                // Logged-in users must be able to navigate to them freely to switch
+                // platform context. Do NOT include login or register paths here.
+                blockedPaths: []
             },
             business: {
                 dashboard: '/business-dashboard.html',
                 profile: '/business-settings.html',
-                blockedPaths: [
-                    '/champion-login.html',
-                    '/champion-register.html'
-                ]
+                // BUG_HomePage_001 fix: same rationale — champion-register.html is a
+                // public page and must never be blocked for business users.
+                blockedPaths: []
             }
         };
     }
@@ -1196,6 +1195,16 @@ class DynamicNavigation {
             } catch (err) {
                 return;
             }
+
+            // BUG_HomePage_001 fix: never intercept navigation to auth/register pages.
+            // These are public entry points that allow users to switch platform context.
+            const AUTH_PAGES = [
+                '/champion-login.html', '/business-login.html',
+                '/champion-register.html', '/business-register.html',
+                '/forgot-password.html', '/business-reset-password.html',
+                '/verify.html', '/reset-password.html'
+            ];
+            if (AUTH_PAGES.some(p => targetPath === p || targetPath.endsWith(p))) return;
 
             const userType = this.userType || await this.detectCurrentUserType();
             this.userType = userType;
