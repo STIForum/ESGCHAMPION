@@ -209,11 +209,11 @@ class SupabaseService {
      * Sign in with OAuth (LinkedIn)
      */
     async signInWithOAuth(provider) {
+        const redirectTo = `${window.location.origin}/linkedin-callback.html`;
+        console.log('Supabase OAuth redirectTo:', redirectTo);
         const { data, error } = await this.client.auth.signInWithOAuth({
             provider,
-            options: {
-                redirectTo: `${window.location.origin}/linkedin-callback.html`
-            }
+            options: { redirectTo }
         });
         if (error) throw error;
         return data;
@@ -1380,7 +1380,83 @@ class SupabaseService {
     /**
      * Approve submission with admin comment - updates both submission and indicator reviews
      */
+    /**
+     * Calculate STIF credits for a single indicator review based on field completion.
+     *
+     * Scoring rules (from STIF Credit Calculation spreadsheet):
+     *   Mandatory fields  → +2 each  (8 fields, max 16 pts)
+     *   Optional fields   → +1 each  (10 fields, max 10 pts)
+     *   Read-only fields  →  0       (indicator title, code, description)
+     *   Maximum per review: 26 pts
+     */
+    calculateIndicatorReviewCredits(review) {
+        // --- Mandatory fields (+2 each) ---
+        const mandatoryFields = [
+            'sme_size_band',
+            'primary_sector',
+            'relevance',
+            'regulatory_necessity',
+            'operational_feasibility',
+            'cost_to_collect',
+            'misreporting_risk',
+            'rationale'
+        ];
+
+        // --- Optional / non-mandatory fields (+1 each) ---
+        const optionalFields = [
+            'geographic_footprint',
+            'primary_framework',
+            'esg_class',
+            'estimated_time',
+            'support_required',
+            'suggested_tier',
+            'notes'
+        ];
+
+        // Array-based optional fields — count if the array is non-empty (+1 each)
+        const optionalArrayFields = [
+            'sdgs',
+            'stakeholder_priority',
+            'optional_tags'  // "More Specific Sector / NACE Tags"
+        ];
+
+        let credits = 0;
+
+        for (const field of mandatoryFields) {
+            const val = review[field];
+            if (val !== null && val !== undefined && val !== '') {
+                credits += 2;
+            }
+        }
+
+        for (const field of optionalFields) {
+            const val = review[field];
+            if (val !== null && val !== undefined && val !== '') {
+                credits += 1;
+            }
+        }
+
+        for (const field of optionalArrayFields) {
+            const val = review[field];
+            if (Array.isArray(val) && val.length > 0) {
+                credits += 1;
+            }
+        }
+
+        return credits; // 0–26
+    }
+
     async approveSubmissionWithComment(submissionId, adminComment, adminId) {
+        // Fetch all indicator reviews for this submission so we can calculate credits
+        const { data: indicatorReviews, error: fetchError } = await this.client
+            .from('panel_review_indicator_reviews')
+            .select('*')
+            .eq('submission_id', submissionId);
+
+        if (fetchError) {
+            console.error('Error fetching indicator reviews for credit calculation:', fetchError);
+        }
+
         // Update the submission status to approved with admin notes
         const { data: submission, error: submissionError } = await this.client
             .from('panel_review_submissions')
@@ -1396,21 +1472,89 @@ class SupabaseService {
         
         if (submissionError) throw submissionError;
 
-        // Update all indicator reviews for this submission to 'accepted' status
-        const { error: indicatorError } = await this.client
-            .from('panel_review_indicator_reviews')
-            .update({ 
-                review_status: 'accepted',
-                updated_at: new Date().toISOString()
-            })
-            .eq('submission_id', submissionId);
-        
-        if (indicatorError) {
-            console.error('Error updating indicator reviews:', indicatorError);
-            // Don't throw - submission was already updated
+        // Calculate total credits earned across all indicator reviews
+        let totalCreditsEarned = 0;
+        const reviews = indicatorReviews || [];
+
+        for (const review of reviews) {
+            const reviewCredits = this.calculateIndicatorReviewCredits(review);
+            totalCreditsEarned += reviewCredits;
+
+            // Persist the per-indicator credit score
+            const { error: updateErr } = await this.client
+                .from('panel_review_indicator_reviews')
+                .update({
+                    review_status: 'accepted',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', review.id);
+
+            if (updateErr) {
+                console.error('Error updating indicator review status:', updateErr);
+            }
         }
 
-        return submission;
+        // Award credits to the champion who submitted the review
+        if (totalCreditsEarned > 0 && submission.champion_id) {
+            const { data: champion, error: champFetchErr } = await this.client
+                .from('champions')
+                .select('credits, accepted_reviews_count')
+                .eq('id', submission.champion_id)
+                .single();
+
+            if (!champFetchErr && champion) {
+                const { error: creditErr } = await this.client
+                    .from('champions')
+                    .update({
+                        credits: (champion.credits || 0) + totalCreditsEarned,
+                        accepted_reviews_count: (champion.accepted_reviews_count || 0) + reviews.length,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', submission.champion_id);
+
+                if (creditErr) {
+                    console.error('Error awarding credits to champion:', creditErr);
+                } else {
+                    console.log(`Awarded ${totalCreditsEarned} STIF credits to champion ${submission.champion_id} (${reviews.length} indicator reviews)`);
+                }
+            }
+        }
+
+        // Fetch panel name for a meaningful notification message
+        let panelName = 'your panel review';
+        try {
+            const { data: panelData } = await this.client
+                .from('panels')
+                .select('name')
+                .eq('id', submission.panel_id)
+                .single();
+            if (panelData?.name) panelName = panelData.name;
+        } catch (_) { /* non-critical */ }
+
+        // Send notification to the champion with the exact credits earned
+        if (submission.champion_id) {
+            const indicatorCount = reviews.length;
+            const notificationMessage = totalCreditsEarned > 0
+                ? `Your review of "${panelName}" has been approved! You earned ${totalCreditsEarned} STIF credit${totalCreditsEarned !== 1 ? 's' : ''} across ${indicatorCount} indicator${indicatorCount !== 1 ? 's' : ''}.${adminComment ? ` Admin note: ${adminComment}` : ''}`
+                : `Your review of "${panelName}" has been approved.${adminComment ? ` Admin note: ${adminComment}` : ''}`;
+
+            await this.createNotification(
+                submission.champion_id,
+                'review_accepted',
+                `✅ Review Approved — +${totalCreditsEarned} STIF Credit${totalCreditsEarned !== 1 ? 's' : ''}`,
+                notificationMessage,
+                '/champion-dashboard.html',
+                {
+                    submissionId,
+                    panelId: submission.panel_id,
+                    panel_name: panelName,
+                    creditsAwarded: totalCreditsEarned,
+                    indicatorCount: reviews.length
+                }
+            );
+        }
+
+        return { ...submission, creditsAwarded: totalCreditsEarned };
     }
 
     /**
@@ -1443,6 +1587,35 @@ class SupabaseService {
         
         if (indicatorError) {
             console.error('Error updating indicator reviews:', indicatorError);
+        }
+
+        // Fetch panel name for the notification
+        let panelName = 'your panel review';
+        try {
+            const { data: panelData } = await this.client
+                .from('panels')
+                .select('name')
+                .eq('id', submission.panel_id)
+                .single();
+            if (panelData?.name) panelName = panelData.name;
+        } catch (_) { /* non-critical */ }
+
+        // Send rejection notification to the champion
+        if (submission.champion_id) {
+            const notificationMessage = `Your review of "${panelName}" was not approved and can be resubmitted.${adminComment ? ` Admin feedback: ${adminComment}` : ''}`;
+
+            await this.createNotification(
+                submission.champion_id,
+                'review_rejected',
+                `❌ Review Not Approved — ${panelName}`,
+                notificationMessage,
+                `/champion-panels.html`,
+                {
+                    submissionId,
+                    panelId: submission.panel_id,
+                    panel_name: panelName
+                }
+            );
         }
 
         return submission;
