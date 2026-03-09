@@ -704,39 +704,7 @@ class AdminReviewPage {
             // Update submission and indicator reviews in database
             await window.championDB.approveSubmissionWithComment(submissionId, adminComment, adminId);
 
-            // Send notification to the champion
-            if (championId) {
-                try {
-                    // Send review approved notification
-                    await window.championDB.createNotification(
-                        championId,
-                        'review_accepted',
-                        'Review Approved! 🎉',
-                        `Your review for "${panelName}" has been approved!${adminComment ? ' Admin feedback: ' + adminComment : ''}`,
-                        '/champion-dashboard.html',
-                        { 
-                            submission_id: submissionId, 
-                            panel_name: panelName,
-                            admin_comment: adminComment 
-                        }
-                    );
-                    
-                    // Send credits awarded notification (10 credits per approved review)
-                    await window.championDB.createNotification(
-                        championId,
-                        'credits_awarded',
-                        'Credits Earned! 💰',
-                        `You earned 10 credits for your approved review of "${panelName}".`,
-                        '/champion-dashboard.html',
-                        { 
-                            credits: 10,
-                            panel_name: panelName
-                        }
-                    );
-                } catch (notifError) {
-                    console.warn('Failed to send notification:', notifError);
-                }
-            }
+            // Notifications are sent by approveSubmissionWithComment in supabase-service.js
 
             // Also update localStorage for backwards compatibility
             const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
@@ -794,26 +762,7 @@ class AdminReviewPage {
             // Update in database with rejection comment
             await window.championDB.rejectSubmissionWithComment(submissionId, adminComment, adminId);
 
-            // Send notification to the champion
-            if (championId) {
-                try {
-                    await window.championDB.createNotification(
-                        championId,
-                        'review_rejected',
-                        'Review Requires Changes',
-                        `Your review for "${panelName}" needs some changes.${adminComment ? ' Feedback: ' + adminComment : ' Please review and resubmit.'}`,
-                        '/champion-panels.html',
-                        { 
-                            submission_id: submissionId, 
-                            panel_name: panelName,
-                            admin_comment: adminComment,
-                            rejection_reason: adminComment
-                        }
-                    );
-                } catch (notifError) {
-                    console.warn('Failed to send notification:', notifError);
-                }
-            }
+            // Notifications are sent by rejectSubmissionWithComment in supabase-service.js
 
             // Also update localStorage for backwards compatibility
             const submissions = JSON.parse(localStorage.getItem('panelSubmissions') || '[]');
