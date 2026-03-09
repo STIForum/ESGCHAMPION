@@ -222,10 +222,34 @@ class ChampionDashboard {
         try {
             const scoreData = await this.db.getSTIFScore();
             const total = scoreData.totalScore || 0;
+            const breakdown = scoreData.breakdown || {};
 
+            // Update total in modal
             const totalEl = document.getElementById('score-modal-total');
             if (totalEl) {
                 totalEl.textContent = total;
+            }
+
+            // Update breakdown details if elements exist
+            const mandatoryEl = document.getElementById('score-mandatory-credits');
+            if (mandatoryEl) {
+                mandatoryEl.textContent = breakdown.mandatoryFields || 0;
+            }
+
+            const optionalEl = document.getElementById('score-optional-credits');
+            if (optionalEl) {
+                optionalEl.textContent = breakdown.optionalFields || 0;
+            }
+
+            const reviewsEl = document.getElementById('score-approved-reviews');
+            if (reviewsEl) {
+                reviewsEl.textContent = breakdown.approvedReviews || 0;
+            }
+
+            // Update score info tooltip / helper text
+            const maxEl = document.getElementById('score-max-per-review');
+            if (maxEl) {
+                maxEl.textContent = breakdown.maxPerReview || 26;
             }
         } catch (error) {
             console.error('Error loading score breakdown:', error);
