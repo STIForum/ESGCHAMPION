@@ -349,6 +349,11 @@ class ChampionDB {
 
     /**
      * Get STIF score breakdown
+     *
+     * Credits are now earned per indicator review field completion:
+     *   - Mandatory fields completed × 2  (max 16 per indicator)
+     *   - Optional fields completed  × 1  (max 10 per indicator)
+     *   - Max per indicator review: 26 pts
      */
     async getSTIFScore() {
         const auth = window.championAuth;
@@ -357,28 +362,76 @@ class ChampionDB {
         }
 
         try {
-            const champion = await this.service.getChampion(auth.getUser().id);
-            const reviews = await this.service.getReviewsByChampion(auth.getUser().id);
-            const acceptedReviews = await this.service.getAcceptedReviews({ championId: auth.getUser().id });
+            const userId = auth.getUser().id;
+            const champion = await this.service.getChampion(userId);
 
-            // Calculate STIF score components
-            const reviewCredits = acceptedReviews.reduce((sum, r) => sum + (r.credits_awarded || 0), 0);
-            
-            // Get vote stats
-            let totalUpvotes = 0;
-            for (const review of reviews) {
-                const votes = await this.service.getVotes(review.id);
-                totalUpvotes += votes.filter(v => v.vote_type === 'upvote').length;
+            // Fetch all approved panel review submissions for this champion
+            const { data: approvedSubmissions, error: subError } = await this.service.client
+                .from('panel_review_submissions')
+                .select('id, champion_id')
+                .eq('champion_id', userId)
+                .eq('status', 'approved');
+
+            if (subError) throw subError;
+
+            let mandatoryCredits = 0;
+            let optionalCredits = 0;
+            let totalApprovedReviews = 0;
+
+            if (approvedSubmissions && approvedSubmissions.length > 0) {
+                const submissionIds = approvedSubmissions.map(s => s.id);
+
+                // Fetch all accepted indicator reviews for those submissions
+                const { data: indicatorReviews, error: revError } = await this.service.client
+                    .from('panel_review_indicator_reviews')
+                    .select('*')
+                    .in('submission_id', submissionIds)
+                    .eq('review_status', 'accepted');
+
+                if (revError) throw revError;
+
+                // Mandatory fields (+2 each)
+                const mandatoryFields = [
+                    'sme_size_band', 'primary_sector', 'relevance',
+                    'regulatory_necessity', 'operational_feasibility',
+                    'cost_to_collect', 'misreporting_risk', 'rationale'
+                ];
+
+                // Optional scalar fields (+1 each)
+                const optionalFields = [
+                    'geographic_footprint', 'primary_framework', 'esg_class',
+                    'estimated_time', 'support_required', 'suggested_tier', 'notes'
+                ];
+
+                // Optional array fields (+1 if non-empty)
+                const optionalArrayFields = ['sdgs', 'stakeholder_priority', 'optional_tags'];
+
+                for (const review of (indicatorReviews || [])) {
+                    totalApprovedReviews++;
+                    for (const f of mandatoryFields) {
+                        const v = review[f];
+                        if (v !== null && v !== undefined && v !== '') mandatoryCredits += 2;
+                    }
+                    for (const f of optionalFields) {
+                        const v = review[f];
+                        if (v !== null && v !== undefined && v !== '') optionalCredits += 1;
+                    }
+                    for (const f of optionalArrayFields) {
+                        const v = review[f];
+                        if (Array.isArray(v) && v.length > 0) optionalCredits += 1;
+                    }
+                }
             }
 
-            const voteCredits = totalUpvotes * 2;
-            
+            const totalScore = mandatoryCredits + optionalCredits;
+
             return {
-                totalScore: champion.credits || 0,
+                totalScore: champion.credits || totalScore,
                 breakdown: {
-                    reviews: reviewCredits,
-                    votes: voteCredits,
-                    participation: champion.credits - reviewCredits - voteCredits
+                    mandatoryFields: mandatoryCredits,
+                    optionalFields: optionalCredits,
+                    approvedReviews: totalApprovedReviews,
+                    maxPerReview: 26
                 },
                 rank: await this.getChampionRank(champion.id)
             };
