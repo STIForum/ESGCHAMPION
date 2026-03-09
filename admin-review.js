@@ -3827,7 +3827,18 @@ class AdminReviewPage {
     formatLabel(mapKey, value) {
         if (!value) return '—';
         const map = this.labelMaps[mapKey] || {};
-        return map[value] || value;
+        if (map[value]) return map[value];
+        // For primary_framework, the stored value is a framework code (e.g. "001", "gri").
+        // Look it up in FRAMEWORK_LABELS (populated from the frameworks table) for the real name.
+        if (mapKey === 'primary_framework') {
+            const fromLabels = window.FRAMEWORK_LABELS?.[String(value).toLowerCase()];
+            if (fromLabels) return fromLabels;
+            const fromList = (this.frameworksList || []).find(
+                f => f.code?.toLowerCase() === String(value).toLowerCase() || f.id === value
+            );
+            if (fromList?.name) return fromList.name;
+        }
+        return value;
     }
 
     formatSdgs(sdgs) {
