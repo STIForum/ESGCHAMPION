@@ -467,26 +467,15 @@ class DynamicNavigation {
                 id: 'demo-review-approved-001',
                 type: 'review_accepted',
                 title: 'Review Approved! 🎉',
-                message: 'Your review for "Climate & GHG Emissions" panel has been approved!',
+                message: 'Your review for "Climate & GHG Emissions" panel has been approved! You earned 18 STIF credits across 2 indicators.',
                 read: false,
                 is_read: false,
                 created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
                 data: {
                     panel_name: 'Climate & GHG Emissions',
+                    creditsAwarded: 18,
+                    indicatorCount: 2,
                     admin_comment: 'Great work! Your analysis was thorough and well-structured.'
-                }
-            },
-            {
-                id: 'demo-credits-awarded-001',
-                type: 'credits_awarded',
-                title: 'Credits Earned! 💰',
-                message: 'You earned 10 credits for your approved review of "Climate & GHG Emissions".',
-                read: false,
-                is_read: false,
-                created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-                data: {
-                    credits: 10,
-                    panel_name: 'Climate & GHG Emissions'
                 }
             },
             {
@@ -561,8 +550,6 @@ class DynamicNavigation {
         const list = document.getElementById('notifications-list');
         if (!list) return;
 
-        const unreadNotifications = notifications.filter(n => !n.read);
-        
         if (notifications.length === 0) {
             list.innerHTML = `
                 <div class="notifications-empty">
@@ -625,18 +612,26 @@ class DynamicNavigation {
         // Check notification type and handle accordingly
         const isBusiness = this.userType === 'business';
         const reviewNotifications = ['review_accepted', 'review_rejected', 'review_approved'];
+        const creditNotifications = ['credits_awarded', 'credits_earned'];
         const detailNotifications = isBusiness
             ? ['subscription', 'workspace_ready', 'reporting']
-            : ['credits_awarded', 'peer_joined', 'new_panel'];
+            : ['peer_joined', 'new_panel'];
 
-        if (reviewNotifications.includes(notification.type)) {
-            // Show detailed modal for review notifications
+        if (reviewNotifications.includes(notification.type) || creditNotifications.includes(notification.type)) {
+            // Normalise legacy credits_awarded so modal renders the credit block correctly
+            if (creditNotifications.includes(notification.type)) {
+                let d = notification.data || {};
+                if (typeof d === 'string') { try { d = JSON.parse(d); } catch (_) { d = {}; } }
+                // Map old field name to the one the modal reads
+                if (d.credits !== undefined && d.creditsAwarded === undefined) {
+                    d = { ...d, creditsAwarded: d.credits };
+                }
+                notification = { ...notification, type: 'review_accepted', data: d };
+            }
             this.showNotificationDetailModal(notification);
         } else if (detailNotifications.includes(notification.type)) {
-            // Show generic detail modal for other notification types
             this.showGenericNotificationModal(notification);
         } else if (notification.link) {
-            // Navigate to the link
             window.location.href = notification.link;
         }
     }
@@ -666,8 +661,6 @@ class DynamicNavigation {
             actionButton = `<a href="/champion-panels.html" class="btn btn-primary">View Panels</a>`;
         } else if (notification.type === 'peer_joined') {
             actionButton = `<a href="/champion-dashboard.html" class="btn btn-primary">Go to Dashboard</a>`;
-        } else if (notification.type === 'credits_awarded') {
-            actionButton = `<a href="/champion-dashboard.html" class="btn btn-primary">View Credits</a>`;
         }
 
         const modalHTML = `
@@ -684,12 +677,6 @@ class DynamicNavigation {
                             </div>
                             <p class="text-secondary" style="font-size: var(--text-base);">${notification.message}</p>
                         </div>
-                        ${notification.data?.credits ? `
-                            <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-3); text-align: center; margin-bottom: var(--space-4);">
-                                <span class="text-secondary">Credits earned:</span>
-                                <strong style="margin-left: var(--space-2); color: var(--warning); font-size: var(--text-lg);">+${notification.data.credits}</strong>
-                            </div>
-                        ` : ''}
                         ${notification.data?.new_user_name ? `
                             <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-3); text-align: center; margin-bottom: var(--space-4);">
                                 <span class="text-secondary">New member:</span>
@@ -715,16 +702,54 @@ class DynamicNavigation {
     }
 
     /**
-     * Show notification detail modal with admin feedback
+     * Show notification detail modal for review approval/rejection.
+     * Displays the exact STIF credits earned broken down by mandatory vs optional fields.
      */
     showNotificationDetailModal(notification) {
         // Remove existing modal if any
         const existingModal = document.getElementById('notification-detail-modal-backdrop');
         if (existingModal) existingModal.remove();
 
-        const isApproved = notification.type === 'review_accepted';
-        const adminComment = notification.data?.admin_comment || notification.data?.rejection_reason || '';
-        const panelName = notification.data?.panel_name || 'Panel';
+        const isApproved = notification.type === 'review_accepted' || notification.type === 'review_approved';
+
+        // Supabase jsonb columns can arrive as a JSON string — parse defensively
+        let data = notification.data || {};
+        if (typeof data === 'string') {
+            try { data = JSON.parse(data); } catch (_) { data = {}; }
+        }
+
+        const adminComment = data.admin_comment || data.rejection_reason || '';
+        const panelName = data.panel_name || 'Panel';
+
+        // Credit breakdown — support new shape (creditsAwarded) and legacy shape (credits)
+        const creditsAwarded = data.creditsAwarded ?? data.credits_awarded ?? data.credits ?? null;
+        const indicatorCount = data.indicatorCount ?? data.indicator_count ?? null;
+        const maxPerReview = 26;
+
+        // Build credit summary block — only shown for approvals that carry credit data
+        let creditBlock = '';
+        if (isApproved && creditsAwarded !== null) {
+            const avgPerIndicator = indicatorCount && indicatorCount > 0
+                ? Math.round(creditsAwarded / indicatorCount)
+                : creditsAwarded;
+            const pct = Math.round((creditsAwarded / (maxPerReview * (indicatorCount || 1))) * 100);
+
+            creditBlock = `
+                <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+                        <span style="font-weight: 600; color: #166534; font-size: var(--text-sm);">STIF Credits Earned</span>
+                        <span style="font-size: 24px; font-weight: 700; color: #16a34a;">+${creditsAwarded}</span>
+                    </div>
+                    <div style="background: #bbf7d0; border-radius: 999px; height: 6px; margin-bottom: var(--space-3); overflow: hidden;">
+                        <div style="background: #16a34a; height: 100%; width: ${Math.min(pct, 100)}%; border-radius: 999px; transition: width 0.6s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: var(--text-xs); color: #166534;">
+                        <span>${indicatorCount ? `${indicatorCount} indicator${indicatorCount !== 1 ? 's' : ''} reviewed` : 'Review assessed'}</span>
+                        <span>${avgPerIndicator} pts/indicator · max ${maxPerReview}</span>
+                    </div>
+                </div>
+            `;
+        }
 
         const modalHTML = `
             <div class="modal-backdrop active" id="notification-detail-modal-backdrop">
@@ -745,31 +770,34 @@ class DynamicNavigation {
                             <p class="text-secondary">${notification.message}</p>
                         </div>
 
+                        ${creditBlock}
+
                         <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4);">
-                            <div style="margin-bottom: var(--space-3);">
-                                <span class="text-secondary">Panel:</span>
-                                <strong style="margin-left: var(--space-2);">${panelName}</strong>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+                                <span class="text-secondary">Panel</span>
+                                <strong>${panelName}</strong>
                             </div>
-                            <div style="margin-bottom: var(--space-3);">
-                                <span class="text-secondary">Status:</span>
-                                <span class="badge ${isApproved ? 'badge-success' : 'badge-warning'}" style="margin-left: var(--space-2);">
+                            <div style="display: flex; align-items: center; justify-content: space-between; ${adminComment ? 'margin-bottom: var(--space-3);' : ''}">
+                                <span class="text-secondary">Status</span>
+                                <span class="badge ${isApproved ? 'badge-success' : 'badge-warning'}">
                                     ${isApproved ? 'Approved' : 'Needs Changes'}
                                 </span>
                             </div>
                             ${adminComment ? `
                                 <div>
-                                    <span class="text-secondary">Admin Feedback:</span>
-                                    <div style="margin-top: var(--space-2); padding: var(--space-3); background: white; border-radius: var(--radius-md); border-left: 3px solid ${isApproved ? 'var(--success)' : 'var(--warning)'};">
+                                    <span class="text-secondary" style="font-size: var(--text-sm); display: block; margin-bottom: var(--space-2);">Admin Feedback</span>
+                                    <div style="padding: var(--space-3); background: white; border-radius: var(--radius-md); border-left: 3px solid ${isApproved ? 'var(--success)' : 'var(--warning)'}; font-size: var(--text-sm); color: var(--gray-700); line-height: 1.5;">
                                         ${adminComment}
                                     </div>
                                 </div>
-                            ` : '<p class="text-muted"><em>No additional feedback provided.</em></p>'}
+                            ` : ''}
                         </div>
                     </div>
                     <div class="modal-footer">
-                        ${!isApproved ? `
-                            <a href="/champion-panels.html" class="btn btn-primary">Review Panels</a>
-                        ` : ''}
+                        ${isApproved
+                            ? `<a href="/champion-dashboard.html" class="btn btn-primary">View Dashboard</a>`
+                            : `<a href="/champion-panels.html" class="btn btn-primary">Resubmit Review</a>`
+                        }
                         <button type="button" class="btn btn-secondary" onclick="window.dynamicNav.closeNotificationDetailModal()">Close</button>
                     </div>
                 </div>
@@ -1010,17 +1038,13 @@ class DynamicNavigation {
     /**
      * Detect signed-in user type.
      * login_context (set at login time) is the authoritative source of truth.
-     * For users registered in both tables, this prevents the business_users
-     * query from overriding a champion login (and vice-versa).
      */
     async detectCurrentUserType() {
         try {
-            // 1. login_context is set at login time and is always correct.
             const loginContext = localStorage.getItem('login_context');
             if (loginContext === 'champion') return 'champion';
             if (loginContext === 'business') return 'business';
 
-            // 2. No login_context — fall back to DB detection (fresh session, etc.)
             if (!window.getSupabase) {
                 if (this.auth?.isAuthenticated?.() && this.auth.getChampion?.()?.id) return 'champion';
                 return null;
@@ -1048,41 +1072,27 @@ class DynamicNavigation {
         }
     }
 
-    /**
-     * Path rules by user type
-     */
     getUserTypePathRules() {
         return {
             champion: {
                 dashboard: '/champion-dashboard.html',
                 profile: '/champion-profile.html',
-                // BUG_HomePage_001 fix: auth/register pages are public entry points.
-                // Logged-in users must be able to navigate to them freely to switch
-                // platform context. Do NOT include login or register paths here.
                 blockedPaths: []
             },
             business: {
                 dashboard: '/business-dashboard.html',
                 profile: '/business-settings.html',
-                // BUG_HomePage_001 fix: same rationale — champion-register.html is a
-                // public page and must never be blocked for business users.
                 blockedPaths: []
             }
         };
     }
 
-    /**
-     * Normalize URL path
-     */
     normalizePath(path) {
         if (!path) return '/';
         if (path === '/index.html') return '/';
         return path;
     }
 
-    /**
-     * Determine whether a path is any dashboard route
-     */
     isDashboardPath(path) {
         const normalized = this.normalizePath(path);
         return normalized === '/champion-dashboard.html'
@@ -1091,9 +1101,6 @@ class DynamicNavigation {
             || normalized === '/dashboard';
     }
 
-    /**
-     * Show modal and redirect user to correct dashboard for their account type
-     */
     showUserTypeRedirectModal(message, redirectPath) {
         if (!message || !redirectPath) return;
 
@@ -1127,9 +1134,6 @@ class DynamicNavigation {
         }, 1000);
     }
 
-    /**
-     * Enforce current page by user type
-     */
     async enforceCurrentPageByUserType() {
         const userType = this.userType || await this.detectCurrentUserType();
         if (!userType) return;
@@ -1171,9 +1175,6 @@ class DynamicNavigation {
         }
     }
 
-    /**
-     * Guard links so clicking Dashboard anywhere routes to correct dashboard
-     */
     setupUserTypeLinkGuard() {
         if (this.userTypeGuardSetup) return;
         this.userTypeGuardSetup = true;
@@ -1196,8 +1197,6 @@ class DynamicNavigation {
                 return;
             }
 
-            // BUG_HomePage_001 fix: never intercept navigation to auth/register pages.
-            // These are public entry points that allow users to switch platform context.
             const AUTH_PAGES = [
                 '/champion-login.html', '/business-login.html',
                 '/champion-register.html', '/business-register.html',
@@ -1250,9 +1249,6 @@ class DynamicNavigation {
         }, true);
     }
 
-    /**
-     * Check if current path is active
-     */
     isActive(path) {
         const currentPath = window.location.pathname;
         if (path === '/' || path === '/index.html') {
@@ -1261,9 +1257,6 @@ class DynamicNavigation {
         return currentPath === path ? 'active' : '';
     }
 
-    /**
-     * Get initials from name
-     */
     getInitials(name) {
         if (!name) return '?';
         const parts = name.trim().split(' ');
@@ -1536,7 +1529,6 @@ window.dynamicNav = new DynamicNavigation();
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait a bit for auth to initialize
     setTimeout(() => {
         window.dynamicNav.init();
     }, 100);
