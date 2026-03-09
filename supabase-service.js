@@ -1245,7 +1245,7 @@ class SupabaseService {
     async getAdminPanelReviewSubmissions(status = null) {
         let query = this.client
             .from('panel_review_submissions')
-            .select('*, panels(name, category)')
+            .select('*, panels(name, category, primary_framework)')
             .order('created_at', { ascending: false });
 
         if (status) {
@@ -1280,6 +1280,23 @@ class SupabaseService {
             data.forEach(submission => {
                 submission.champions = championsMap[submission.champion_id] || null;
             });
+
+            // Fetch indicator counts for all submissions in one query
+            const submissionIds = data.map(s => s.id);
+            const { data: indicatorRows } = await this.client
+                .from('panel_review_indicator_reviews')
+                .select('submission_id')
+                .in('submission_id', submissionIds);
+
+            const indicatorCountMap = {};
+            if (indicatorRows) {
+                indicatorRows.forEach(row => {
+                    indicatorCountMap[row.submission_id] = (indicatorCountMap[row.submission_id] || 0) + 1;
+                });
+            }
+            data.forEach(submission => {
+                submission.indicatorCount = indicatorCountMap[submission.id] || 0;
+            });
         }
         
         return data || [];
@@ -1291,7 +1308,7 @@ class SupabaseService {
         // Get submission
         const { data: submission, error: subError } = await this.client
             .from('panel_review_submissions')
-            .select('*, panels(name, category)')
+            .select('*, panels(name, category, primary_framework)')
             .eq('id', submissionId)
             .single();
         if (subError) throw subError;
@@ -1547,7 +1564,6 @@ class SupabaseService {
                 {
                     submissionId,
                     panelId: submission.panel_id,
-                    panel_name: panelName,
                     creditsAwarded: totalCreditsEarned,
                     indicatorCount: reviews.length
                 }
@@ -1612,8 +1628,7 @@ class SupabaseService {
                 `/champion-panels.html`,
                 {
                     submissionId,
-                    panelId: submission.panel_id,
-                    panel_name: panelName
+                    panelId: submission.panel_id
                 }
             );
         }
