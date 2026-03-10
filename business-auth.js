@@ -303,12 +303,27 @@ class BusinessAuth {
                 return { success: false, error: officePhoneValidation.error };
             }
 
-            // FIX BUG_REG_001: Check for duplicate email before attempting signUp.
-            // Supabase's signUp can silently succeed for an existing email when
-            // "Confirm email" is enabled – it returns a fake/obfuscated user object
-            // with identities: [] instead of throwing an error.
-            // We do an OTP-less existence check via a dedicated pre-check approach:
-            // attempt signUp and inspect the response carefully.
+            // FIX BUG_REG_001 (PRE-CHECK): Query business_users BEFORE calling signUp.
+            // Root cause: Supabase's signUp() for an existing confirmed email silently
+            // triggers a password update / re-auth flow BEFORE we can inspect the response.
+            // The post-signUp identities[] check fires too late — the damage is already done.
+            // Solution: block here, before any auth call is made.
+            const { data: preCheckBusiness, error: preCheckError } = await this.supabase
+                .from('business_users')
+                .select('id')
+                .eq('business_email', emailValidation.email)
+                .maybeSingle();
+
+            if (preCheckError) {
+                console.warn('BUG_REG_001 pre-check query error (non-fatal):', preCheckError.message);
+            }
+
+            if (preCheckBusiness) {
+                return {
+                    success: false,
+                    error: 'A business account with this email already exists. Please log in or reset your password.'
+                };
+            }
 
             // Store all registration data in user metadata (survives email confirmation)
             const enrichedMetadata = {
@@ -350,30 +365,20 @@ class BusinessAuth {
 
             if (!data?.user) throw new Error('User creation failed: no user returned');
 
-            // FIX BUG_REG_001 (continued): When Supabase email-confirm is ON, a duplicate
-            // signUp returns a user with an empty identities array instead of an error.
-            // DUAL-ROLE SAFE: a user may already exist as a Champion with this email –
-            // that is legitimate. We only block if a business_users row already exists
-            // for this email (true duplicate business registration).
+            // FIX BUG_REG_001 (post-signUp guard): When Supabase email-confirm is ON, a
+            // duplicate signUp returns identities: [] instead of an error. The pre-check
+            // above covers the common case; this guard catches the rare race condition or
+            // any auth-only user (e.g. Champion) that slipped through — we must NOT proceed
+            // because signUp has already silently triggered a password update for them.
             if (
                 data.user.identities !== undefined &&
                 Array.isArray(data.user.identities) &&
                 data.user.identities.length === 0
             ) {
-                const { data: existingBusiness } = await this.supabase
-                    .from('business_users')
-                    .select('id')
-                    .eq('business_email', email)
-                    .maybeSingle();
-
-                if (existingBusiness) {
-                    return {
-                        success: false,
-                        error: 'A business account with this email already exists. Please log in or reset your password.'
-                    };
-                }
-                // No business profile yet — existing auth user is likely a Champion.
-                // Fall through: profile will be created after email confirmation via createInitialProfile().
+                return {
+                    success: false,
+                    error: 'An account with this email address already exists. Please log in or reset your password.'
+                };
             }
 
             // 2. Try to insert business profile immediately
