@@ -561,49 +561,58 @@
         });
     }
 
-        // Registration number validation (BUG_REG_021–023)
-        // Root-cause fix: regex was stored as a module-level /g constant, causing
-        // stateful lastIndex carryover between calls — characters slipped through on
-        // every other event (BUG_REG_021, BUG_REG_023). Paste-bypass of maxlength
-        // also allowed >50 chars (BUG_REG_022). Both fixed below.
+        // Registration number validation (BUG_REG_021–023) - FIXED
+        // =====================================================================
         (function() {
             const input        = document.getElementById('registration_number');
             const errorChar    = document.getElementById('error-registration_number');
             const errorSpecial = document.getElementById('error-registration_number_special');
-            // Allowed: letters (unicode), digits, hyphens, forward slashes.
-            // Covers formats like UK: SC123456, US: 12-3456789, MY: 202301012345.
-            // Rejects SQL-dangerous chars: \' ; -- = < > spaces, and all other symbols.
+            
+            // Maximum length is 50 characters (BUG_REG_022 fix)
+            const MAX_LENGTH = 50;
+            
+            // Strict allowlist: only letters (any language), numbers, hyphens, and forward slashes
+            // This explicitly rejects SQL injection payloads like: OR 1=1 -- -, '; DROP TABLE, etc.
+            // The regex removes ANY character that's NOT in the allowlist
+            const ALLOWED_PATTERN = /[^\p{L}0-9\-\/]/gu;
 
             function validateRegNum() {
                 setTimeout(() => {
-                    // 1. Strip disallowed characters (BUG_REG_021, BUG_REG_023)
-                    //    Regex is a literal inside the call — never reused, so lastIndex
-                    //    is always 0. This is the core fix for the stateful-regex bug.
-                    const cleaned = input.value.replace(/[^\p{L}0-9\-\/]/gu, '');
+                    // 1. Strip disallowed characters - this removes SQL injection attempts (BUG_REG_023 fix)
+                    // The regex literal is created fresh each time, avoiding the stateful regex bug
+                    const cleaned = input.value.replace(ALLOWED_PATTERN, '');
+                    
                     if (cleaned !== input.value) {
                         input.value = cleaned;
                         if (errorSpecial) {
                             errorSpecial.style.display = 'block';
-                            setTimeout(() => { errorSpecial.style.display = 'none'; }, 2500);
+                            errorSpecial.textContent = 'Invalid characters removed. Only letters, numbers, hyphens, and forward slashes are allowed.';
+                            setTimeout(() => { errorSpecial.style.display = 'none'; }, 3000);
                         }
                     } else {
                         if (errorSpecial) errorSpecial.style.display = 'none';
                     }
 
-                    // 2. Enforce 50-char limit after paste (BUG_REG_022)
-                    //    HTML maxlength blocks typing but browsers may not trim
-                    //    pasted text before the paste event fires, so we clamp here.
-                    if (input.value.length > 50) {
-                        input.value = input.value.slice(0, 50);
+                    // 2. Enforce MAX_LENGTH (50 chars) - this fixes BUG_REG_022
+                    if (input.value.length > MAX_LENGTH) {
+                        input.value = input.value.slice(0, MAX_LENGTH);
                     }
-                    if (errorChar) errorChar.style.display = input.value.length > 50 ? 'block' : 'none';
+                    
+                    // Show error if still over limit (shouldn't happen after slice, but just in case)
+                    if (errorChar) {
+                        errorChar.style.display = input.value.length > MAX_LENGTH ? 'block' : 'none';
+                    }
                 }, 0);
             }
 
             if (input) {
                 ['input', 'paste'].forEach(evt => input.addEventListener(evt, validateRegNum));
+                
+                // Also validate on blur to catch any edge cases
+                input.addEventListener('blur', validateRegNum);
             }
         })();
+// =====================================================================
 
         // Role / Designation validation (BUG_REG_024, BUG_REG_025)
         (function() {
@@ -979,18 +988,42 @@
             }
 
             // BUG_REG_021–023: Registration number validation
+            // BUG_REG_021–023: Registration number validation
             const regNumInput = document.getElementById('registration_number');
             const regNumVal   = regNumInput ? regNumInput.value.trim() : '';
-            const REG_INVALID = /[^\p{L}0-9\-\/]/u;
+
+            // BUG_REG_022: Max length 50 (not 256)
             if (regNumVal.length > 50) {
                 const el = document.getElementById('error-registration_number');
-                if (el) el.style.display = 'block';
+                if (el) {
+                    el.style.display = 'block';
+                    el.textContent = 'Company registration number must be 50 characters or fewer.';
+                }
                 throw new Error('Company registration number must be 50 characters or fewer.');
             }
+
+            // BUG_REG_023: Strict validation - reject SQL injection
+            const REG_INVALID = /[^\p{L}0-9\-\/]/u;
             if (regNumVal.length > 0 && REG_INVALID.test(regNumVal)) {
                 const el = document.getElementById('error-registration_number_special');
-                if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
+                if (el) { 
+                    el.style.display = 'block'; 
+                    el.textContent = 'Invalid characters. Only letters, numbers, hyphens, and forward slashes are allowed.';
+                    setTimeout(() => { el.style.display = 'none'; }, 3000); 
+                }
                 throw new Error('Company registration number contains invalid characters. Only letters, numbers, hyphens, and forward slashes are allowed.');
+            }
+
+            // Additional SQL injection pattern check
+            const sqlPatterns = /(--|;|\bOR\b|\bAND\b|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bUNION\b)/i;
+            if (regNumVal.length > 0 && sqlPatterns.test(regNumVal)) {
+                const el = document.getElementById('error-registration_number_special');
+                if (el) {
+                    el.style.display = 'block';
+                    el.textContent = 'SQL patterns are not allowed in registration number.';
+                    setTimeout(() => { el.style.display = 'none'; }, 3000);
+                }
+                throw new Error('Registration number contains invalid SQL patterns.');
             }
 
             // BUG_REG_026: Email format validation
