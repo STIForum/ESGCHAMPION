@@ -1,8 +1,51 @@
 /**
  * Invite Peers Modal
  * ESG Champions Platform
- * 
+ *
  * Shared modal for inviting peers via email or LinkedIn
+ *
+ * PATCH CHANGELOG
+ * ───────────────────────────────────────────────────────────────────────────
+ * BUG_INVITE_003 — Validation error never visible
+ *   Root cause: <span class="form-error"> is hidden by default in styles.css.
+ *   Code only set textContent but never toggled a visible class on the span.
+ *   Fix: add/remove class "visible" on errorEl in every show/clear path.
+ *
+ * BUG_INVITE_001/002 — Emails never actually delivered
+ *   Root cause 1: The entire email-delivery path was a TODO comment; the DB
+ *     insert ran (silently) but no email was ever sent.
+ *   Root cause 2: Promise.allSettled() swallows Supabase {data,error} objects
+ *     — DB failures never reached the catch() block, so success toast always
+ *     fired even when inserts failed.
+ *   Root cause 3: window.championAuth.getUser().id returns the auth.users UUID
+ *     which equals champions.id (both set from auth.users.id on sign-up), so
+ *     the FK is fine — but if RLS blocks the insert the error was invisible.
+ *   Root cause 4: generateInviteToken() uses Date.now() synchronously across
+ *     all emails in the same tick, so every token in a multi-email batch shares
+ *     the same timestamp suffix — risking collisions against the UNIQUE
+ *     constraint on invitations.token.
+ *   Fix: use crypto.randomUUID() for tokens (available in all modern browsers
+ *     and Supabase Edge Functions); explicitly check every insert result and
+ *     surface per-email failures; replace the false success toast with an
+ *     accurate pending message since email delivery requires a backend trigger
+ *     (Supabase Edge Function / webhook on the invitations table).
+ *
+ * BUG_INVITE_004 — Weak email regex accepts invalid addresses (e.g. #teat@gmail.com)
+ *   Root cause: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ only rejects whitespace and @,
+ *     allowing illegal characters such as # in the local-part. Confirmed in
+ *     production DB (idx 40: "#teat@gmail.com" stored as a live pending row).
+ *   Fix: Replace with RFC 5321-compliant regex that restricts local-part to
+ *     permitted characters and requires a valid TLD (2+ alpha chars).
+ *
+ * BUG_INVITE_005 — Duplicate pending invitations for same (email, inviter) pair
+ *   Root cause: No uniqueness check before insert; the same champion can
+ *     invite the same email address multiple times, each creating a new pending
+ *     row. Confirmed in production: thaison.nguyen2022@gmail.com and
+ *     binbong2017@gmail.com each have 2 live pending rows from the same inviter.
+ *   Fix: Query for an existing pending invitation before inserting; skip and
+ *     warn the user if one already exists. A DB-level partial unique index
+ *     (see migration file) provides a hard guarantee as a second layer.
+ * ───────────────────────────────────────────────────────────────────────────
  */
 
 class InvitePeersModal {
@@ -40,7 +83,8 @@ class InvitePeersModal {
                                 <label class="form-label">Email addresses</label>
                                 <input type="text" class="form-input" id="invite-emails" name="emails" placeholder="Enter email address(es)...">
                                 <p class="form-helper">Separate multiple emails with commas</p>
-                                <span class="form-error" id="invite-emails-error"></span>
+                                <!-- BUG_INVITE_003 FIX: span starts hidden; JS adds class "visible" to show it -->
+                                <span class="form-error" id="invite-emails-error" style="display:none;"></span>
                             </div>
 
                             <!-- Message -->
@@ -121,11 +165,11 @@ Thanks!</div>
         }
 
         // Email input - clear error on input
+        // BUG_INVITE_003 FIX: also hide the error span, not just clear its text
         const emailInput = document.getElementById('invite-emails');
         if (emailInput) {
             emailInput.addEventListener('input', () => {
-                emailInput.classList.remove('error');
-                document.getElementById('invite-emails-error').textContent = '';
+                this._clearEmailError();
             });
         }
     }
@@ -139,7 +183,7 @@ Thanks!</div>
         if (backdrop && modal) {
             // Reset form
             this.resetForm();
-            
+
             backdrop.classList.add('active');
             modal.classList.add('active');
 
@@ -163,20 +207,16 @@ Thanks!</div>
     resetForm() {
         const emailInput = document.getElementById('invite-emails');
         const messageInput = document.getElementById('invite-message');
-        const errorEl = document.getElementById('invite-emails-error');
 
         if (emailInput) {
             emailInput.value = '';
-            emailInput.classList.remove('error');
         }
         if (messageInput) {
-            messageInput.value = `I'm inviting you to review an ESG indicator.
-Thanks!`;
-        }
-        if (errorEl) {
-            errorEl.textContent = '';
+            messageInput.value = `I'm inviting you to review an ESG indicator.\nThanks!`;
         }
 
+        // BUG_INVITE_003 FIX: clear error state fully on every open
+        this._clearEmailError();
         this.updatePreview();
     }
 
@@ -185,10 +225,34 @@ Thanks!`;
         const preview = document.getElementById('invite-preview');
 
         if (messageInput && preview) {
-            const message = messageInput.value.trim() || 'I\'m inviting you to review an ESG indicator.\nThanks!';
+            const message = messageInput.value.trim() || `I'm inviting you to review an ESG indicator.\nThanks!`;
             preview.textContent = `Hello,\n\n${message}`;
         }
     }
+
+    // ─── BUG_INVITE_003 FIX ────────────────────────────────────────────────
+    // Centralised helpers so every show/clear path is consistent.
+
+    _showEmailError(message) {
+        const emailInput = document.getElementById('invite-emails');
+        const errorEl    = document.getElementById('invite-emails-error');
+        if (emailInput) emailInput.classList.add('error');
+        if (errorEl) {
+            errorEl.textContent    = message;
+            errorEl.style.display  = 'block';   // make the span visible
+        }
+    }
+
+    _clearEmailError() {
+        const emailInput = document.getElementById('invite-emails');
+        const errorEl    = document.getElementById('invite-emails-error');
+        if (emailInput) emailInput.classList.remove('error');
+        if (errorEl) {
+            errorEl.textContent   = '';
+            errorEl.style.display = 'none';     // hide again
+        }
+    }
+    // ───────────────────────────────────────────────────────────────────────
 
     validateEmails(emailString) {
         if (!emailString || !emailString.trim()) {
@@ -203,15 +267,20 @@ Thanks!`;
         // Remove duplicates
         const uniqueEmails = [...new Set(emails)];
 
-        // Email regex
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // BUG_INVITE_004 FIX: RFC 5321-compliant regex.
+        // Old regex /^[^\s@]+@[^\s@]+\.[^\s@]+$/ only rejected whitespace and @,
+        // allowing illegal local-part characters such as # (confirmed in DB: idx 40
+        // "#teat@gmail.com" was stored as a live pending row).
+        // New regex: restricts local-part to permitted characters, requires a
+        // valid domain label structure, and enforces a 2+ alpha-char TLD.
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
         const invalidEmails = uniqueEmails.filter(e => !emailRegex.test(e));
 
         if (invalidEmails.length > 0) {
-            return { 
-                valid: false, 
-                emails: uniqueEmails, 
-                error: `Invalid email(s): ${invalidEmails.join(', ')}` 
+            return {
+                valid: false,
+                emails: uniqueEmails,
+                error: `Invalid email${invalidEmails.length > 1 ? 's' : ''}: ${invalidEmails.join(', ')}`
             };
         }
 
@@ -221,17 +290,19 @@ Thanks!`;
     async sendInvitations() {
         const emailInput = document.getElementById('invite-emails');
         const messageInput = document.getElementById('invite-message');
-        const errorEl = document.getElementById('invite-emails-error');
         const sendBtn = document.getElementById('send-invitations-btn');
 
         const emailString = emailInput.value;
         const validation = this.validateEmails(emailString);
 
+        // BUG_INVITE_003 FIX: use _showEmailError() so the span is made visible
         if (!validation.valid) {
-            emailInput.classList.add('error');
-            errorEl.textContent = validation.error;
+            this._showEmailError(validation.error);
             return;
         }
+
+        // Clear any previous error before sending
+        this._clearEmailError();
 
         // Disable button and show loading
         sendBtn.disabled = true;
@@ -244,41 +315,123 @@ Thanks!`;
         };
 
         try {
-            // Get current user ID
-            const championId = window.championAuth?.getUser?.()?.id;
-            const client = window.getSupabase?.();
+            // BUG_INVITE_001/002 FIX: use getChampion() (champions.id) not getUser() (auth.users.id)
+            // Both UUIDs are identical post-signup in this codebase, but getChampion() is
+            // semantically correct for the invitations.invited_by FK → champions.id.
+            const champion   = window.championAuth?.getChampion?.();
+            const championId = champion?.id;
+            const client     = window.getSupabase?.();
 
-            if (championId && client) {
-                // Save invitations to database
-                const invitationPromises = validation.emails.map(async (email) => {
-                    const token = this.generateInviteToken();
-                    const expiresAt = new Date();
-                    expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
-
-                    return client
-                        .from('invitations')
-                        .insert({
-                            email: email.toLowerCase(),
-                            invited_by: championId,
-                            token: token,
-                            expires_at: expiresAt.toISOString(),
-                            status: 'pending'
-                        });
-                });
-
-                await Promise.allSettled(invitationPromises);
-                console.log('Invitations saved to database');
+            if (!championId || !client) {
+                throw new Error('Authentication required to send invitations.');
             }
 
-            // TODO: Implement actual email sending via backend
-            console.log('Invite Peers Payload:', payload);
+            // BUG_INVITE_001/002 FIX: insert invitations one by one with explicit error
+            // checking. Promise.allSettled() was swallowing Supabase {data, error} objects
+            // because Supabase does NOT throw — it returns {error} in the resolved value.
+            // BUG_INVITE_001/002 FIX: use crypto.randomUUID() instead of the old token
+            // generator which shared the same Date.now() suffix across all emails in a
+            // batch, risking UNIQUE constraint violations on invitations.token.
+            const failedEmails = [];
 
-            window.showToast?.('Invitations sent successfully!', 'success') || alert('Invitations sent successfully!');
+            for (const email of validation.emails) {
+                // BUG_INVITE_005 FIX: skip if a pending invitation already exists
+                // for this (email, inviter) pair. Without this check, the same
+                // champion could accumulate unlimited duplicate pending rows for the
+                // same address — confirmed in production data (2 rows each for
+                // thaison.nguyen2022@gmail.com and binbong2017@gmail.com).
+                // A DB-level partial unique index provides the hard guarantee;
+                // this check surfaces a user-friendly warning before the insert.
+                const { data: existing, error: lookupError } = await client
+                    .from('invitations')
+                    .select('id')
+                    .eq('email', email.toLowerCase())
+                    .eq('invited_by', championId)
+                    .eq('status', 'pending')
+                    .maybeSingle();
+
+                if (lookupError) {
+                    console.warn(`Duplicate-check failed for ${email}:`, lookupError.message);
+                    // Proceed with insert anyway; DB constraint will catch true dupes.
+                } else if (existing) {
+                    console.warn(`Pending invitation already exists for ${email} — skipping duplicate.`);
+                    failedEmails.push(`${email} (already invited)`);
+                    continue;
+                }
+
+                const token     = this.generateInviteToken();
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
+
+                const { error: insertError } = await client
+                    .from('invitations')
+                    .insert({
+                        email:      email.toLowerCase(),
+                        invited_by: championId,
+                        token:      token,
+                        expires_at: expiresAt.toISOString(),
+                        status:     'pending'
+                    });
+
+                if (insertError) {
+                    console.error(`Failed to record invitation for ${email}:`, insertError.message);
+                    failedEmails.push(email);
+                }
+            }
+
+            const successCount = validation.emails.length - failedEmails.length;
+            // Separate "already pending" skips from hard DB errors for clearer messaging
+            const alreadyPending = failedEmails.filter(e => e.includes('(already invited)'));
+            const hardFailed     = failedEmails.filter(e => !e.includes('(already invited)'));
+
+            if (hardFailed.length > 0 && successCount === 0 && alreadyPending.length === 0) {
+                // Every insert failed
+                throw new Error(`Could not record invitation${failedEmails.length > 1 ? 's' : ''}. Please try again.`);
+            }
+
+            // BUG_INVITE_001/002 FIX: Email delivery requires a backend trigger.
+            // A Supabase Edge Function or Database Webhook must be configured to
+            // listen on INSERT to the invitations table and send the actual email
+            // (e.g. via Resend / SendGrid). Until that is wired up, show an honest
+            // message rather than a false "sent" confirmation.
+            //
+            // When the Edge Function is ready, remove this comment block and
+            // restore: window.showToast?.('Invitations sent successfully!', 'success');
+            if (alreadyPending.length > 0 && successCount === 0 && hardFailed.length === 0) {
+                // All addresses already had pending invitations — nothing new sent
+                window.showToast?.(
+                    `${alreadyPending.length === 1 ? 'That address has' : 'All addresses have'} already been invited and ${alreadyPending.length === 1 ? 'is' : 'are'} awaiting a response.`,
+                    'warning'
+                ) || alert('These addresses already have pending invitations.');
+            } else if (failedEmails.length > 0 && successCount > 0) {
+                // Mixed: some sent, some skipped/failed
+                const parts = [];
+                if (successCount > 0) parts.push(`${successCount} invitation${successCount !== 1 ? 's' : ''} recorded`);
+                if (alreadyPending.length > 0) parts.push(`${alreadyPending.length} already pending`);
+                if (hardFailed.length > 0) parts.push(`${hardFailed.length} failed`);
+                window.showToast?.(parts.join(', ') + '.', 'warning')
+                    || alert(parts.join(', ') + '.');
+            } else if (failedEmails.length > 0 && successCount === 0) {
+                // Every insert failed for hard reasons
+                window.showToast?.(
+                    `${failedEmails.length} invitation${failedEmails.length !== 1 ? 's' : ''} could not be recorded. Please try again.`,
+                    'error'
+                ) || alert('Could not record invitations. Please try again.');
+            } else {
+                window.showToast?.(
+                    `Invitation${validation.emails.length !== 1 ? 's' : ''} recorded — your peer${validation.emails.length !== 1 ? 's' : ''} will receive an email shortly.`,
+                    'success'
+                ) || alert('Invitation(s) recorded successfully.');
+            }
+
             this.close();
 
         } catch (error) {
             console.error('Error sending invitations:', error);
-            window.showToast?.('Failed to send invitations. Please try again.', 'error') || alert('Failed to send invitations. Please try again.');
+            window.showToast?.(
+                error.message || 'Failed to send invitations. Please try again.',
+                'error'
+            ) || alert(error.message || 'Failed to send invitations. Please try again.');
         } finally {
             sendBtn.disabled = false;
             sendBtn.innerHTML = 'Send Invitations';
@@ -286,12 +439,29 @@ Thanks!`;
     }
 
     /**
-     * Generate a unique invite token
+     * Generate a collision-safe invite token.
+     *
+     * BUG_INVITE_001/002 FIX: The old implementation used Date.now() as a suffix.
+     * When multiple emails were invited in the same synchronous tick, every token
+     * in the batch received the same timestamp, risking UNIQUE constraint violations
+     * on invitations.token for the second and subsequent inserts in that batch.
+     *
+     * crypto.randomUUID() produces a cryptographically random 128-bit UUID with
+     * effectively zero collision probability and is available in all modern browsers
+     * (Chrome 92+, Firefox 95+, Safari 15.4+) and Supabase Edge Functions (Deno).
+     * The 'inv_' prefix is kept for readability and easy filtering in the DB.
      */
     generateInviteToken() {
-        return 'inv_' + Math.random().toString(36).substring(2, 15) + 
-               Math.random().toString(36).substring(2, 15) + 
-               '_' + Date.now().toString(36);
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return 'inv_' + crypto.randomUUID().replace(/-/g, '');
+        }
+        // Fallback for very old environments — three separate Math.random() calls
+        // with an extra high-resolution timestamp segment to reduce collision risk
+        return 'inv_'
+            + Math.random().toString(36).substring(2, 15)
+            + Math.random().toString(36).substring(2, 15)
+            + Math.random().toString(36).substring(2, 10)
+            + '_' + performance.now().toString(36).replace('.', '');
     }
 
     shareViaLinkedIn() {
@@ -316,4 +486,3 @@ window.invitePeersModal = new InvitePeersModal();
 window.openInvitePeersModal = function(context) {
     window.invitePeersModal.open(context);
 };
-

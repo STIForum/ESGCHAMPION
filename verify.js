@@ -39,13 +39,13 @@ async function verifyEmail() {
           <h1>Verification link no longer valid</h1>
           <p>The link you clicked may have already been used or has expired.</p>
           <p>If you still need to verify your email, please request a new confirmation email from the app.</p>
-          <a class="button" href="index.html">Go to login</a>
+          <a class="button" href="/landing.html">Go to login</a>
         `);
       } else {
         setContent(`
           <h1>Verification failed</h1>
           <p class="error">${error.message}</p>
-          <a class="button" href="index.html">Try again</a>
+          <a class="button" href="/landing.html">Try again</a>
         `);
       }
       return;
@@ -69,7 +69,7 @@ async function verifyEmail() {
       setContent(`
         <h1>Verification failed</h1>
         <p class="error">${error.message}</p>
-        <a class="button" href="index.html">Try again</a>
+        <a class="button" href="/landing.html">Try again</a>
       `);
       return;
     }
@@ -82,7 +82,7 @@ async function verifyEmail() {
     setContent(`
       <h1>Invalid verification link</h1>
       <p>The link is missing required parameters.</p>
-      <a class="button" href="index.html">Go to login</a>
+      <a class="button" href="/landing.html">Go to login</a>
     `);
   }
 }
@@ -92,7 +92,7 @@ async function handleSuccessfulVerification(session) {
     setContent(`
       <h1>Verification completed</h1>
       <p>Your email has been verified. You may now log in.</p>
-      <a class="button" href="index.html">Go to login</a>
+      <a class="button" href="/landing.html">Go to login</a>
     `);
     return;
   }

@@ -19,7 +19,7 @@ async function handleLogout(event) {
 
         if (!auth) {
             console.error('Auth not available');
-            window.location.href = '/';
+            window.location.href = '/landing.html';
             return;
         }
 
@@ -43,7 +43,7 @@ async function handleLogout(event) {
             
             // Redirect to home
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/landing.html';
             }, 500);
         } else {
             throw new Error(result.error);
@@ -54,7 +54,7 @@ async function handleLogout(event) {
         
         // Force redirect anyway
         setTimeout(() => {
-            window.location.href = '/';
+            window.location.href = '/landing.html';
         }, 1000);
     }
 }

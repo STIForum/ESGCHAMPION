@@ -626,7 +626,7 @@ class ChampionProfile {
             // Note: In a real app, you'd call a server-side function to delete the account
             window.showToast('Account deletion requested. You will be logged out.', 'info');
             await window.championAuth.logout();
-            window.location.href = '/';
+            window.location.href = '/landing.html';
         } catch (error) {
             console.error('Error deleting account:', error);
             window.showToast('Failed to delete account. Please contact support.', 'error');

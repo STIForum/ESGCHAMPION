@@ -150,8 +150,8 @@ class DynamicNavigation {
                         }
                     }
                     const logoutHandler = isBusinessUser
-                        ? "window.getSupabase().auth.signOut().then(() => window.location.href = '/')"
-                        : "window.championAuth.logout().then(() => window.location.href = '/')";
+                        ? "window.getSupabase().auth.signOut().then(() => window.location.href = '/landing.html')"
+                        : "window.championAuth.logout().then(() => window.location.href = '/landing.html')";
                     menuHTML += `<li><a href="#" class="mobile-nav-link" onclick="${logoutHandler}">Logout</a></li>`;
                 } else {
                     menuHTML += `<li><a href="/faq.html" class="mobile-nav-link">FAQ</a></li>`;
@@ -175,7 +175,7 @@ class DynamicNavigation {
                     const dashboardLink = champion ? '/champion-dashboard.html' : '/business-dashboard.html';
                     const profileLink = champion ? '/champion-profile.html' : '/business-settings.html';
                     const profileLabel = champion ? 'Profile Settings' : 'Business Profile';
-                    const logoutHandler = champion ? "window.championAuth.logout().then(() => window.location.href = '/')" : "window.getSupabase().auth.signOut().then(() => window.location.href = '/')";
+                    const logoutHandler = champion ? "window.championAuth.logout().then(() => window.location.href = '/landing.html')" : "window.getSupabase().auth.signOut().then(() => window.location.href = '/landing.html')";
 
                     const avatar = champion
                         ? (champion.avatar_url 
