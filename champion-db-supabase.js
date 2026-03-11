@@ -426,7 +426,7 @@ class ChampionDB {
             const totalScore = mandatoryCredits + optionalCredits;
 
             return {
-                totalScore: champion.credits || totalScore,
+                totalScore: champion.credits ?? totalScore,
                 breakdown: {
                     mandatoryFields: mandatoryCredits,
                     optionalFields: optionalCredits,
