@@ -3,112 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Admin Review Panel - STIF Sustainability Technology and Innovation Forum">
-    <title>Admin Panel | STIF - Sustainability Technology and Innovation Forum</title>
+    <meta name="description" content="Business Dashboard - STIF SME Portal">
+    <title>Dashboard | STIF - Sustainability Technology and Innovation Forum</title>
     
-    <!-- STIF Fonts: Roboto with Montserrat fallback -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    
     <style>
-        .admin-tabs {
-            display: flex;
-            gap: var(--space-2);
-            margin-bottom: var(--space-6);
-            border-bottom: 2px solid var(--gray-200);
-            padding-bottom: var(--space-2);
-        }
-        .admin-tab {
-            padding: var(--space-3) var(--space-5);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            font-weight: 600;
-            color: var(--gray-500);
-            cursor: pointer;
-            transition: all var(--transition);
-            background: none;
-            border: none;
-        }
-        .admin-tab:hover {
-            color: var(--gray-700);
-            background: var(--gray-50);
-        }
-        .admin-tab.active {
-            color: var(--primary-700);
-            background: var(--primary-50);
-            border-bottom: 2px solid var(--primary-500);
-            margin-bottom: -2px;
-        }
-        .review-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: var(--space-6);
-            margin-bottom: var(--space-4);
-            box-shadow: var(--shadow);
-            transition: all var(--transition);
-        }
-        .review-card:hover {
-            box-shadow: var(--shadow-lg);
-        }
-        .review-actions {
-            display: flex;
-            gap: var(--space-2);
-            margin-top: var(--space-4);
-            padding-top: var(--space-4);
-            border-top: 1px solid var(--gray-100);
-        }
-        .panel-review-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: var(--space-6);
-            margin-bottom: var(--space-4);
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            transition: all var(--transition);
-            border-left: 4px solid var(--warning);
-        }
-        .panel-review-card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateX(4px);
-        }
-        .panel-review-card.approved {
-            border-left-color: var(--success);
-        }
-        .panel-review-card.rejected {
-            border-left-color: var(--error);
-        }
-        .indicator-review-item {
-            background: var(--gray-50);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            margin-bottom: var(--space-3);
-        }
-        .indicator-review-item:last-child {
-            margin-bottom: 0;
+        .dashboard-sections {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-6);
+            align-items: start;
         }
 
-        .metadata-label {
-            font-size: var(--text-sm);
-            color: var(--gray-500);
-            margin-bottom: var(--space-1);
+        .right-action-cards {
+            display: grid;
+            gap: var(--space-4);
         }
 
-        .metadata-value {
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-
-        .methodology-section {
-            background: var(--gray-50);
-            border-radius: var(--radius-lg);
-            padding: var(--space-3);
-            border: 1px solid var(--gray-100);
-        }
-
-        .methodology-grid {
+        .recent-activities-list {
             display: grid;
             gap: var(--space-3);
+        }
+
+        .recent-activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3);
+            border: 1px solid var(--gray-100);
+            border-radius: var(--radius-lg);
+            background: var(--gray-50);
+        }
+
+        .recent-activity-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 2px;
+        }
+
+        .recent-activity-meta {
+            font-size: var(--text-sm);
+            color: var(--gray-500);
+        }
+
+        .recent-activity-status {
+            font-size: var(--text-xs);
+            font-weight: 700;
+            letter-spacing: .03em;
+            padding: 6px 10px;
+            border-radius: var(--radius-full);
+        }
+
+        .recent-activity-status.completed {
+            color: var(--success);
+            background: var(--success-100);
+        }
+
+        .recent-activity-status.pending {
+            color: var(--warning);
+            background: var(--warning-100);
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-sections {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
     
@@ -126,9 +88,8 @@
             <nav>
                 <ul class="nav-menu">
                     <li><a href="/landing.html" class="nav-link">Home</a></li>
-                    <li><a href="/champion-dashboard.html" class="nav-link">Dashboard</a></li>
-                    <li><a href="/champion-panels.html" class="nav-link">Panels</a></li>
-                    <li><a href="/admin-review.html" class="nav-link active">Admin</a></li>
+                    <li><a href="/business-dashboard.html" class="nav-link active">Dashboard</a></li>
+                    <li><a href="/business-settings.html" class="nav-link">Settings</a></li>
                 </ul>
             </nav>
             <div class="nav-actions"></div>
@@ -145,1282 +106,253 @@
     </div>
 
     <!-- Main Content -->
-    <main style="padding-top: 100px; min-height: 100vh; background: var(--gray-50);">
-        <div class="container">
-            <!-- Header -->
-            <div class="flex-between mb-6">
-                <div>
-                    <h1>Admin Panel</h1>
-                    <p class="text-secondary">Manage reviews, panels, and indicators</p>
-                </div>
-                <button class="btn btn-secondary" id="export-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Export Data
-                </button>
-            </div>
-
-            <!-- Admin Tabs -->
-            <div class="admin-tabs">
-                <button class="admin-tab active" data-tab="panel-reviews">
-                    Panel Reviews
-                    <span class="badge badge-warning" id="panel-pending-count" style="margin-left: var(--space-2);">0</span>
-                </button>
-                <button class="admin-tab" data-tab="frameworks">Frameworks</button>
-                <button class="admin-tab" data-tab="panels">Panels</button>
-                <button class="admin-tab" data-tab="indicators">Indicators</button>
-                <button class="admin-tab" data-tab="champions">Champions</button>
-                <button class="admin-tab" data-tab="business-users">Business Users</button>
-            </div>
-
-            <!-- Loading State -->
-            <div id="loading-state" class="flex-center" style="height: 300px;">
-                <div class="loading-spinner"></div>
-            </div>
-
-            <!-- Tab Content -->
-            <div id="admin-content" class="hidden">
-                <!-- Panel Reviews Tab -->
-                <div id="tab-panel-reviews" class="tab-content">
-                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
-                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
-                            <div style="min-width: 240px; flex: 1;">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-input" id="panel-review-search"
-                                    maxlength="256" placeholder="Search by panel or champion">
-                            </div>
-                            <div style="min-width: 200px;">
-                                <label class="form-label">Framework</label>
-                                <select class="form-select" id="panel-review-filter-framework">
-                                    <option value="all">All Frameworks</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="panel-reviews-queue">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Frameworks Tab -->
-                <div id="tab-frameworks" class="tab-content hidden">
-                    <div class="flex-between mb-4">
-                        <h3>Frameworks</h3>
-                        <button class="btn btn-secondary" id="add-framework-btn">
+    <main class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <ul class="sidebar-nav">
+                    <li>
+                        <a href="/business-dashboard.html" class="sidebar-link active">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
                             </svg>
-                            Add Framework
-                        </button>
-                    </div>
-                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
-                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
-                            <div style="min-width: 240px; flex: 1;">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-input" id="framework-search" placeholder="Search by name, code, owner">
-                            </div>
-                            <div style="min-width: 200px;">
-                                <label class="form-label">Status</label>
-                                <select class="form-select" id="framework-filter-status">
-                                    <option value="all">All Statuses</option>
-                                    <option value="active">Active</option>
-                                    <option value="draft">Draft</option>
-                                    <option value="deprecated">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="frameworks-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Panels Tab -->
-                <div id="tab-panels" class="tab-content hidden">
-                    <div class="flex-between mb-4">
-                        <h3>ESG Panels</h3>
-                        <button class="btn btn-primary" id="add-panel-btn">Add Panel</button>
-                    </div>
-                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
-                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
-                            <!-- Search -->
-                            <div style="min-width: 240px; flex: 1;">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-input" id="panel-search" placeholder="Search panel by name">
-                            </div>
-                            <!-- Framework Filter -->
-                            <div style="min-width: 200px;">
-                                <label class="form-label">Framework</label>
-                                <select class="form-select" id="panel-filter-framework">
-                                    <option value="all">All Frameworks</option>
-                                </select>
-                            </div>
-                            <!-- Status Filter -->
-                            <div style="min-width: 200px;">
-                                <label class="form-label">Status</label>
-                                <select class="form-select" id="panel-filter-status">
-                                    <option value="all">All Statuses</option>
-                                    <option value="active">Active</option>
-                                    <option value="draft">Draft</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="panels-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Indicators Tab -->
-                <div id="tab-indicators" class="tab-content hidden">
-                    <div class="flex-between mb-4">
-                        <h3>ESG Indicators</h3>
-                        <button class="btn btn-primary" id="add-indicator-btn">
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/business-reporting.html" class="sidebar-link">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                <path d="M2 17l10 5 10-5"></path>
+                                <path d="M2 12l10 5 10-5"></path>
                             </svg>
-                            Add Indicator
-                        </button>
+                            Sustainability Reporting
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/business-settings.html" class="sidebar-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            Account Settings
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/faq.html" class="sidebar-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            FAQ & Support
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Dashboard Content -->
+        <div class="main-content">
+            <div class="dashboard-container">
+                <!-- Loading State -->
+                <div id="loading-state" class="flex-center" style="height: 400px;">
+                    <div class="loading-spinner"></div>
+                </div>
+
+                <!-- Dashboard Content (hidden until loaded) -->
+                <div id="dashboard-content" class="hidden">
+                    <!-- Welcome Header -->
+                    <div class="flex-between mb-8">
+                        <div>
+                            <h1 id="welcome-title">Welcome back!</h1>
+                            <p class="text-secondary">Manage your sustainability reporting and ESG metrics</p>
+                        </div>
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                            <a href="/business-subscription.html" class="btn btn-ghost">Subscription</a>
+                            <a href="/business-settings.html" class="btn btn-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                                Settings
+                            </a>
+                        </div>
                     </div>
-                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
-                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
-                            <div style="min-width: 240px; flex: 1;">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-input" id="indicator-search-filter" placeholder="Search indicator by name">
+
+                    <!-- Stats Grid -->
+                    <div class="stats-grid mb-8">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--success-100); color: var(--success);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
                             </div>
-                            <div style="min-width: 200px;">
-                                <label class="form-label">Framework</label>
-                                <select class="form-select" id="indicator-filter-framework">
-                                    <option value="all">All Frameworks</option>
-                                </select>
+                            <div class="stat-value" id="subscription-status">Active</div>
+                            <div class="stat-label">Subscription Status</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--primary-100); color: var(--primary);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
                             </div>
-                                <!-- Add this block for Status Filter -->
-                                <div style="min-width: 200px;">
-                                    <label class="form-label">Status</label>
-                                    <select class="form-select" id="indicator-filter-status">
-                                        <option value="all">All Statuses</option>
-                                        <option value="active">Active</option>
-                                        <option value="draft">Draft</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                            <div class="stat-value" id="reporting-year">2026</div>
+                            <div class="stat-label">Reporting Year</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--success-100); color: var(--success);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                            </div>
+                            <div class="stat-value" id="account-status">Complete</div>
+                            <div class="stat-label">Account Status</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--warning-100); color: var(--warning);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div class="stat-value" id="stat-days">--</div>
+                            <div class="stat-label">Days Active</div>
+                        </div>
+                    </div>
+
+                    <!-- Reporting + Activities + Action Cards -->
+                    <div class="dashboard-sections mb-8">
+                        <div>
+                            <div class="widget mb-6">
+                                <div class="widget-header">
+                                    <h3 class="widget-title">Reporting Overview</h3>
+                                </div>
+                                <div class="widget-body">
+                                    <div class="stats-grid">
+                                        <div class="stat-card">
+                                            <div class="stat-value" id="stat-indicators">0</div>
+                                            <div class="stat-label">Indicators Tracked</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-value" id="stat-completed">0%</div>
+                                            <div class="stat-label">Profile Completed</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-value" id="stat-reports">0</div>
+                                            <div class="stat-label">Reports Generated</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div id="indicators-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
 
-                <!-- Champions Tab -->
-                <div id="tab-champions" class="tab-content hidden">
-                    <h3 class="mb-4">Champions</h3>
-                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
-                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
-                            <div style="min-width: 240px; flex: 1;">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-input" id="champion-search" placeholder="Search by name or email">
-                            </div>
-                            <div style="min-width: 200px;">
-                                <label class="form-label">Role</label>
-                                <select class="form-select" id="champion-filter-role">
-                                    <option value="all">All Roles</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="champion">Champion</option>
-                                </select>
-                            </div>
                         </div>
-                    </div>
-                    <div id="champions-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
 
-                <!-- Business Users Tab -->
-                <div id="tab-business-users" class="tab-content hidden">
-                    <h3 class="mb-4">Business Users</h3>
-                    <div class="flex-between mb-4" style="gap: var(--space-3); align-items: end;">
-                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; width: 100%;">
-                            <div style="min-width: 240px; flex: 1;">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-input" id="business-user-search" placeholder="Search by name, email or company">
-                            </div>
-                            <div style="min-width: 200px;">
-                                <label class="form-label">Subscription</label>
-                                <select class="form-select" id="business-user-filter-subscription">
-                                    <option value="all">All Statuses</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="trial">Trial</option>
-                                </select>
-                            </div>
+                        <div class="right-action-cards">
+                            <a href="/business-reporting.html" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
+                                <div class="widget-body">
+                                    <div class="feature-icon" style="background: var(--environmental-bg); color: var(--environmental); margin-bottom: var(--space-4);">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                            <path d="M2 17l10 5 10-5"></path>
+                                            <path d="M2 12l10 5 10-5"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 style="margin-bottom: var(--space-2);">Sustainability Reporting</h3>
+                                    <p class="text-secondary" style="font-size: var(--text-sm);">Access ESG frameworks, track your sustainability metrics, and generate reports.</p>
+                                </div>
+                            </a>
+
+                            <a href="/faq.html" class="widget" style="text-decoration: none; color: inherit; transition: all var(--transition);">
+                                <div class="widget-body">
+                                    <div class="feature-icon" style="background: var(--governance-bg); color: var(--governance); margin-bottom: var(--space-4);">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                        </svg>
+                                    </div>
+                                    <h3 style="margin-bottom: var(--space-2);">FAQ & Support</h3>
+                                    <p class="text-secondary" style="font-size: var(--text-sm);">Find answers to common questions about sustainability reporting and the STIF platform.</p>
+                                </div>
+                            </a>
                         </div>
                     </div>
-                    <div id="business-users-list">
-                        <!-- Populated by JS -->
-                    </div>
+
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Panel Review Modal -->
-    <div class="modal-backdrop" id="panel-review-modal-backdrop">
-        <div class="modal" id="panel-review-modal" style="max-width: 700px; max-height: 80vh;">
-            <div class="modal-header">
-                <h3 class="modal-title" id="panel-review-modal-title">Panel Review Details</h3>
-                <button class="modal-close" id="panel-review-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" id="panel-review-modal-body" style="max-height: 60vh; overflow-y: auto;">
-                <!-- Populated by JS -->
-            </div>
-            <div class="modal-footer" id="panel-review-modal-footer">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Panel Modal -->
-    <div class="modal-backdrop" id="add-panel-modal-backdrop">
-        <div class="modal" id="add-panel-modal" style="max-width: 700px; max-height: 90vh;">
-            <div class="modal-header">
-                <h3 class="modal-title">Add Panel</h3>
-                <button class="modal-close" id="add-panel-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <form id="add-panel-form">
-                    <!-- Panel Title -->
-                    <div class="form-group">
-                        <label class="form-label">Panel Title <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="panel-title" name="title" placeholder="e.g., Climate & GHG Emissions Panel" required>
-                        <span class="form-error" id="panel-title-error"></span>
-                    </div>
-
-                    <!-- Panel Category + Impact (two columns) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">Panel Category <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="panel-category" name="category" required>
-                                <option value="">Select category</option>
-                                <option value="Energy & Resource Use">Energy & Resource Use</option>
-                                <option value="Climate & GHG Emissions">Climate & GHG Emissions</option>
-                                <option value="Water, Waste & Circularity">Water, Waste & Circularity</option>
-                                <option value="Biodiversity & Land Use">Biodiversity & Land Use</option>
-                                <option value="Pollution & Air Quality">Pollution & Air Quality</option>
-                                <option value="Workforce & Labour Practices">Workforce & Labour Practices</option>
-                                <option value="Diversity, Equity & Inclusion (DEI)">Diversity, Equity & Inclusion (DEI)</option>
-                                <option value="Human Rights & Supply Chain">Human Rights & Supply Chain</option>
-                                <option value="Community & Social Impact">Community & Social Impact</option>
-                                <option value="Health & Safety">Health & Safety</option>
-                                <option value="Ethics, Compliance & Anti-Corruption">Ethics, Compliance & Anti-Corruption</option>
-                                <option value="Risk Management & Resilience">Risk Management & Resilience</option>
-                                <option value="Data Privacy & Cybersecurity">Data Privacy & Cybersecurity</option>
-                                <option value="Product Responsibility & Quality">Product Responsibility & Quality</option>
-                                <option value="ESG Strategy, Materiality & Innovation">ESG Strategy, Materiality & Innovation</option>
-                            </select>
-                            <span class="form-error" id="panel-category-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Impact <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="panel-impact" name="impact" required>
-                                <option value="">Select impact level</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Foundational">Foundational</option>
-                            </select>
-                            <span class="form-error" id="panel-impact-error"></span>
-                        </div>
-                    </div>
-
-                    <!-- Description -->
-                    <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-textarea" id="panel-description" name="description" placeholder="Short description of what this panel covers." rows="3"></textarea>
-                    </div>
-
-                    <!-- ESG Classification + Primary Framework (two columns) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">ESG Classification <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="panel-esg-classification" name="esgClassification" required>
-                                <option value="">Select classification</option>
-                                <option value="Environment">Environment</option>
-                                <option value="Social">Social</option>
-                                <option value="Governance">Governance</option>
-                            </select>
-                            <span class="form-error" id="panel-esg-classification-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Primary Framework <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="panel-framework" name="primaryFramework" required>
-                                <option value="">Select framework</option>
-                            </select>
-                            <span class="form-error" id="panel-framework-error"></span>
-                        </div>
-                    </div>
-
-                    <!-- Related SDGs -->
-                    <div class="form-group">
-                        <label class="form-label">Related SDGs</label>
-                        <select class="form-select" id="panel-sdgs" name="relatedSdgs" multiple size="7" style="height: auto;">
-                            <option value="SDG 1">SDG 1 – No Poverty</option>
-                            <option value="SDG 2">SDG 2 – Zero Hunger</option>
-                            <option value="SDG 3">SDG 3 – Good Health and Well-Being</option>
-                            <option value="SDG 4">SDG 4 – Quality Education</option>
-                            <option value="SDG 5">SDG 5 – Gender Equality</option>
-                            <option value="SDG 6">SDG 6 – Clean Water and Sanitation</option>
-                            <option value="SDG 7">SDG 7 – Affordable and Clean Energy</option>
-                            <option value="SDG 8">SDG 8 – Decent Work and Economic Growth</option>
-                            <option value="SDG 9">SDG 9 – Industry, Innovation and Infrastructure</option>
-                            <option value="SDG 10">SDG 10 – Reduced Inequalities</option>
-                            <option value="SDG 11">SDG 11 – Sustainable Cities and Communities</option>
-                            <option value="SDG 12">SDG 12 – Responsible Consumption and Production</option>
-                            <option value="SDG 13">SDG 13 – Climate Action</option>
-                            <option value="SDG 14">SDG 14 – Life Below Water</option>
-                            <option value="SDG 15">SDG 15 – Life on Land</option>
-                            <option value="SDG 16">SDG 16 – Peace, Justice and Strong Institutions</option>
-                            <option value="SDG 17">SDG 17 – Partnerships for the Goals</option>
-                        </select>
-                        <p class="form-helper">Hold <strong>Cmd (Mac)</strong> or <strong>Ctrl (Windows)</strong> to select multiple SDGs.</p>
-                    </div>
-
-                    <!-- Purpose -->
-                    <div class="form-group">
-                        <label class="form-label">Purpose</label>
-                        <textarea class="form-textarea" id="panel-purpose" name="purpose" placeholder="Panel purpose or intended use." rows="2"></textarea>
-                    </div>
-
-                    <!-- Unicode + Icon (two columns) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">Unicode (optional)</label>
-                            <input type="text" class="form-input" id="panel-unicode" name="unicode" placeholder="e.g., U+1F30D">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Icon (Emoji or Unicode)</label>
-                            <input type="text" class="form-input" id="panel-icon" name="icon" placeholder="e.g., 🌍">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="display: flex; justify-content: flex-start; gap: var(--space-3);">
-                <button type="button" class="btn btn-primary" id="save-panel-btn">Save Panel</button>
-                <button type="button" class="btn btn-secondary" id="cancel-panel-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Framework Modal -->
-    <div class="modal-backdrop" id="add-framework-modal-backdrop">
-        <div class="modal" id="add-framework-modal" style="max-width: 640px; max-height: 90vh;">
-            <div class="modal-header">
-                <h3 class="modal-title">Add Framework</h3>
-                <button class="modal-close" id="add-framework-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <form id="add-framework-form">
-                    <div class="form-group">
-                        <label class="form-label">Framework Name <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="framework-name" placeholder="e.g., GRI Standards" required>
-                        <span class="form-error" id="framework-name-error"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Framework Code <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="framework-code" placeholder="e.g., GRI, VSME, ISSB_S1" required>
-                        <span class="form-error" id="framework-code-error"></span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">Version / Edition <span style="color: var(--error);">*</span></label>
-                            <input type="text" class="form-input" id="framework-version" placeholder="e.g., 2024, 1.1.1" required>
-                            <span class="form-error" id="framework-version-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Status <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="framework-status" required>
-                                <option value="">Select status</option>
-                                <option value="draft">Draft</option>
-                                <option value="active">Active</option>
-                                <option value="deprecated">Inactive</option>
-                            </select>
-                            <span class="form-error" id="framework-status-error"></span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Owner / Publisher <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="framework-owner" placeholder="e.g., GRI, EFRAG, ISSB" required>
-                        <span class="form-error" id="framework-owner-error"></span>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="display: flex; justify-content: flex-start; gap: var(--space-3);">
-                <button type="button" class="btn btn-primary" id="save-framework-btn">Save Framework</button>
-                <button type="button" class="btn btn-secondary" id="cancel-framework-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-    <!-- Edit Framework Modal -->
-    <div class="modal-backdrop" id="edit-framework-modal-backdrop">
-        <div class="modal" id="edit-framework-modal" style="max-width: 640px; max-height: 90vh;">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Framework</h3>
-                <button class="modal-close" id="edit-framework-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <form id="edit-framework-form">
-                    <input type="hidden" id="edit-framework-id" name="id">
-                    
-                    <div class="form-group">
-                        <label class="form-label">Framework Name <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="edit-framework-name" placeholder="e.g., GRI Standards" required>
-                        <span class="form-error" id="edit-framework-name-error"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Framework Code <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="edit-framework-code" placeholder="e.g., GRI, VSME, ISSB_S1" required>
-                        <span class="form-error" id="edit-framework-code-error"></span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">Version / Edition <span style="color: var(--error);">*</span></label>
-                            <input type="text" class="form-input" id="edit-framework-version" placeholder="e.g., 2024, 1.1.1" required>
-                            <span class="form-error" id="edit-framework-version-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Status <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="edit-framework-status" required>
-                                <option value="">Select status</option>
-                                <option value="draft">Draft</option>
-                                <option value="active">Active</option>
-                                <option value="deprecated">Inactive</option>
-                            </select>
-                            <span class="form-error" id="edit-framework-status-error"></span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Owner / Publisher <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="edit-framework-owner" placeholder="e.g., GRI, EFRAG, ISSB" required>
-                        <span class="form-error" id="edit-framework-owner-error"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Order Index</label>
-                        <input type="number" class="form-input" id="edit-framework-order" placeholder="Display order" min="0">
-                        <span class="form-error" id="edit-framework-order-error"></span>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="display: flex; justify-content: space-between; gap: var(--space-3);">
-                <div style="display: flex; gap: var(--space-2);">
-                    <button type="button" class="btn btn-error" id="delete-framework-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                        Delete
-                    </button>
-                </div>
-                <div style="display: flex; gap: var(--space-3);">
-                    <button type="button" class="btn btn-secondary" id="cancel-edit-framework-btn">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="update-framework-btn">Update Framework</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Framework Confirmation Modal -->
-    <div class="modal-backdrop" id="delete-framework-confirm-modal-backdrop">
-        <div class="modal" id="delete-framework-confirm-modal" style="max-width: 450px;">
-            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-                <h3 class="modal-title" style="color: var(--error);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: var(--space-2);">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    Confirm Deletion
-                </h3>
-                <button class="modal-close" id="delete-framework-confirm-modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: var(--space-4);">
-                    You are about to delete the framework: <strong id="delete-framework-name"></strong>
-                </p>
-                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
-                    <strong style="color: var(--error);">Warning:</strong> This action will permanently delete this framework from the database. This may affect panels that reference this framework. This action <strong>cannot be undone</strong>.
-                </p>
-                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
-                    💡 <em>Tip: To hide a framework without deleting it, set its status to "Inactive" instead.</em>
-                </p>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Type <strong>"DELETE"</strong> to confirm:</label>
-                    <input type="text" class="form-input" id="delete-framework-confirm-input" placeholder="Type DELETE here" autocomplete="off">
-                    <span class="form-error" id="delete-framework-confirm-error"></span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="delete-framework-confirm-cancel-btn">Cancel</button>
-                <button type="button" class="btn btn-error" id="delete-framework-confirm-btn" disabled>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    Delete Framework
-                </button>
-            </div>
-        </div>
-    </div>
-<!-- Full replacement for the Edit Panel Modal block only -->
-    <!-- Edit Panel Modal -->
-    <div class="modal-backdrop" id="edit-panel-modal-backdrop">
-        <div class="modal" id="edit-panel-modal" style="max-width: 700px; max-height: 90vh;">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Panel</h3>
-                <button class="modal-close" id="edit-panel-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <form id="edit-panel-form">
-                    <input type="hidden" id="edit-panel-id" name="id">
-                    
-                    <!-- Panel Title -->
-                    <div class="form-group">
-                        <label class="form-label">Panel Title <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="edit-panel-title" name="title" placeholder="e.g., Climate & GHG Emissions Panel" required>
-                        <span class="form-error" id="edit-panel-title-error"></span>
-                    </div>
-
-                    <!-- Panel Category + Impact (two columns) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">Panel Category <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="edit-panel-category" name="category" required>
-                                <option value="">Select category</option>
-                                <option value="Energy & Resource Use">Energy & Resource Use</option>
-                                <option value="Climate & GHG Emissions">Climate & GHG Emissions</option>
-                                <option value="Water, Waste & Circularity">Water, Waste & Circularity</option>
-                                <option value="Biodiversity & Land Use">Biodiversity & Land Use</option>
-                                <option value="Pollution & Air Quality">Pollution & Air Quality</option>
-                                <option value="Workforce & Labour Practices">Workforce & Labour Practices</option>
-                                <option value="Diversity, Equity & Inclusion (DEI)">Diversity, Equity & Inclusion (DEI)</option>
-                                <option value="Human Rights & Supply Chain">Human Rights & Supply Chain</option>
-                                <option value="Community & Social Impact">Community & Social Impact</option>
-                                <option value="Health & Safety">Health & Safety</option>
-                                <option value="Ethics, Compliance & Anti-Corruption">Ethics, Compliance & Anti-Corruption</option>
-                                <option value="Risk Management & Resilience">Risk Management & Resilience</option>
-                                <option value="Data Privacy & Cybersecurity">Data Privacy & Cybersecurity</option>
-                                <option value="Product Responsibility & Quality">Product Responsibility & Quality</option>
-                                <option value="ESG Strategy, Materiality & Innovation">ESG Strategy, Materiality & Innovation</option>
-                                <!-- Legacy values -->
-                                <option value="environmental">Environmental (Legacy)</option>
-                                <option value="social">Social (Legacy)</option>
-                                <option value="governance">Governance (Legacy)</option>
-                            </select>
-                            <span class="form-error" id="edit-panel-category-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Impact <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="edit-panel-impact" name="impact" required>
-                                <option value="">Select impact level</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Foundational">Foundational</option>
-                            </select>
-                            <span class="form-error" id="edit-panel-impact-error"></span>
-                        </div>
-                    </div>
-
-                    <!-- Description -->
-                    <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-textarea" id="edit-panel-description" name="description" placeholder="Short description of what this panel covers." rows="3"></textarea>
-                    </div>
-
-                    <!-- ESG Classification + Primary Framework (two columns) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">ESG Classification <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="edit-panel-esg-classification" name="esgClassification" required>
-                                <option value="">Select classification</option>
-                                <option value="Environment">Environment</option>
-                                <option value="Social">Social</option>
-                                <option value="Governance">Governance</option>
-                            </select>
-                            <span class="form-error" id="edit-panel-esg-classification-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Primary Framework <span style="color: var(--error);">*</span></label>
-                            <select class="form-select" id="edit-panel-framework" name="primaryFramework" required>
-                                <option value="">Select framework</option>
-                            </select>
-                            <span class="form-error" id="edit-panel-framework-error"></span>
-                        </div>
-                    </div>
-
-                    <!-- Related SDGs -->
-                    <div class="form-group">
-                        <label class="form-label">Related SDGs</label>
-                        <select class="form-select" id="edit-panel-sdgs" name="relatedSdgs" multiple size="7" style="height: auto;">
-                            <option value="SDG 1">SDG 1 – No Poverty</option>
-                            <option value="SDG 2">SDG 2 – Zero Hunger</option>
-                            <option value="SDG 3">SDG 3 – Good Health and Well-Being</option>
-                            <option value="SDG 4">SDG 4 – Quality Education</option>
-                            <option value="SDG 5">SDG 5 – Gender Equality</option>
-                            <option value="SDG 6">SDG 6 – Clean Water and Sanitation</option>
-                            <option value="SDG 7">SDG 7 – Affordable and Clean Energy</option>
-                            <option value="SDG 8">SDG 8 – Decent Work and Economic Growth</option>
-                            <option value="SDG 9">SDG 9 – Industry, Innovation and Infrastructure</option>
-                            <option value="SDG 10">SDG 10 – Reduced Inequalities</option>
-                            <option value="SDG 11">SDG 11 – Sustainable Cities and Communities</option>
-                            <option value="SDG 12">SDG 12 – Responsible Consumption and Production</option>
-                            <option value="SDG 13">SDG 13 – Climate Action</option>
-                            <option value="SDG 14">SDG 14 – Life Below Water</option>
-                            <option value="SDG 15">SDG 15 – Life on Land</option>
-                            <option value="SDG 16">SDG 16 – Peace, Justice and Strong Institutions</option>
-                            <option value="SDG 17">SDG 17 – Partnerships for the Goals</option>
-                        </select>
-                        <p class="form-helper">Hold <strong>Cmd (Mac)</strong> or <strong>Ctrl (Windows)</strong> to select multiple SDGs.</p>
-                    </div>
-
-                    <!-- Purpose -->
-                    <div class="form-group">
-                        <label class="form-label">Purpose</label>
-                        <textarea class="form-textarea" id="edit-panel-purpose" name="purpose" placeholder="Panel purpose or intended use." rows="2"></textarea>
-                    </div>
-
-                    <!-- Unicode + Icon (two columns) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-                        <div class="form-group">
-                            <label class="form-label">Unicode (optional)</label>
-                            <input type="text" class="form-input" id="edit-panel-unicode" name="unicode" placeholder="e.g., U+1F30D">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Icon (Emoji or Unicode)</label>
-                            <input type="text" class="form-input" id="edit-panel-icon" name="icon" placeholder="e.g., 🌍">
-                        </div>
-                    </div>
-
-                    <!-- CSV Import Section for Panel Indicators -->
-                    <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4); margin: var(--space-4) 0;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-3);">
-                            <div>
-                                <strong>Import Indicators to This Panel</strong>
-                                <p class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">Upload a CSV file to add multiple indicators to this panel.</p>
-                            </div>
-                            <div style="display: flex; gap: var(--space-2);">
-                                <button type="button" class="btn btn-secondary btn-sm" id="edit-panel-download-csv-btn">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    Template
-                                </button>
-                                <label class="btn btn-primary btn-sm" style="cursor: pointer;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="17 8 12 3 7 8"></polyline>
-                                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                                    </svg>
-                                    Import CSV
-                                    <input type="file" id="edit-panel-csv-input" accept=".csv" style="display: none;">
-                                </label>
-                            </div>
-                        </div>
-                        <div id="edit-panel-csv-status" style="display: none; padding: var(--space-2); border-radius: var(--radius-md); font-size: var(--text-sm);"></div>
-                        <p class="text-secondary" style="font-size: var(--text-xs); margin-top: var(--space-2);">
-                            <strong>Current Panel Indicators:</strong> <span id="edit-panel-indicator-count">0</span>
-                        </p>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" id="edit-panel-status" name="status">
-                            <option value="draft">Draft</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                        <span class="form-error" id="edit-panel-status-error"></span>
-                        <p class="form-helper">
-                            Draft panels are only visible to admins. Inactive panels are hidden from all users.
-                            Active panels are visible to champions and business users.
-                        </p>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="display: flex; justify-content: space-between; gap: var(--space-3);">
-                <div style="display: flex; gap: var(--space-2);">
-                    <button type="button" class="btn btn-error" id="delete-panel-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                        Delete
-                    </button>
-                </div>
-                <div style="display: flex; gap: var(--space-3);">
-                    <button type="button" class="btn btn-secondary" id="cancel-edit-panel-btn">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="update-panel-btn">Update Panel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Indicator Modal -->
-    <div class="modal-backdrop" id="add-indicator-modal-backdrop">
-        <div class="modal" id="add-indicator-modal" style="max-width: 700px; max-height: 90vh;">
-            <div class="modal-header">
-                <h3 class="modal-title">Add Indicator to Panel</h3>
-                <button class="modal-close" id="add-indicator-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <!-- CSV Import Section -->
-                <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);">
-                        <div>
-                            <strong>Import from CSV</strong>
-                            <p class="text-muted" style="font-size: var(--text-sm); margin-top: var(--space-1);">Upload a CSV file to import multiple indicators at once.</p>
-                        </div>
-                        <div style="display: flex; gap: var(--space-2);">
-                            <button type="button" class="btn btn-secondary btn-sm" id="download-csv-template-btn">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Template
-                            </button>
-                            <label class="btn btn-primary btn-sm" style="cursor: pointer;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                                Import CSV
-                                <input type="file" id="csv-import-input" accept=".csv" style="display: none;">
-                            </label>
-                        </div>
-                    </div>
-                    <div id="csv-import-status" style="display: none; margin-top: var(--space-3);"></div>
-                </div>
-
-                <div style="text-align: center; color: var(--gray-400); margin-bottom: var(--space-4);">
-                    <span style="display: inline-flex; align-items: center; gap: var(--space-2);">
-                        <span style="width: 40px; height: 1px; background: var(--gray-200);"></span>
-                        or add manually
-                        <span style="width: 40px; height: 1px; background: var(--gray-200);"></span>
-                    </span>
-                </div>
-
-                <form id="add-indicator-form">
-                    <!-- Panel Selection (Required) -->
-                    <div class="form-group">
-                        <label class="form-label">Panel <span style="color: var(--error);">*</span></label>
-                        <select class="form-select" id="indicator-panel" name="panelId" required>
-                            <option value="">Select a panel for this indicator</option>
-                        </select>
-                        <span class="form-error" id="indicator-panel-error"></span>
-                        <p class="form-helper">Indicators are specific to panels and cannot be shared across panels.</p>
-                    </div>
-
-                    <!-- Unit + Formula Required -->
-                    <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: end;">
-                        <div class="form-group">
-                            <label class="form-label">Unit</label>
-                            <input type="text" class="form-input" id="indicator-unit" name="unit" placeholder="e.g., tCO2e, kWh">
-                        </div>
-                        <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; padding: var(--space-3) 0;">
-                                <input type="checkbox" id="indicator-formula-required" name="formulaRequired">
-                                <span>Formula Required</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Indicator Title -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Title <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="indicator-title" name="title" placeholder="e.g., Scope 1 GHG Emissions (Tonnes CO₂e)" required>
-                        <span class="form-error" id="indicator-title-error"></span>
-                    </div>
-
-                    <!-- Indicator Code -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Code</label>
-                        <input type="text" class="form-input" id="indicator-code" name="code" placeholder="e.g., GRI 305-1, ESRS E1-1, SASB RT-CH-110a.1">
-                    </div>
-
-                    <!-- Primary Framework -->
-                    <div class="form-group">
-                        <label class="form-label">Primary Framework</label>
-                        <select class="form-select" id="indicator-framework" name="primaryFramework">
-                            <option value="">Select framework</option>
-                            <option value="gri">GRI</option>
-                            <option value="esrs">ESRS</option>
-                            <option value="ifrs">IFRS</option>
-                        </select>
-                    </div>
-
-                    <!-- Framework Version -->
-                    <div class="form-group">
-                        <label class="form-label">Framework Version</label>
-                        <input type="text" class="form-input" id="indicator-framework-version" name="frameworkVersion" placeholder="e.g., 2021 Update">
-                    </div>
-
-                    <!-- Description -->
-                    <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-textarea" id="indicator-description" name="description" placeholder="Short description of what this indicator measures." rows="3"></textarea>
-                    </div>
-
-                    <!-- Why It Matters to SMEs -->
-                    <div class="form-group">
-                        <label class="form-label">Why It Matters to SMEs</label>
-                        <textarea class="form-textarea" id="indicator-why-matters" name="whyItMatters" placeholder="Explain why this indicator is important for SMEs and how it supports their sustainability journey." rows="3"></textarea>
-                    </div>
-
-                    <!-- Impact Level -->
-                    <div class="form-group">
-                        <label class="form-label">Impact Level</label>
-                        <select class="form-select" id="indicator-impact" name="impactLevel">
-                            <option value="">Select impact level</option>
-                            <option value="High">High</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Foundational">Foundational</option>
-                        </select>
-                    </div>
-
-                    <!-- Difficulty Level -->
-                    <div class="form-group">
-                        <label class="form-label">Difficulty Level</label>
-                        <select class="form-select" id="indicator-difficulty" name="difficultyLevel">
-                            <option value="">Select how difficult it is for SMEs to report on this indicator</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Moderate">Moderate</option>
-                            <option value="Complex">Complex</option>
-                        </select>
-                    </div>
-
-                    <!-- Estimated Time to Validate -->
-                    <div class="form-group">
-                        <label class="form-label">Estimated Time to Validate</label>
-                        <input type="text" class="form-input" id="indicator-estimated-time" name="estimatedTime" placeholder="e.g., 3–5 minutes">
-                    </div>
-
-                    <!-- ESG Class -->
-                    <div class="form-group">
-                        <label class="form-label">ESG Class</label>
-                        <select class="form-select" id="indicator-esg-class" name="esgClass">
-                            <option value="">Select ESG classification</option>
-                            <option value="Environment">Environment</option>
-                            <option value="Social">Social</option>
-                            <option value="Governance">Governance</option>
-                        </select>
-                    </div>
-
-                    <!-- Related SDGs -->
-                    <div class="form-group">
-                        <label class="form-label">Related SDG(s)</label>
-                        <select class="form-select" id="indicator-sdgs" name="relatedSdgs" multiple size="6" style="height: auto;">
-                            <option value="SDG 1">SDG 1 – No Poverty</option>
-                            <option value="SDG 2">SDG 2 – Zero Hunger</option>
-                            <option value="SDG 3">SDG 3 – Good Health and Well-Being</option>
-                            <option value="SDG 4">SDG 4 – Quality Education</option>
-                            <option value="SDG 5">SDG 5 – Gender Equality</option>
-                            <option value="SDG 6">SDG 6 – Clean Water and Sanitation</option>
-                            <option value="SDG 7">SDG 7 – Affordable and Clean Energy</option>
-                            <option value="SDG 8">SDG 8 – Decent Work and Economic Growth</option>
-                            <option value="SDG 9">SDG 9 – Industry, Innovation and Infrastructure</option>
-                            <option value="SDG 10">SDG 10 – Reduced Inequalities</option>
-                            <option value="SDG 11">SDG 11 – Sustainable Cities and Communities</option>
-                            <option value="SDG 12">SDG 12 – Responsible Consumption and Production</option>
-                            <option value="SDG 13">SDG 13 – Climate Action</option>
-                            <option value="SDG 14">SDG 14 – Life Below Water</option>
-                            <option value="SDG 15">SDG 15 – Life on Land</option>
-                            <option value="SDG 16">SDG 16 – Peace, Justice and Strong Institutions</option>
-                            <option value="SDG 17">SDG 17 – Partnerships for the Goals</option>
-                        </select>
-                        <p class="form-helper">Hold <strong>Cmd (Mac)</strong> or <strong>Ctrl (Windows)</strong> to select multiple SDGs.</p>
-                    </div>
-
-                    <!-- Indicator Validation Question -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Validation Question</label>
-                        <textarea class="form-textarea" id="indicator-validation-question" name="validationQuestion" placeholder="Enter the question the ESG Champion must answer to validate this indicator." rows="2"></textarea>
-                    </div>
-
-                    <!-- Response Type -->
-                    <div class="form-group">
-                        <label class="form-label">Response Type</label>
-                        <select class="form-select" id="indicator-response-type" name="responseType">
-                            <option value="">Choose the response format</option>
-                            <option value="Multiple Choice">Multiple Choice</option>
-                            <option value="Yes-No">Yes–No</option>
-                            <option value="Short Text">Short Text</option>
-                            <option value="Long Text">Long Text</option>
-                        </select>
-                    </div>
-
-                    <!-- Indicator Tags -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Tags (Optional)</label>
-                        <input type="text" class="form-input" id="indicator-tags" name="tags" placeholder="e.g., emissions, water use, SME reporting, data availability...">
-                    </div>
-
-                    <!-- Icon / Unicode -->
-                    <div class="form-group">
-                        <label class="form-label">Icon / Unicode (Optional)</label>
-                        <input type="text" class="form-input" id="indicator-icon" name="icon" placeholder="Select icon or enter Unicode character">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="display: flex; justify-content: flex-start; gap: var(--space-3);">
-                <button type="button" class="btn btn-primary" id="save-indicator-btn">Save Indicator</button>
-                <button type="button" class="btn btn-secondary" id="cancel-indicator-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Indicator Modal -->
-    <div class="modal-backdrop" id="edit-indicator-modal-backdrop">
-        <div class="modal" id="edit-indicator-modal" style="max-width: 700px; max-height: 90vh;">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Indicator</h3>
-                <button class="modal-close" id="edit-indicator-modal-close">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <form id="edit-indicator-form">
-                    <input type="hidden" id="edit-indicator-id" name="id">
-
-                    <!-- Panel Selection -->
-                    <div class="form-group">
-                        <label class="form-label">Assign to Panel <span style="color: var(--error);">*</span></label>
-                        <select class="form-select" id="edit-indicator-panel" name="panel_id" required>
-                            <option value="">Select a panel...</option>
-                        </select>
-                        <span class="form-error" id="edit-indicator-panel-error"></span>
-                        <p class="form-helper">The indicator will only appear in the selected panel.</p>
-                    </div>
-
-                    <!-- Unit + Formula Required -->
-                    <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: end;">
-                        <div class="form-group">
-                            <label class="form-label">Unit</label>
-                            <input type="text" class="form-input" id="edit-indicator-unit" name="unit" placeholder="e.g., tCO2e, kWh">
-                        </div>
-                        <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; padding: var(--space-3) 0;">
-                                <input type="checkbox" id="edit-indicator-formula-required" name="formulaRequired">
-                                <span>Formula Required</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Indicator Title -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Title <span style="color: var(--error);">*</span></label>
-                        <input type="text" class="form-input" id="edit-indicator-title" name="title" placeholder="e.g., Scope 1 GHG Emissions (Tonnes CO₂e)" required>
-                        <span class="form-error" id="edit-indicator-title-error"></span>
-                    </div>
-
-                    <!-- Indicator Code -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Code</label>
-                        <input type="text" class="form-input" id="edit-indicator-code" name="code" placeholder="e.g., GRI 305-1, ESRS E1-1, SASB RT-CH-110a.1">
-                    </div>
-
-                    <!-- Primary Framework -->
-                    <div class="form-group">
-                        <label class="form-label">Primary Framework</label>
-                        <select class="form-select" id="edit-indicator-framework" name="primaryFramework">
-                            <option value="">Select framework</option>
-                        </select>
-                    </div>
-
-                    <!-- Framework Version -->
-                    <div class="form-group">
-                        <label class="form-label">Framework Version</label>
-                        <input type="text" class="form-input" id="edit-indicator-framework-version" name="frameworkVersion" placeholder="e.g., 2021 Update">
-                    </div>
-
-                    <!-- Description -->
-                    <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-textarea" id="edit-indicator-description" name="description" placeholder="Short description of what this indicator measures." rows="3"></textarea>
-                    </div>
-
-                    <!-- Why It Matters to SMEs -->
-                    <div class="form-group">
-                        <label class="form-label">Why It Matters to SMEs</label>
-                        <textarea class="form-textarea" id="edit-indicator-why-matters" name="whyItMatters" placeholder="Explain why this indicator is important for SMEs and how it supports their sustainability journey." rows="3"></textarea>
-                    </div>
-
-                    <!-- Impact Level -->
-                    <div class="form-group">
-                        <label class="form-label">Impact Level</label>
-                        <select class="form-select" id="edit-indicator-impact" name="impactLevel">
-                            <option value="">Select impact level</option>
-                            <option value="High">High</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Foundational">Foundational</option>
-                        </select>
-                    </div>
-
-                    <!-- Difficulty Level -->
-                    <div class="form-group">
-                        <label class="form-label">Difficulty Level</label>
-                        <select class="form-select" id="edit-indicator-difficulty" name="difficultyLevel">
-                            <option value="">Select how difficult it is for SMEs to report on this indicator</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Moderate">Moderate</option>
-                            <option value="Complex">Complex</option>
-                        </select>
-                    </div>
-
-                    <!-- Estimated Time to Validate -->
-                    <div class="form-group">
-                        <label class="form-label">Estimated Time to Validate</label>
-                        <input type="text" class="form-input" id="edit-indicator-estimated-time" name="estimatedTime" placeholder="e.g., 3–5 minutes">
-                    </div>
-
-                    <!-- ESG Class -->
-                    <div class="form-group">
-                        <label class="form-label">ESG Class</label>
-                        <select class="form-select" id="edit-indicator-esg-class" name="esgClass">
-                            <option value="">Select ESG classification</option>
-                            <option value="Environment">Environment</option>
-                            <option value="Social">Social</option>
-                            <option value="Governance">Governance</option>
-                        </select>
-                    </div>
-
-                    <!-- Related SDGs -->
-                    <div class="form-group">
-                        <label class="form-label">Related SDG(s)</label>
-                        <select class="form-select" id="edit-indicator-sdgs" name="relatedSdgs" multiple size="6" style="height: auto;">
-                            <option value="SDG 1">SDG 1 – No Poverty</option>
-                            <option value="SDG 2">SDG 2 – Zero Hunger</option>
-                            <option value="SDG 3">SDG 3 – Good Health and Well-Being</option>
-                            <option value="SDG 4">SDG 4 – Quality Education</option>
-                            <option value="SDG 5">SDG 5 – Gender Equality</option>
-                            <option value="SDG 6">SDG 6 – Clean Water and Sanitation</option>
-                            <option value="SDG 7">SDG 7 – Affordable and Clean Energy</option>
-                            <option value="SDG 8">SDG 8 – Decent Work and Economic Growth</option>
-                            <option value="SDG 9">SDG 9 – Industry, Innovation and Infrastructure</option>
-                            <option value="SDG 10">SDG 10 – Reduced Inequalities</option>
-                            <option value="SDG 11">SDG 11 – Sustainable Cities and Communities</option>
-                            <option value="SDG 12">SDG 12 – Responsible Consumption and Production</option>
-                            <option value="SDG 13">SDG 13 – Climate Action</option>
-                            <option value="SDG 14">SDG 14 – Life Below Water</option>
-                            <option value="SDG 15">SDG 15 – Life on Land</option>
-                            <option value="SDG 16">SDG 16 – Peace, Justice and Strong Institutions</option>
-                            <option value="SDG 17">SDG 17 – Partnerships for the Goals</option>
-                        </select>
-                        <p class="form-helper">Hold <strong>Cmd (Mac)</strong> or <strong>Ctrl (Windows)</strong> to select multiple SDGs.</p>
-                    </div>
-
-                    <!-- Indicator Validation Question -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Validation Question</label>
-                        <textarea class="form-textarea" id="edit-indicator-validation-question" name="validationQuestion" placeholder="Enter the question the ESG Champion must answer to validate this indicator." rows="2"></textarea>
-                    </div>
-
-                    <!-- Response Type -->
-                    <div class="form-group">
-                        <label class="form-label">Response Type</label>
-                        <select class="form-select" id="edit-indicator-response-type" name="responseType">
-                            <option value="">Choose the response format</option>
-                            <option value="Multiple Choice">Multiple Choice</option>
-                            <option value="Yes-No">Yes–No</option>
-                            <option value="Short Text">Short Text</option>
-                            <option value="Long Text">Long Text</option>
-                        </select>
-                    </div>
-
-                    <!-- Indicator Tags -->
-                    <div class="form-group">
-                        <label class="form-label">Indicator Tags (Optional)</label>
-                        <input type="text" class="form-input" id="edit-indicator-tags" name="tags" placeholder="e.g., emissions, water use, SME reporting, data availability...">
-                    </div>
-
-                    <!-- Icon / Unicode -->
-                    <div class="form-group">
-                        <label class="form-label">Icon / Unicode (Optional)</label>
-                        <input type="text" class="form-input" id="edit-indicator-icon" name="icon" placeholder="Select icon or enter Unicode character">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="display: flex; justify-content: space-between; gap: var(--space-3);">
-                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
-                    <div style="display: flex; gap: var(--space-2); align-items: center;">
-                        <button type="button" class="btn btn-error" id="delete-indicator-btn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
-                    <div class="form-group" style="margin: 0;">
-                        <label class="form-label" for="edit-indicator-status">Status</label>
-                        <select class="form-select" id="edit-indicator-status" name="status">
-                            <option value="draft">Draft</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                        <span class="form-error" id="edit-indicator-status-error"></span>
-                        <p class="form-helper">
-                            Draft indicators are only visible to admins. Inactive indicators are hidden from all users.
-                            Active indicators are visible in their assigned panel.
-                        </p>
-                    </div>
-                </div>
-                <div style="display: flex; gap: var(--space-3); align-items: flex-end;">
-                    <button type="button" class="btn btn-secondary" id="cancel-edit-indicator-btn">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="update-indicator-btn">Update Indicator</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Indicator Confirmation Modal -->
-    <div class="modal-backdrop" id="delete-indicator-confirm-modal-backdrop">
-        <div class="modal" id="delete-indicator-confirm-modal" style="max-width: 450px;">
-            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-                <h3 class="modal-title" style="color: var(--error);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: var(--space-2);">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    Confirm Deletion
-                </h3>
-                <button class="modal-close" id="delete-indicator-confirm-modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: var(--space-4);">
-                    You are about to delete the indicator: <strong id="delete-indicator-name"></strong>
-                </p>
-                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
-                    <strong style="color: var(--error);">Warning:</strong> This action will permanently delete this indicator from the database. This action <strong>cannot be undone</strong>.
-                </p>
-                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
-                    💡 <em>Tip: To hide an indicator without deleting it, use the "Hide" button instead.</em>
-                </p>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Type <strong>"DELETE"</strong> to confirm:</label>
-                    <input type="text" class="form-input" id="delete-indicator-confirm-input" placeholder="Type DELETE here" autocomplete="off">
-                    <span class="form-error" id="delete-indicator-confirm-error"></span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="delete-indicator-confirm-cancel-btn">Cancel</button>
-                <button type="button" class="btn btn-error" id="delete-indicator-confirm-btn" disabled>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    Delete Indicator
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal-backdrop" id="delete-confirm-modal-backdrop">
-        <div class="modal" id="delete-confirm-modal" style="max-width: 450px;">
-            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-                <h3 class="modal-title" style="color: var(--error);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: var(--space-2);">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    Confirm Deletion
-                </h3>
-                <button class="modal-close" id="delete-confirm-modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: var(--space-4);">
-                    You are about to delete the panel: <strong id="delete-panel-name"></strong>
-                </p>
-                <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--text-sm);">
-                    <strong style="color: var(--error);">Warning:</strong> This action will permanently delete the panel and all its associated indicators from the database. This action <strong>cannot be undone</strong>.
-                </p>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Type <strong>"DELETE"</strong> to confirm:</label>
-                    <input type="text" class="form-input" id="delete-confirm-input" placeholder="Type DELETE here" autocomplete="off">
-                    <span class="form-error" id="delete-confirm-error"></span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="delete-confirm-cancel-btn">Cancel</button>
-                <button type="button" class="btn btn-error" id="delete-confirm-btn" disabled>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    Delete Panel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Compact Footer (Dashboard variant) -->
-    <footer class="footer-compact">
-        <div class="container">
-            <!-- LEFT: Footer links -->
-            <ul class="footer-compact-links">
-                <li><a href="/terms.html" class="footer-link">Terms of Service</a></li>
-                <li><a href="/privacy.html" class="footer-link">Privacy Policy</a></li>
-                <li><a href="/cookie-policy.html" class="footer-link">Cookie Policy</a></li>
-            </ul>
-            <!-- CENTER: Contact button -->
-            <div class="footer-compact-cta">
-                <a href="https://calendly.com/stiforum-info/30min" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                    Contact
-                </a>
-            </div>
-            <!-- RIGHT: Copyright dynamic year -->
-            <span class="footer-compact-copyright">
-                &copy; <span id="footer-year"></span> STIF
-            </span>
-        </div>
-    </footer>
-    <script>
-        // Dynamically set the year
-        document.getElementById('footer-year').textContent = new Date().getFullYear();
-    </script>
-
-    <!-- Scripts -->
-    <!-- Services -->
     <script src="supabase-service.js"></script>
     <script src="business-auth.js"></script>
     <script src="champion-auth-supabase.js"></script>
-    <script src="champion-db-supabase.js"></script>
     <script src="dynamic-navigation.js"></script>
+    <script src="logout.js"></script>   <!-- ADD THIS -->
     <script src="mobile-menu.js"></script>
-    <script src="logout.js"></script>
-    <script src="admin-service.js"></script>
-    <script src="admin-review.js"></script>
+        <script src="user-type-control.js"></script>
+    <script>
+        let currentUser = null;
+        
+        async function checkAuth() {
+            const supabase = window.getSupabase();
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                window.location.href = '/business-login.html';
+                return;
+            }
+            
+            const { data: businessUser, error } = await supabase.from('business_users').select('*').eq('auth_user_id', session.user.id).single();
+            
+            if (error || !businessUser) {
+                window.location.href = '/business-login.html';
+                return;
+            }
+            
+            currentUser = businessUser;
+            renderDashboard();
+        }
+        
+        function renderDashboard() {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('dashboard-content').classList.remove('hidden');
+            
+            const companyName = currentUser.company_name || 'Business User';
+            document.getElementById('welcome-title').textContent = `Welcome back, ${companyName}`;
+            
+            document.getElementById('subscription-status').textContent = capitalize(currentUser.subscription_status || 'Active');
+            document.getElementById('reporting-year').textContent = currentUser.reporting_year || new Date().getFullYear();
+            
+            calculateProfileCompletion();
+            calculateDaysActive();
+        }
+        
+        function capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''; }
+        
+        function calculateProfileCompletion() {
+            const fields = ['first_name', 'last_name', 'company_name', 'business_email', 'mobile_number', 'office_phone', 'linkedin_url', 'website', 'company_size', 'country', 'business_address', 'industry', 'primary_esg_focus', 'ongoing_esg_initiatives'];
+            const completed = fields.filter(f => currentUser[f] && currentUser[f].toString().trim()).length;
+            const completion = Math.round((completed / fields.length) * 100);
+            document.getElementById('stat-completed').textContent = completion + '%';
+            document.getElementById('account-status').textContent = completion === 100 ? 'Complete' : 'Incomplete';
+        }
+        
+        function calculateDaysActive() {
+            if (currentUser.created_at) {
+                const days = Math.floor((new Date() - new Date(currentUser.created_at)) / (1000 * 60 * 60 * 24));
+                document.getElementById('stat-days').textContent = days;
+            }
+        }
+        
+        checkAuth();
+    </script>
 </body>
 </html>
