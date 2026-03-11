@@ -129,8 +129,8 @@ function build() {
         }
 
         if (entry.isDirectory()) {
-            // Only copy assets directory
-            if (entry.name === 'assets') {
+            // Copy assets and homepage directories
+            if (entry.name === 'assets' || entry.name === 'homepage') {
                 copyDir(srcPath, destPath);
             }
         } else {
@@ -153,4 +153,3 @@ function build() {
 
 // Run build
 build();
-

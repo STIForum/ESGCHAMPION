@@ -1,6 +1,8 @@
 {
   "version": 2,
   "name": "esg-champions",
+  "buildCommand": "node build.js",
+  "outputDirectory": "public",
   "headers": [
     {
       "source": "/(.*)\\.js",
