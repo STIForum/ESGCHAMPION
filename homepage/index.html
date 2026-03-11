@@ -411,12 +411,13 @@
         
         <div class="footer-bottom">
           <div class="footer-bottom-inner">
-            <p>© 2025 STIF - Sustainability Technology and Innovation Forum. All rights reserved.</p>
+            <p>© <span id="footer-year"></span> STIF - Sustainability Technology and Innovation Forum. All rights reserved.</p>
             <p>Built with purpose for a sustainable future.</p>
           </div>
         </div>
       </div>
-    </footer>
+    <script>document.getElementById("footer-year").textContent=new Date().getFullYear();</script>
+  </footer>
   </div>
 
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
