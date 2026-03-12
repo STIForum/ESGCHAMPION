@@ -118,16 +118,19 @@ function initTabs() {
       // Tabs 1 and 2: keep tabContent0 visible (don't hide it),
       // and scroll down to the corresponding section below.
       var sectionId = tabIndex === '1' ? 'grow-as-business' : 'stif-framework';
-      var header = document.querySelector('.header');
-      var headerHeight = header ? header.offsetHeight : 0;
 
       requestAnimationFrame(function() {
         requestAnimationFrame(function() {
           var targetSection = document.getElementById(sectionId);
-          if (targetSection) {
-            var top = targetSection.getBoundingClientRect().top + window.pageYOffset - headerHeight;
-            window.scrollTo({ top: top, behavior: 'smooth' });
-          }
+          if (!targetSection) return;
+
+          var header = document.querySelector('.header');
+          var headerHeight = header ? header.getBoundingClientRect().height : 0;
+          var rect = targetSection.getBoundingClientRect();
+          var scrollTop = window.scrollY !== undefined ? window.scrollY : window.pageYOffset;
+          var top = rect.top + scrollTop - headerHeight;
+
+          window.scrollTo({ top: top, behavior: 'smooth' });
         });
       });
     });
