@@ -253,101 +253,166 @@
                 <button class="modal-close" id="score-modal-close">&times;</button>
             </div>
             <div class="modal-body">
+
+                <!-- Credit Score Summary header -->
+                <h4 class="widget-title" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #f4b400;">★</span>
+                    Credit Score Summary
+                </h4>
+
+                <!-- Section: Mandatory Fields -->
                 <div class="mb-4">
-                    <h4 class="widget-title" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                        <span style="color: #f4b400;">★</span>
-                        Credit Score Summary
-                    </h4>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #f4b400;">★</span>
-                            <span>Indicator Necessity</span>
-                        </div>
-                        <span class="font-semibold">+2</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600; font-size: var(--text-sm); color: var(--gray-700); text-transform: uppercase; letter-spacing: 0.05em;">
+                            ✓ Mandatory Fields Completed <span style="font-weight: 400; color: var(--gray-500);">(8 fields × +2 each)</span>
+                        </span>
+                        <span style="font-weight: 700; color: var(--success);">max +16</span>
                     </div>
 
-                    <div class="divider"></div>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: var(--success);">✓</span>
-                            <span>Gap Detection / Missing Requirement</span>
+                    <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 4px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;">
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> SME Size Band
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> Primary Industry / Sector
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> Relevance for This SME Profile
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> Regulatory Necessity
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> Operational Feasibility
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> Cost-to-Collect
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> Misreporting Risk
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--success);">✓</span> One-Line Rationale
+                                <span style="margin-left: auto; font-weight: 600; color: var(--success);">+2</span>
+                            </div>
                         </div>
-                        <span class="font-semibold">+4</span>
                     </div>
 
-                    <div class="divider"></div>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: var(--gray-700);">•</span>
-                            <span>SME Reporting Difficulty (Moderate)</span>
-                        </div>
-                        <span class="font-semibold">+2</span>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #f59e0b;">🏷️</span>
-                            <span>Materiality Tags (2 selected)</span>
-                        </div>
-                        <span class="font-semibold">+2</span>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #f4b400;">★</span>
-                            <span>Impact Score on SMEs</span>
-                            <span style="color: #f4b400;">★★★★★</span>
-                        </div>
-                        <span class="font-semibold">+4</span>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: var(--success);">✓</span>
-                            <span>Version Appropriateness</span>
-                        </div>
-                        <span class="font-semibold">+1</span>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #fb7185;">✨</span>
-                            <span>Validation Response Quality</span>
-                        </div>
-                        <span class="font-semibold">+5</span>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="color: var(--info);">💬</span>
-                            <span>Additional Comments</span>
-                        </div>
-                        <span class="font-semibold">+2</span>
+                    <div style="display: flex; justify-content: flex-end; font-size: var(--text-sm); color: var(--gray-500); margin-top: 6px; padding-right: 2px;">
+                        Your mandatory credits: <strong style="margin-left: 6px; color: var(--gray-800);" id="score-mandatory-credits">0</strong>
                     </div>
                 </div>
 
                 <div class="divider"></div>
 
-                <div class="mt-4" style="text-align: center;">
-                    <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--primary-700); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span style="color: #f4b400;">★</span>
-                        TOTAL CREDITS EARNED: <span id="score-modal-total" style="margin-left: 6px;">0</span>
+                <!-- Section: Optional Fields -->
+                <div class="mb-4 mt-4">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600; font-size: var(--text-sm); color: var(--gray-700); text-transform: uppercase; letter-spacing: 0.05em;">
+                            • Optional Fields Completed <span style="font-weight: 400; color: var(--gray-500);">(10 fields × +1 each)</span>
+                        </span>
+                        <span style="font-weight: 700; color: var(--primary);">max +10</span>
                     </div>
-                    <div style="font-size: var(--text-xl); font-weight: 700; color: var(--primary-700);">Credits</div>
+
+                    <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 4px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;">
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Geographic Footprint
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Primary Framework
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> ESG Class
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Related SDGs
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Estimated Time to Collect
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Support Required
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Stakeholder Priority
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Suggested STIF Tier
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> More Specific Sector / NACE Tags
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--gray-700);">
+                                <span style="color: var(--primary);">•</span> Notes / Caveats
+                                <span style="margin-left: auto; font-weight: 600; color: var(--primary);">+1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; font-size: var(--text-sm); color: var(--gray-500); margin-top: 6px; padding-right: 2px;">
+                        Your optional credits: <strong style="margin-left: 6px; color: var(--gray-800);" id="score-optional-credits">0</strong>
+                    </div>
                 </div>
+
+                <div class="divider"></div>
+
+                <!-- Section: Read-Only Fields -->
+                <div class="mb-4 mt-4">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600; font-size: var(--text-sm); color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em;">
+                            📄 Read-Only Indicator Information <span style="font-weight: 400;">(No Credit)</span>
+                        </span>
+                        <span style="font-weight: 700; color: var(--gray-400);">+0</span>
+                    </div>
+                    <div style="background: var(--gray-50); border-radius: var(--radius-lg); padding: 10px 14px;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px 24px;">
+                            <span style="font-size: var(--text-sm); color: var(--gray-400);">📄 Indicator Title → 0</span>
+                            <span style="font-size: var(--text-sm); color: var(--gray-400);">📄 Framework Code(s) → 0</span>
+                            <span style="font-size: var(--text-sm); color: var(--gray-400);">📄 Indicator Description → 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Formula explanation -->
+                <div class="mt-4 mb-4" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-lg); padding: 12px 16px; font-size: var(--text-sm); color: var(--gray-700);">
+                    <strong style="display: block; margin-bottom: 4px; color: var(--gray-800);">Formula per indicator review:</strong>
+                    (Mandatory Fields × 2) + (Non-Mandatory Fields × 1) + (Read-Only × 0)
+                    <br>
+                    <span style="color: var(--gray-500); font-size: var(--text-xs);">Maximum possible per indicator review: <strong id="score-max-per-review">26</strong> credits</span>
+                </div>
+
+                <!-- Total credits -->
+                <div style="text-align: center; background: linear-gradient(135deg, var(--primary-50, #eff6ff), var(--primary-100, #dbeafe)); border-radius: var(--radius-lg); padding: 16px;">
+                    <div style="font-size: var(--text-sm); color: var(--gray-600); margin-bottom: 4px;">
+                        Across <strong id="score-approved-reviews">0</strong> approved indicator review(s)
+                    </div>
+                    <div style="font-size: var(--text-3xl); font-weight: 700; color: var(--primary-700); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span style="color: #f4b400;">★</span>
+                        <span id="score-modal-total">0</span>
+                    </div>
+                    <div style="font-size: var(--text-sm); font-weight: 600; color: var(--primary-600); margin-top: 2px;">Total STIF Credits Earned</div>
+                </div>
+
             </div>
         </div>
     </div>
