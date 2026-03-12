@@ -96,41 +96,40 @@ function initTabs() {
   tabButtons.forEach(function(button, index) {
     button.addEventListener('click', function() {
       const tabIndex = button.getAttribute('data-tab');
-      
-      // Handle special navigation tabs
-      if (tabIndex === '1') {
-        // Scroll to "Grow as a Business" section
-        const growSection = document.getElementById('grow-as-business');
-        if (growSection) {
-          growSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        return;
-      }
-      
-      if (tabIndex === '2') {
-        // Scroll to "STIF Framework" section
-        const frameworkSection = document.getElementById('stif-framework');
-        if (frameworkSection) {
-          frameworkSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        return;
-      }
-      
+
       // Update active tab button
       tabButtons.forEach(function(btn) {
         btn.classList.remove('active');
       });
       button.classList.add('active');
-      
-      // Update visible content
-      tabContents.forEach(function(content) {
-        content.classList.add('hidden');
-      });
-      
-      const targetContent = document.getElementById('tabContent' + tabIndex);
-      if (targetContent) {
-        targetContent.classList.remove('hidden');
+
+      // Tab 0: show its panel, no scroll needed
+      if (tabIndex === '0') {
+        tabContents.forEach(function(content) {
+          content.classList.add('hidden');
+        });
+        var targetContent = document.getElementById('tabContent0');
+        if (targetContent) {
+          targetContent.classList.remove('hidden');
+        }
+        return;
       }
+
+      // Tabs 1 and 2: keep tabContent0 visible (don't hide it),
+      // and scroll down to the corresponding section below.
+      var sectionId = tabIndex === '1' ? 'grow-as-business' : 'stif-framework';
+      var header = document.querySelector('.header');
+      var headerHeight = header ? header.offsetHeight : 0;
+
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          var targetSection = document.getElementById(sectionId);
+          if (targetSection) {
+            var top = targetSection.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+          }
+        });
+      });
     });
   });
 }
