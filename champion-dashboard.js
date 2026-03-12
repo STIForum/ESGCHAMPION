@@ -249,7 +249,7 @@ class ChampionDashboard {
             // Update score info tooltip / helper text
             const maxEl = document.getElementById('score-max-per-review');
             if (maxEl) {
-                maxEl.textContent = breakdown.maxPerReview || 26;
+                maxEl.textContent = breakdown.maxPerReview || 27;
             }
         } catch (error) {
             console.error('Error loading score breakdown:', error);

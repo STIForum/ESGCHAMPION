@@ -351,9 +351,19 @@ class ChampionDB {
      * Get STIF score breakdown
      *
      * Credits are now earned per indicator review field completion:
-     *   - Mandatory fields completed × 2  (max 16 per indicator)
-     *   - Optional fields completed  × 1  (max 10 per indicator)
-     *   - Max per indicator review: 26 pts
+     *   - Mandatory fields completed × 2  (9 fields, max 18 per indicator)
+     *   - Non-mandatory fields completed × 1  (9 fields, max 9 per indicator)
+     *   - Read-only fields × 0
+     *   - Max per indicator review: 27 pts
+     *
+     * Mandatory fields (×2): sme_size_band, primary_sector, relevance,
+     *   regulatory_necessity, operational_feasibility, cost_to_collect,
+     *   misreporting_risk, rationale, suggested_tier
+     *
+     * Non-mandatory scalar fields (×1): geographic_footprint, primary_framework,
+     *   esg_class, estimated_time, support_required, notes
+     * Non-mandatory array fields (×1 if non-empty): sdgs, stakeholder_priority,
+     *   optional_tags
      */
     async getSTIFScore() {
         const auth = window.championAuth;
@@ -390,20 +400,21 @@ class ChampionDB {
 
                 if (revError) throw revError;
 
-                // Mandatory fields (+2 each)
+                // Mandatory fields (+2 each) — 9 fields, max 18 per review
                 const mandatoryFields = [
                     'sme_size_band', 'primary_sector', 'relevance',
                     'regulatory_necessity', 'operational_feasibility',
-                    'cost_to_collect', 'misreporting_risk', 'rationale'
+                    'cost_to_collect', 'misreporting_risk', 'rationale',
+                    'suggested_tier'
                 ];
 
-                // Optional scalar fields (+1 each)
+                // Non-mandatory scalar fields (+1 each)
                 const optionalFields = [
                     'geographic_footprint', 'primary_framework', 'esg_class',
-                    'estimated_time', 'support_required', 'suggested_tier', 'notes'
+                    'estimated_time', 'support_required', 'notes'
                 ];
 
-                // Optional array fields (+1 if non-empty)
+                // Non-mandatory array fields (+1 if non-empty)
                 const optionalArrayFields = ['sdgs', 'stakeholder_priority', 'optional_tags'];
 
                 for (const review of (indicatorReviews || [])) {
@@ -431,7 +442,7 @@ class ChampionDB {
                     mandatoryFields: mandatoryCredits,
                     optionalFields: optionalCredits,
                     approvedReviews: totalApprovedReviews,
-                    maxPerReview: 26
+                    maxPerReview: 27
                 },
                 rank: await this.getChampionRank(champion.id)
             };
