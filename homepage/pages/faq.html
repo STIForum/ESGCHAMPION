@@ -315,20 +315,21 @@
           <!-- Contact Column -->
           <div>
             <h4 class="footer-heading">Contact Us</h4>
-            <a href="mailto:info@stiforum.org" class="btn btn-teal">Contact</a>
+            <a href="https://calendly.com/stiforum-info/30min" target="_blank" rel="noopener noreferrer" class="btn btn-teal">Contact</a>
           </div>
         </div>
         
         <div class="footer-bottom">
           <div class="footer-bottom-inner">
-            <p>© 2025 STIF - Sustainability Technology and Innovation Forum. All rights reserved.</p>
+            <p>© <span id="footer-year"></span> STIF - Sustainability Technology and Innovation Forum. All rights reserved.</p>
             <p>Built with purpose for a sustainable future.</p>
           </div>
         </div>
       </div>
-    </footer>
+    <script>document.getElementById("footer-year").textContent=new Date().getFullYear();</script>
+  </footer>
   </div>
-  
-  <script src="../js/main.js"></script>
+
+  <script data-cfasync="false" src="../assets/js/scripts.js"></script>
 </body>
 </html>
