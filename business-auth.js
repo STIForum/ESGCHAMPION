@@ -227,13 +227,13 @@ class BusinessAuth {
 
     /**
      * Validate company registration number. Fixes BUG_REG_021–023.
-     * Optional; max 50 chars; only letters/digits/hyphens/forward-slashes.
+     * Optional; max 50 digits; only digits (0–9) allowed.
      */
     validateRegistrationNumber(raw) {
         const reg = (raw || '').trim();
         if (!reg) return { valid: true, regNumber: '' };
-        if (reg.length > 50) return { valid: false, error: 'Registration number must be 50 characters or fewer.' };
-        if (/[^\p{L}0-9\-\/]/u.test(reg)) return { valid: false, error: 'Registration number may only contain letters, numbers, hyphens, and forward slashes.' };
+        if (reg.length > 50) return { valid: false, error: 'Registration number must be 50 digits or fewer.' };
+        if (/[^0-9]/u.test(reg)) return { valid: false, error: 'Registration number may only contain digits (0–9).' };
         return { valid: true, regNumber: reg };
     }
 

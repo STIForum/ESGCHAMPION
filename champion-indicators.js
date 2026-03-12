@@ -705,7 +705,7 @@ class ChampionIndicators {
 
                     <div class="field-row">
                         <div class="field-header">
-                            <label class="form-label" for="suggested_tier">Suggested STIF Tier</label>
+                            <label class="form-label" for="suggested_tier">Suggested STIF Tier <span style="color: var(--error);">*</span></label>
                             ${this.renderInfo('tier', indicator.id)}
                         </div>
                         <select id="suggested_tier" class="form-select" ${tierLocked ? 'disabled' : ''}>
