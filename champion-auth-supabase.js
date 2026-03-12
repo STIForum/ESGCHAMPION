@@ -275,104 +275,122 @@ class ChampionAuth {
 
     /**
      * Login with email and password
+     *
+     * Fix BUG_LOG_001: Account only locks after exactly MAX_ATTEMPTS (5) consecutive
+     *   failures. Counter and lock state are managed via SECURITY DEFINER RPCs so
+     *   the anon role can never be blocked by RLS from writing to the champions table.
+     *
+     * Fix BUG_LOG_002: Lock state is cleared via RPC BEFORE Supabase auth is attempted
+     *   when the cooldown has expired. This ensures a valid login succeeds after
+     *   cooldown and that a subsequent bad password starts a fresh counter rather than
+     *   re-locking instantly because the DB still held the old count.
+     *
+     * Why RPCs?
+     *   champions has no auth_user_id FK to auth.users, so the standard
+     *   "auth.uid() = id" RLS policy cannot identify an unauthenticated user.
+     *   Direct updateChampion() calls from an anon session are silently blocked
+     *   by RLS, meaning lock state was never persisted — the root cause of both bugs.
+     *   SECURITY DEFINER functions bypass RLS and run as the function owner.
+     *   See: fix_login_lock_rls.sql
      */
     async login(email, password) {
         const MAX_ATTEMPTS = 5;
-        const LOCK_MINUTES = 1; // or 15, etc.
+        const LOCK_MINUTES = 1;
+
+        const supabase = window.getSupabase();
 
         try {
-            // 1) Check if account is locked before attempting auth
+            // ── Step 1: Fetch champion record to check lock state ─────────────────
+            // SELECT is allowed for anon via the "anon_can_read_champion_by_email"
+            // RLS policy added in the migration.
             let champion = null;
             try {
                 champion = await this.service.getChampionByEmail(email);
             } catch (e) {
-                // If champion record doesn't exist yet, we still let Supabase handle auth error
                 champion = null;
             }
 
+            // ── Step 2: Enforce active lock OR clear an expired lock ──────────────
             if (champion && champion.locked_until) {
                 const lockedUntil = new Date(champion.locked_until);
                 const now = new Date();
+
                 if (lockedUntil > now) {
+                    // Lock is still active — reject before even hitting Supabase auth
                     const minutesLeft = Math.ceil((lockedUntil - now) / 60000);
                     return {
                         success: false,
                         error: `Your account is locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`
                     };
                 }
+
+                // BUG_LOG_002 – lock has expired: clear via RPC so anon RLS cannot
+                // block the write, and so a correct password is never rejected.
+                try {
+                    await supabase.rpc('clear_login_lock', { p_email: email });
+                } catch (clearError) {
+                    console.error('Failed to clear expired lock:', clearError);
+                }
             }
 
-            // 2) Try Supabase authentication
+            // ── Step 3: Attempt Supabase authentication ───────────────────────────
             const data = await this.service.signIn(email, password);
             this.currentUser = data.user;
             await this.loadChampionProfile();
 
-            // 3) On successful login, reset failed attempts & lock state
-            if (this.currentChampion) {
-                try {
-                    await this.service.updateChampion(this.currentChampion.id, {
-                        failed_login_attempts: 0,
-                        locked_until: null
-                    });
-                } catch (e) {
-                    console.error('Failed to reset login attempts:', e);
-                }
+            // ── Step 4: Successful login – reset attempt counter via RPC ─────────
+            // Use email (not id) because clear_login_lock is keyed on email, matching
+            // how the anon role identifies the row before a session exists.
+            try {
+                await supabase.rpc('clear_login_lock', { p_email: email });
+            } catch (e) {
+                console.error('Failed to reset login lock after success:', e);
             }
 
-            // 4) Log login activity
+            // ── Step 5: Log login activity ────────────────────────────────────────
             if (this.currentUser) {
                 await this.service.logActivity(this.currentUser.id, 'login');
             }
 
-            // 5) Record which portal this session belongs to.
-            //    This is the single source of truth used by all auth guards
-            //    to handle users registered in both tables.
+            // ── Step 6: Record portal context ────────────────────────────────────
             localStorage.setItem('login_context', 'champion');
 
             return {
                 success: true,
                 data
             };
+
         } catch (error) {
             console.error('Login error:', error);
 
-            // 5) On failed login, increment failed_login_attempts and maybe lock
+            // ── Step 7: Increment failure counter via RPC ─────────────────────────
+            // record_failed_login_attempt handles all counter/lock logic atomically
+            // in the DB and returns the resulting state so we can build the message.
+            let lockResult = null;
             try {
-                const champion = await this.service.getChampionByEmail(email);
-                if (champion) {
-                    const currentAttempts = champion.failed_login_attempts || 0;
-                    const newAttempts = currentAttempts + 1;
-
-                    const updates = { failed_login_attempts: newAttempts };
-
-                    if (newAttempts >= MAX_ATTEMPTS) {
-                        const lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000).toISOString();
-                        updates.locked_until = lockUntil;
+                const { data: rpcData, error: rpcError } = await supabase.rpc(
+                    'record_failed_login_attempt',
+                    {
+                        p_email:        email,
+                        p_max_attempts: MAX_ATTEMPTS,
+                        p_lock_minutes: LOCK_MINUTES
                     }
-
-                    await this.service.updateChampion(champion.id, updates);
-                }
-            } catch (updateError) {
-                // Don't break login flow if we can't update counters
-                console.error('Error updating failed login attempts:', updateError);
+                );
+                if (!rpcError) lockResult = rpcData;
+            } catch (rpcErr) {
+                console.error('Error recording failed login attempt:', rpcErr);
             }
 
-            // 6) Build appropriate error message
+            // ── Step 8: Build user-facing error message ───────────────────────────
             let message = this.getAuthErrorMessage(error);
 
-            // If account is now locked, override with lock message (dynamic time)
-            try {
-                const champion = await this.service.getChampionByEmail(email);
-                if (champion && champion.locked_until) {
-                    const lockedUntil = new Date(champion.locked_until);
-                    const now = new Date();
-                    if (lockedUntil > now) {
-                        const minutesLeft = Math.ceil((lockedUntil - now) / 60000);
-                        message = `Your account is locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`;
-                    }
+            if (lockResult && lockResult.locked && lockResult.locked_until) {
+                const lockedUntil = new Date(lockResult.locked_until);
+                const now = new Date();
+                if (lockedUntil > now) {
+                    const minutesLeft = Math.ceil((lockedUntil - now) / 60000);
+                    message = `Your account is locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`;
                 }
-            } catch (_) {
-                // ignore
             }
 
             return {

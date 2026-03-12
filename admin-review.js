@@ -3100,7 +3100,7 @@ class AdminReviewPage {
      */
     downloadCsvTemplate() {
         const headers = [
-            'panel_id',              // NEW: panel reference
+            'panel_id',              // panel reference
             'name',
             'code',
             'description',
@@ -3116,11 +3116,13 @@ class AdminReviewPage {
             'why_it_matters',
             'related_sdgs',
             'tags',
-            'formula_required'
+            'formula_required',
+            'icon',                  // icon character or emoji
+            'unicode'                // unicode code point (e.g. U+1F4CA)
         ];
 
         const sampleRow = [
-            'PANEL_ID_HERE',         // NEW: sample panel id placeholder
+            'PANEL_ID_HERE',         // sample panel id placeholder
             'Scope 1 GHG Emissions',
             'GRI 305-1',
             'Direct GHG emissions from owned or controlled sources',
@@ -3136,7 +3138,9 @@ class AdminReviewPage {
             'Critical for climate action and regulatory compliance',
             'SDG 13; SDG 7',
             'emissions; climate; carbon',
-            'false'
+            'false',
+            '🌿',                    // icon — emoji or character
+            'U+1F33F'                // unicode — code point for the icon above
         ];
 
         const csvContent = headers.join(',') + '\n' + sampleRow.map(v => `"${v}"`).join(',');
@@ -3294,6 +3298,7 @@ class AdminReviewPage {
         
         // Map headers to indicator fields
         const headerMap = {
+            'panel_id': 'panel_id',
             'name': 'name',
             'title': 'name',
             'indicator_title': 'name',
@@ -3322,7 +3327,8 @@ class AdminReviewPage {
             'sdgs': 'related_sdgs',
             'tags': 'tags',
             'formula_required': 'formula_required',
-            'icon': 'icon'
+            'icon': 'icon',
+            'unicode': 'unicode'
         };
 
         // Valid values for constrained fields (case-insensitive lookup)

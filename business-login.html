@@ -84,6 +84,31 @@
             color: var(--gray-500);
             font-size: var(--text-sm);
         }
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-wrapper .form-input {
+            width: 100%;
+            padding-right: 2.75rem;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .password-toggle:hover {
+            color: var(--gray-600);
+        }
         .error-message {
             background: var(--error-100);
             border: 1px solid var(--error);
@@ -158,7 +183,22 @@
                 
                 <div class="form-group">
                     <label class="form-label" for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" id="password-toggle" aria-label="Toggle password visibility">
+                            <!-- Eye icon (shown when password is hidden) -->
+                            <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <!-- Eye-off icon (shown when password is visible) -->
+                            <svg id="eye-off-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <a href="/forgot-password.html" class="forgot-link">Forgot password?</a>
@@ -201,6 +241,19 @@
             }
             return error?.message || 'Login failed. Please try again.';
         }
+
+        // BUG_LOGIN_001: Password visibility toggle
+        document.getElementById('password-toggle').addEventListener('click', function () {
+            const input      = document.getElementById('password');
+            const eyeIcon    = document.getElementById('eye-icon');
+            const eyeOffIcon = document.getElementById('eye-off-icon');
+            const isHidden   = input.type === 'password';
+
+            input.type           = isHidden ? 'text' : 'password';
+            eyeIcon.style.display    = isHidden ? 'none'  : 'block';
+            eyeOffIcon.style.display = isHidden ? 'block' : 'none';
+            this.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        });
 
     document.getElementById('login-form').addEventListener('submit', async function(e) {
         e.preventDefault();

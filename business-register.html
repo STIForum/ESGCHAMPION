@@ -110,6 +110,11 @@
             margin: 0 auto var(--space-6);
             color: var(--success);
         }
+        .input-error {
+            border-color: #dc2626 !important;
+            outline-color: #dc2626 !important;
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15) !important;
+        }
         @media (max-width: 640px) {
             .form-row { grid-template-columns: 1fr; }
             .auth-card { padding: var(--space-6); }
@@ -184,9 +189,9 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="first_name">First Name <span class="text-error">*</span></label>
-                                <input type="text" id="first_name" name="first_name" class="form-input" placeholder="John" required maxlength="100" pattern="[^\W\d_][\p{L}\s'\-]{0,99}" title="Only letters, hyphens, and apostrophes are allowed.">
+                                <input type="text" id="first_name" name="first_name" class="form-input" placeholder="John" required pattern="[^\W\d_][\p{L}\s'\-]{0,255}" title="Only letters, hyphens, and apostrophes are allowed.">
                                 <div class="field-error" id="error-first_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
-                                    Maximum 100 characters allowed.
+                                    Maximum 256 characters allowed.
                                 </div>
                                 <div class="field-error" id="error-first_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
                                     Digits are not allowed. Only letters, hyphens, and apostrophes.
@@ -200,9 +205,9 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="last_name">Last Name <span class="text-error">*</span></label>
-                                <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe" required maxlength="100" pattern="[^\W\d_][\p{L}\s'\-]{0,99}" title="Only letters, hyphens, and apostrophes are allowed.">
+                                <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe" required pattern="[^\W\d_][\p{L}\s'\-]{0,255}" title="Only letters, hyphens, and apostrophes are allowed.">
                                 <div class="field-error" id="error-last_name" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
-                                    Maximum 100 characters allowed.
+                                    Maximum 256 characters allowed.
                                 </div>
                                 <div class="field-error" id="error-last_name_digit" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
                                     Digits are not allowed. Only letters, hyphens, and apostrophes.
@@ -218,7 +223,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="company_name">Company Name <span class="text-error">*</span></label>
-                                <input type="text" id="company_name" name="company_name" class="form-input" required maxlength="256">
+                                <input type="text" id="company_name" name="company_name" class="form-input" required>
                                 <div class="field-error" id="error-company_name_alpha" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
                                     Company name must contain at least one letter.
                                 </div>
@@ -246,9 +251,9 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="role">Role / Designation</label>
-                                <input type="text" id="role" name="role" class="form-input" maxlength="100">
+                                <input type="text" id="role" name="role" class="form-input">
                                 <div class="field-error" id="error-role_length" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
-                                    Role / Designation must be 100 characters or fewer.
+                                    Role / Designation must be 256 characters or fewer.
                                 </div>
                                 <div class="field-error" id="error-role_special" style="display: none; color: #dc2626; font-size: 0.875rem; margin-top: 4px;">
                                     Invalid characters. Only letters, numbers, spaces, hyphens, ampersands, commas, and periods are allowed.
@@ -549,8 +554,14 @@
                                 if (errorSpecial) errorSpecial.style.display = 'none';
                             }
 
-                            // 3. Character limit
-                            errorChar.style.display = input.value.length > 100 ? 'block' : 'none';
+                            // 3. Character limit — show warning persistently while over 256, hide when back under
+                            if (input.value.length > 256) {
+                                errorChar.style.display = 'block';
+                                input.classList.add('input-error');
+                            } else {
+                                errorChar.style.display = 'none';
+                                input.classList.remove('input-error');
+                            }
 
                             // 4. Leading/trailing spaces
                             errorSpace.style.display = input.value !== input.value.trim() ? 'block' : 'none';
@@ -638,17 +649,43 @@
                         if (errSpecial) errSpecial.style.display = 'none';
                     }
 
-                    // 2. Enforce 100-char limit (BUG_REG_024)
-                    //    Clamp here to catch paste-bypass of HTML maxlength.
-                    if (input.value.length > 100) {
-                        input.value = input.value.slice(0, 100);
+                    // 2. Character limit — show warning persistently while over 256, hide when back under
+                    if (input.value.length > 256) {
+                        if (errLength) {
+                            errLength.style.display = 'block';
+                        }
+                        input.classList.add('input-error');
+                    } else {
+                        if (errLength) errLength.style.display = 'none';
+                        input.classList.remove('input-error');
                     }
-                    if (errLength) errLength.style.display = input.value.length > 100 ? 'block' : 'none';
                 }, 0);
             }
 
             if (input) {
                 ['input', 'paste'].forEach(evt => input.addEventListener(evt, validateRole));
+            }
+        })();
+
+        // Company Name — 256-character warning
+        (function() {
+            const input     = document.getElementById('company_name');
+            const errLength = document.getElementById('error-company_name_length');
+
+            function validateCompanyLength() {
+                setTimeout(() => {
+                    if (input.value.length > 256) {
+                        if (errLength) errLength.style.display = 'block';
+                        input.classList.add('input-error');
+                    } else {
+                        if (errLength) errLength.style.display = 'none';
+                        input.classList.remove('input-error');
+                    }
+                }, 0);
+            }
+
+            if (input) {
+                ['input', 'paste'].forEach(evt => input.addEventListener(evt, validateCompanyLength));
             }
         })();
 
@@ -908,9 +945,10 @@
 
             ['first_name', 'last_name'].forEach(id => {
                 const input = document.getElementById(id);
-                if (input && input.value.length > 100) {
+                if (input && input.value.length > 256) {
                     longFields.push(id.replace('_', ' '));
                     document.getElementById('error-' + id).style.display = 'block';
+                    input.classList.add('input-error');
                 }
             });
 
@@ -950,7 +988,7 @@
             });
 
             if (longFields.length > 0) {
-                throw new Error('Fields exceed 100 characters: ' + longFields.join(', '));
+                throw new Error('Fields exceed 256 characters: ' + longFields.join(', '));
             }
             if (spaceFields.length > 0) {
                 throw new Error('Fields cannot start or end with a space: ' + spaceFields.join(', '));
@@ -974,6 +1012,7 @@
             if (companyNameVal.length > 256) {
                 const el = document.getElementById('error-company_name_length');
                 if (el) el.style.display = 'block';
+                if (companyNameInput) companyNameInput.classList.add('input-error');
                 throw new Error('Company name must be 256 characters or fewer.');
             }
             if (COMPANY_ALLOWED.test(companyNameVal)) {
@@ -1044,10 +1083,10 @@
             const roleVal   = roleInput ? roleInput.value.trim() : '';
             if (roleInput) roleInput.value = roleVal;   // auto-trim
 
-            if (roleVal.length > 100) {
+            if (roleVal.length > 256) {
                 const el = document.getElementById('error-role_length');
                 if (el) el.style.display = 'block';
-                throw new Error('Role / Designation must be 100 characters or fewer.');
+                throw new Error('Role / Designation must be 256 characters or fewer.');
             }
             if (roleVal.length > 0 && /[^\p{L}0-9 \-&,\.]/u.test(roleVal)) {
                 const el = document.getElementById('error-role_special');
