@@ -104,11 +104,18 @@ class ChampionDashboard {
             const firstName = champion.full_name?.split(' ')[0] || 'Champion';
             document.getElementById('welcome-title').textContent = `Welcome back, ${firstName}!`;
             
+            // Load STIF score breakdown first — use computed total (not stale DB
+            // champion.credits column) for stat card and score widget (BUG_DASH_021/022/025)
+            const scoreData = await this.loadScoreBreakdown();
+            const computedCredits = (scoreData && scoreData.totalScore != null)
+                ? scoreData.totalScore
+                : data.stats.credits;
+
             // Update stats
-            document.getElementById('stat-credits').textContent = data.stats.credits;
+            document.getElementById('stat-credits').textContent = computedCredits;
             document.getElementById('stat-approved').textContent = data.stats.approvedReviews;
             document.getElementById('stat-pending').textContent = data.stats.pendingReviews;
-            document.getElementById('stif-score').textContent = data.stats.credits;
+            document.getElementById('stif-score').textContent = computedCredits;
             
             // Get rank
             const rank = await this.db.getChampionRank(champion.id);
@@ -121,9 +128,6 @@ class ChampionDashboard {
             
             // Load recent reviews
             this.renderRecentReviews(data.recentReviews);
-            
-            // Load STIF score breakdown
-            await this.loadScoreBreakdown();
             
             // Show dashboard using centralized utility
             _hideLoading('loading-state');
@@ -251,8 +255,13 @@ class ChampionDashboard {
             if (maxEl) {
                 maxEl.textContent = breakdown.maxPerReview || 27;
             }
+
+            // Return scoreData so loadDashboard() can use the computed total
+            // for the stat card and STIF score widget without a second DB call.
+            return scoreData;
         } catch (error) {
             console.error('Error loading score breakdown:', error);
+            return null;
         }
     }
 

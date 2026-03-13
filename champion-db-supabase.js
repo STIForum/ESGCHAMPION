@@ -434,10 +434,13 @@ class ChampionDB {
                 }
             }
 
+            // Always use the freshly computed total — never the potentially stale
+            // champion.credits DB column, which can lag behind accepted indicator reviews
+            // and cause BUG_DASH_021 / BUG_DASH_022 / BUG_DASH_025.
             const totalScore = mandatoryCredits + optionalCredits;
 
             return {
-                totalScore: champion.credits ?? totalScore,
+                totalScore,
                 breakdown: {
                     mandatoryFields: mandatoryCredits,
                     optionalFields: optionalCredits,

@@ -1401,13 +1401,13 @@ class SupabaseService {
      * Calculate STIF credits for a single indicator review based on field completion.
      *
      * Scoring rules (from STIF Credit Calculation spreadsheet):
-     *   Mandatory fields  → +2 each  (8 fields, max 16 pts)
-     *   Optional fields   → +1 each  (10 fields, max 10 pts)
+     *   Mandatory fields  → +2 each  (9 fields, max 18 pts)
+     *   Optional fields   → +1 each  (9 fields: 6 scalar + 3 array, max 9 pts)
      *   Read-only fields  →  0       (indicator title, code, description)
-     *   Maximum per review: 26 pts
+     *   Maximum per review: 27 pts
      */
     calculateIndicatorReviewCredits(review) {
-        // --- Mandatory fields (+2 each) ---
+        // --- Mandatory fields (+2 each) — 9 fields, max 18 pts ---
         const mandatoryFields = [
             'sme_size_band',
             'primary_sector',
@@ -1416,17 +1416,17 @@ class SupabaseService {
             'operational_feasibility',
             'cost_to_collect',
             'misreporting_risk',
-            'rationale'
+            'rationale',
+            'suggested_tier'
         ];
 
-        // --- Optional / non-mandatory fields (+1 each) ---
+        // --- Optional / non-mandatory scalar fields (+1 each) — 6 fields, max 6 pts ---
         const optionalFields = [
             'geographic_footprint',
             'primary_framework',
             'esg_class',
             'estimated_time',
             'support_required',
-            'suggested_tier',
             'notes'
         ];
 
@@ -1460,7 +1460,7 @@ class SupabaseService {
             }
         }
 
-        return credits; // 0–26
+        return credits; // 0–27
     }
 
     async approveSubmissionWithComment(submissionId, adminComment, adminId) {
