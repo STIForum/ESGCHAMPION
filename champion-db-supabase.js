@@ -601,27 +601,67 @@ class ChampionDB {
 
         try {
             const userId = auth.getUser().id;
-            
+
             console.log('Creating panel review submission:', { panelId, userId, reviewCount: indicatorReviews.length });
             console.log('Indicator reviews data:', indicatorReviews);
-            
+
+            // ── GUARD: block duplicate submissions ──────────────────────────────
+            // Reject if a submission for this (champion, panel) pair is already
+            // pending admin review.  Approved submissions are intentionally excluded
+            // so a champion can submit fresh reviews after a panel is fully approved.
+            const { data: existingPending, error: pendingCheckError } = await this.service.client
+                .from('panel_review_submissions')
+                .select('id, status, created_at')
+                .eq('panel_id', panelId)
+                .eq('champion_id', userId)
+                .eq('status', 'pending')
+                .maybeSingle();
+
+            if (pendingCheckError) {
+                // Non-fatal: log and continue rather than blocking on a read error
+                console.warn('Could not verify existing pending submission:', pendingCheckError.message);
+            } else if (existingPending) {
+                throw new Error(
+                    'DUPLICATE_PENDING_SUBMISSION: A submission for this panel is already ' +
+                    'awaiting admin review (submission ID: ' + existingPending.id + '). ' +
+                    'You cannot resubmit until it has been reviewed.'
+                );
+            }
+
+            // ── GUARD: block resubmit of already-pending individual indicators ──
+            // If the caller is resubmitting specific indicators that belong to a
+            // still-pending submission (e.g. via the resubmit URL flow), surface a
+            // clear error rather than silently creating a duplicate row.
+            const submittedIds = await this.service.getUserSubmittedIndicatorIds(userId, panelId);
+            const incomingIds  = indicatorReviews.map(r => r.indicatorId);
+            const alreadyPending = incomingIds.filter(id => submittedIds.includes(id));
+
+            if (alreadyPending.length > 0) {
+                throw new Error(
+                    'INDICATORS_ALREADY_PENDING: The following indicator(s) already have a ' +
+                    'pending submission awaiting review and cannot be resubmitted yet: [' +
+                    alreadyPending.join(', ') + ']'
+                );
+            }
+            // ───────────────────────────────────────────────────────────────────
+
             // Create the submission
             const submission = await this.service.createPanelReviewSubmission(panelId, userId);
             console.log('Submission created:', submission);
-            
+
             if (!submission || !submission.id) {
                 throw new Error('Failed to create submission - no ID returned');
             }
-            
+
             // Add indicator reviews
             const reviews = await this.service.addIndicatorReviewsToSubmission(
                 submission.id,
                 indicatorReviews,
                 userId
             );
-            
+
             console.log('Indicator reviews inserted:', reviews);
-            
+
             if (!reviews || reviews.length === 0) {
                 console.warn('Warning: No indicator reviews were inserted');
             }
