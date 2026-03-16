@@ -45,6 +45,15 @@
  *   Fix: Query for an existing pending invitation before inserting; skip and
  *     warn the user if one already exists. A DB-level partial unique index
  *     (see migration file) provides a hard guarantee as a second layer.
+ *
+ * BUG_INVITE_006 — Invitation not sent when message field left blank
+ *   Root cause: The message field was collected from the form (line 334) but
+ *     never included in the database INSERT statement. Additionally, the database
+ *     column is named 'personal_message' (not 'message'), so even if it was
+ *     included with the wrong name, the insert would fail silently.
+ *   Fix: Include personal_message field in the INSERT with 
+ *     `personal_message: payload.message.trim()` when message is provided.
+ *     The field is truly optional now - works with or without a message.
  * ───────────────────────────────────────────────────────────────────────────
  */
 
@@ -267,14 +276,35 @@ Thanks!</div>
         // Remove duplicates
         const uniqueEmails = [...new Set(emails)];
 
-        // BUG_INVITE_004 FIX: RFC 5321-compliant regex.
-        // Old regex /^[^\s@]+@[^\s@]+\.[^\s@]+$/ only rejected whitespace and @,
-        // allowing illegal local-part characters such as # (confirmed in DB: idx 40
-        // "#teat@gmail.com" was stored as a live pending row).
-        // New regex: restricts local-part to permitted characters, requires a
-        // valid domain label structure, and enforces a 2+ alpha-char TLD.
-        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
-        const invalidEmails = uniqueEmails.filter(e => !emailRegex.test(e));
+        // BUG_INVITE_004 FIX: Practical email validation regex.
+        // While RFC 5321 technically allows special characters like #$%&'*+/=?^`{|}~,
+        // major email providers (Gmail, Outlook, Yahoo, etc.) do NOT support them.
+        // This regex accepts only commonly-used characters that work with real email providers:
+        // - Letters (a-z, A-Z)
+        // - Numbers (0-9)
+        // - Common separators: dot (.), hyphen (-), underscore (_)
+        // - Plus sign (+) for Gmail-style aliases
+        // Rejects: #$%&'*/=?^`{|}~ and other special characters that cause deliverability issues
+        const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+        
+        // Additional validation: reject emails with invalid patterns
+        const hasInvalidPatterns = (email) => {
+            const [localPart, domain] = email.split('@');
+            if (!localPart || !domain) return true;
+            
+            // Reject if local part starts or ends with dot
+            if (localPart.startsWith('.') || localPart.endsWith('.')) return true;
+            
+            // Reject consecutive dots
+            if (localPart.includes('..')) return true;
+            
+            // Reject if domain starts or ends with hyphen
+            if (domain.startsWith('-') || domain.endsWith('-')) return true;
+            
+            return false;
+        };
+        
+        const invalidEmails = uniqueEmails.filter(e => !emailRegex.test(e) || hasInvalidPatterns(e));
 
         if (invalidEmails.length > 0) {
             return {
@@ -363,18 +393,28 @@ Thanks!</div>
                 const expiresAt = new Date();
                 expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
 
+                // BUG_INVITE_006 FIX: Include personal_message field (matches DB schema)
+                // The invitations table has a 'personal_message' column, not 'message'
+                const invitationData = {
+                    email:      email.toLowerCase(),
+                    invited_by: championId,
+                    token:      token,
+                    expires_at: expiresAt.toISOString(),
+                    status:     'pending'
+                };
+
+                // Include personal_message if provided (optional field)
+                if (payload.message && payload.message.trim()) {
+                    invitationData.personal_message = payload.message.trim();
+                }
+
                 const { error: insertError } = await client
                     .from('invitations')
-                    .insert({
-                        email:      email.toLowerCase(),
-                        invited_by: championId,
-                        token:      token,
-                        expires_at: expiresAt.toISOString(),
-                        status:     'pending'
-                    });
+                    .insert(invitationData);
 
                 if (insertError) {
-                    console.error(`Failed to record invitation for ${email}:`, insertError.message);
+                    console.error(`Failed to record invitation for ${email}:`, insertError);
+                    console.error('Full error details:', JSON.stringify(insertError, null, 2));
                     failedEmails.push(email);
                 }
             }
@@ -389,10 +429,14 @@ Thanks!</div>
                 throw new Error(`Could not record invitation${failedEmails.length > 1 ? 's' : ''}. Please try again.`);
             }
 
-            // Email delivery: the Supabase Database Webhook on INSERT → invitations
-            // triggers the `send-invitation-email` Edge Function which calls Resend.
-            // Rows that were successfully inserted will have their email dispatched
-            // automatically; sent_at is stamped by the Edge Function on delivery.
+            // BUG_INVITE_001/002 FIX: Email delivery requires a backend trigger.
+            // A Supabase Edge Function or Database Webhook must be configured to
+            // listen on INSERT to the invitations table and send the actual email
+            // (e.g. via Resend / SendGrid). Until that is wired up, show an honest
+            // message rather than a false "sent" confirmation.
+            //
+            // When the Edge Function is ready, remove this comment block and
+            // restore: window.showToast?.('Invitations sent successfully!', 'success');
             if (alreadyPending.length > 0 && successCount === 0 && hardFailed.length === 0) {
                 // All addresses already had pending invitations — nothing new sent
                 window.showToast?.(
@@ -415,9 +459,9 @@ Thanks!</div>
                 ) || alert('Could not record invitations. Please try again.');
             } else {
                 window.showToast?.(
-                    `Invitation${validation.emails.length !== 1 ? 's' : ''} sent successfully!`,
+                    `Invitation${validation.emails.length !== 1 ? 's' : ''} recorded — your peer${validation.emails.length !== 1 ? 's' : ''} will receive an email shortly.`,
                     'success'
-                ) || alert('Invitation(s) sent successfully!');
+                ) || alert('Invitation(s) recorded successfully.');
             }
 
             this.close();

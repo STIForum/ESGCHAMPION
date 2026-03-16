@@ -132,7 +132,6 @@ class DynamicNavigation {
 
                 // Public links
                 menuHTML += `<li><a href="/landing.html" class="mobile-nav-link">Home</a></li>`;
-                menuHTML += `<li><a href="/about.html" class="mobile-nav-link">About</a></li>`;
         
                 if (isAuthenticated) {
                     if (isBusinessUser) {
