@@ -461,7 +461,7 @@ Thanks!</div>
                 window.showToast?.(
                     `Invitation${validation.emails.length !== 1 ? 's' : ''} recorded — your peer${validation.emails.length !== 1 ? 's' : ''} will receive an email shortly.`,
                     'success'
-                ) || alert('Invitation(s) recorded successfully.');
+                ) || alert('Invitation(s) sent successfully.');
             }
 
             this.close();
