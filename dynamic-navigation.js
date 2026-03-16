@@ -101,7 +101,6 @@ class DynamicNavigation {
 
                 // Public links - always visible
                 menuHTML += `<li><a href="/landing.html" class="nav-link ${this.isActive('/landing.html')}" >Home</a></li>`;
-                menuHTML += `<li><a href="/about.html" class="nav-link ${this.isActive('/about.html')}">About</a></li>`;
         
                 if (isAuthenticated) {
                     if (isBusinessUser) {
