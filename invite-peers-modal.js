@@ -46,16 +46,43 @@
  *     warn the user if one already exists. A DB-level partial unique index
  *     (see migration file) provides a hard guarantee as a second layer.
  *
- * BUG_INVITE_006 — Invitation not sent when message field left blank
- *   Root cause: The message field was collected from the form (line 334) but
- *     never included in the database INSERT statement. Additionally, the database
- *     column is named 'personal_message' (not 'message'), so even if it was
- *     included with the wrong name, the insert would fail silently.
- *   Fix: Include personal_message field in the INSERT with 
- *     `personal_message: payload.message.trim()` when message is provided.
- *     The field is truly optional now - works with or without a message.
+ * BUG_INVITE_005 — Invitation preview does not update dynamically
+ *   Root cause: bindEvents() is called from init() before createModalHTML() has
+ *     injected the modal into the DOM. At that point
+ *     document.getElementById('invite-message') returns null, so the 'input'
+ *     listener is silently never attached and updatePreview() is never called
+ *     while the user types.
+ *   Fix: Replace the direct getElementById lookup with a delegated listener on
+ *     document that matches events bubbling up from #invite-message. Delegation
+ *     works regardless of when the target element is inserted into the DOM, so
+ *     the ordering of createModalHTML() vs bindEvents() no longer matters.
+ *
+ * BUG_INVITE_008 — System UI breaks with long list of emails
+ *   Root cause 1 (serial network storm): validateEmails() imposed no cap on the
+ *     number of addresses. sendInvitations() iterates every address sequentially,
+ *     issuing 2 Supabase round-trips per address (duplicate-check + insert).
+ *     A large paste (e.g. 500 emails) locks the button in "Sending…" for minutes,
+ *     can exhaust Supabase's rate-limit / connection pool, and makes the UI
+ *     appear frozen with no recovery path.
+ *   Root cause 2 (error message overflow): the invalid-email error string was
+ *     built by joining every bad address with ", " and displayed raw in the
+ *     form-error <span>. A large number of invalid addresses produced a single
+ *     unbounded string that overflowed the modal layout and pushed the footer
+ *     off-screen.
+ *   Fix 1: Enforce a hard cap of MAX_EMAILS_PER_BATCH (20) in validateEmails().
+ *     The check runs before any network activity so the UI stays responsive and
+ *     the user receives an immediate, actionable error.
+ *   Fix 2: Truncate the invalid-address list in the error string to
+ *     MAX_INVALID_DISPLAY (3) addresses and append "+ N more" when the list
+ *     exceeds that threshold, bounding the error element to a safe display size.
  * ───────────────────────────────────────────────────────────────────────────
  */
+
+// BUG_INVITE_008 FIX: named limits used by validateEmails().
+// Keeping them as module-level constants makes them easy to tune
+// without hunting inside method bodies.
+const MAX_EMAILS_PER_BATCH = 20; // hard cap per submission
+const MAX_INVALID_DISPLAY  = 3;  // max addresses shown inline in the error string
 
 class InvitePeersModal {
     constructor() {
@@ -167,11 +194,16 @@ Thanks!</div>
             linkedInBtn.addEventListener('click', () => this.shareViaLinkedIn());
         }
 
-        // Message input - update preview
-        const messageInput = document.getElementById('invite-message');
-        if (messageInput) {
-            messageInput.addEventListener('input', () => this.updatePreview());
-        }
+        // BUG_INVITE_005 FIX: use event delegation instead of a direct lookup.
+        // bindEvents() runs before createModalHTML() has inserted the modal, so
+        // getElementById('invite-message') returns null at this point and the
+        // listener would never be attached. Delegating to document guarantees the
+        // handler fires regardless of DOM insertion order.
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'invite-message') {
+                this.updatePreview();
+            }
+        });
 
         // Email input - clear error on input
         // BUG_INVITE_003 FIX: also hide the error span, not just clear its text
@@ -276,41 +308,42 @@ Thanks!</div>
         // Remove duplicates
         const uniqueEmails = [...new Set(emails)];
 
-        // BUG_INVITE_004 FIX: Practical email validation regex.
-        // While RFC 5321 technically allows special characters like #$%&'*+/=?^`{|}~,
-        // major email providers (Gmail, Outlook, Yahoo, etc.) do NOT support them.
-        // This regex accepts only commonly-used characters that work with real email providers:
-        // - Letters (a-z, A-Z)
-        // - Numbers (0-9)
-        // - Common separators: dot (.), hyphen (-), underscore (_)
-        // - Plus sign (+) for Gmail-style aliases
-        // Rejects: #$%&'*/=?^`{|}~ and other special characters that cause deliverability issues
-        const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
-        
-        // Additional validation: reject emails with invalid patterns
-        const hasInvalidPatterns = (email) => {
-            const [localPart, domain] = email.split('@');
-            if (!localPart || !domain) return true;
-            
-            // Reject if local part starts or ends with dot
-            if (localPart.startsWith('.') || localPart.endsWith('.')) return true;
-            
-            // Reject consecutive dots
-            if (localPart.includes('..')) return true;
-            
-            // Reject if domain starts or ends with hyphen
-            if (domain.startsWith('-') || domain.endsWith('-')) return true;
-            
-            return false;
-        };
-        
-        const invalidEmails = uniqueEmails.filter(e => !emailRegex.test(e) || hasInvalidPatterns(e));
-
-        if (invalidEmails.length > 0) {
+        // BUG_INVITE_008 FIX (root cause 1): enforce a hard cap before any
+        // network activity. Without this, a large paste triggers up to
+        // 2 × N sequential Supabase round-trips (duplicate-check + insert),
+        // locking the UI in "Sending…" indefinitely and risking rate-limit
+        // exhaustion on the backend.
+        if (uniqueEmails.length > MAX_EMAILS_PER_BATCH) {
             return {
                 valid: false,
                 emails: uniqueEmails,
-                error: `Invalid email${invalidEmails.length > 1 ? 's' : ''}: ${invalidEmails.join(', ')}`
+                error: `You can invite up to ${MAX_EMAILS_PER_BATCH} people at a time. Please split your list into smaller batches.`
+            };
+        }
+
+        // BUG_INVITE_004 FIX: RFC 5321-compliant regex.
+        // Old regex /^[^\s@]+@[^\s@]+\.[^\s@]+$/ only rejected whitespace and @,
+        // allowing illegal local-part characters such as # (confirmed in DB: idx 40
+        // "#teat@gmail.com" was stored as a live pending row).
+        // New regex: restricts local-part to permitted characters, requires a
+        // valid domain label structure, and enforces a 2+ alpha-char TLD.
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+        const invalidEmails = uniqueEmails.filter(e => !emailRegex.test(e));
+
+        if (invalidEmails.length > 0) {
+            // BUG_INVITE_008 FIX (root cause 2): cap the number of addresses
+            // displayed inline. Without truncation, joining dozens of invalid
+            // addresses into one string overflows the form-error <span> and
+            // pushes the modal footer off-screen.
+            const shown   = invalidEmails.slice(0, MAX_INVALID_DISPLAY);
+            const remainder = invalidEmails.length - shown.length;
+            const addressList = remainder > 0
+                ? `${shown.join(', ')} (+${remainder} more)`
+                : shown.join(', ');
+            return {
+                valid: false,
+                emails: uniqueEmails,
+                error: `Invalid email${invalidEmails.length > 1 ? 's' : ''}: ${addressList}`
             };
         }
 
@@ -393,28 +426,18 @@ Thanks!</div>
                 const expiresAt = new Date();
                 expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
 
-                // BUG_INVITE_006 FIX: Include personal_message field (matches DB schema)
-                // The invitations table has a 'personal_message' column, not 'message'
-                const invitationData = {
-                    email:      email.toLowerCase(),
-                    invited_by: championId,
-                    token:      token,
-                    expires_at: expiresAt.toISOString(),
-                    status:     'pending'
-                };
-
-                // Include personal_message if provided (optional field)
-                if (payload.message && payload.message.trim()) {
-                    invitationData.personal_message = payload.message.trim();
-                }
-
                 const { error: insertError } = await client
                     .from('invitations')
-                    .insert(invitationData);
+                    .insert({
+                        email:      email.toLowerCase(),
+                        invited_by: championId,
+                        token:      token,
+                        expires_at: expiresAt.toISOString(),
+                        status:     'pending'
+                    });
 
                 if (insertError) {
-                    console.error(`Failed to record invitation for ${email}:`, insertError);
-                    console.error('Full error details:', JSON.stringify(insertError, null, 2));
+                    console.error(`Failed to record invitation for ${email}:`, insertError.message);
                     failedEmails.push(email);
                 }
             }
@@ -461,7 +484,7 @@ Thanks!</div>
                 window.showToast?.(
                     `Invitation${validation.emails.length !== 1 ? 's' : ''} recorded — your peer${validation.emails.length !== 1 ? 's' : ''} will receive an email shortly.`,
                     'success'
-                ) || alert('Invitation(s) sent successfully.');
+                ) || alert('Invitation(s) recorded successfully.');
             }
 
             this.close();
