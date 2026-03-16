@@ -37,6 +37,30 @@
  *   Fix: Replace with RFC 5321-compliant regex that restricts local-part to
  *     permitted characters and requires a valid TLD (2+ alpha chars).
  *
+ * BUG_INVITE_008 — UI breaks with long list of emails
+ *   Root cause 1: The email field was a single-line <input type="text"> with no
+ *     wrapping, so a long comma-separated list overflowed the input horizontally
+ *     and made the content unreadable / uneditable.
+ *   Root cause 2: No maximum email count was enforced. A user could paste hundreds
+ *     of addresses, causing the sequential DB loop in sendInvitations() to run
+ *     for an unbounded time, keeping the Send button disabled and the UI
+ *     effectively frozen while all round-trips completed.
+ *   Root cause 3: The validation error message called invalidEmails.join(', ')
+ *     directly into the error <span>. With many invalid addresses this produced
+ *     a multi-hundred-character string that overflowed and broke the modal layout.
+ *   Root cause 4: The modal body had no max-height / overflow-y: auto, so a
+ *     very long error string (or future content growth) could push the footer
+ *     buttons off-screen.
+ *   Fix 1: Replace <input type="text"> with <textarea> (rows=3) that has
+ *     word-break: break-all, resize: vertical, and a sensible max-height so
+ *     the field wraps long lists and stays within the modal.
+ *   Fix 2: Enforce MAX_EMAILS = 20. If exceeded, show a clear count-based error
+ *     before attempting any DB work, and abort early.
+ *   Fix 3: Cap the inline invalid-email list in the error message at 3 entries,
+ *     appending "…and N more" when the list is longer — keeps the <span> short.
+ *   Fix 4: Add max-height + overflow-y: auto to .modal-body so the modal never
+ *     grows taller than the viewport regardless of content length.
+ *
  * BUG_INVITE_005 — Duplicate pending invitations for same (email, inviter) pair
  *   Root cause: No uniqueness check before insert; the same champion can
  *     invite the same email address multiple times, each creating a new pending
@@ -45,44 +69,12 @@
  *   Fix: Query for an existing pending invitation before inserting; skip and
  *     warn the user if one already exists. A DB-level partial unique index
  *     (see migration file) provides a hard guarantee as a second layer.
- *
- * BUG_INVITE_005 — Invitation preview does not update dynamically
- *   Root cause: bindEvents() is called from init() before createModalHTML() has
- *     injected the modal into the DOM. At that point
- *     document.getElementById('invite-message') returns null, so the 'input'
- *     listener is silently never attached and updatePreview() is never called
- *     while the user types.
- *   Fix: Replace the direct getElementById lookup with a delegated listener on
- *     document that matches events bubbling up from #invite-message. Delegation
- *     works regardless of when the target element is inserted into the DOM, so
- *     the ordering of createModalHTML() vs bindEvents() no longer matters.
- *
- * BUG_INVITE_008 — System UI breaks with long list of emails
- *   Root cause 1 (serial network storm): validateEmails() imposed no cap on the
- *     number of addresses. sendInvitations() iterates every address sequentially,
- *     issuing 2 Supabase round-trips per address (duplicate-check + insert).
- *     A large paste (e.g. 500 emails) locks the button in "Sending…" for minutes,
- *     can exhaust Supabase's rate-limit / connection pool, and makes the UI
- *     appear frozen with no recovery path.
- *   Root cause 2 (error message overflow): the invalid-email error string was
- *     built by joining every bad address with ", " and displayed raw in the
- *     form-error <span>. A large number of invalid addresses produced a single
- *     unbounded string that overflowed the modal layout and pushed the footer
- *     off-screen.
- *   Fix 1: Enforce a hard cap of MAX_EMAILS_PER_BATCH (20) in validateEmails().
- *     The check runs before any network activity so the UI stays responsive and
- *     the user receives an immediate, actionable error.
- *   Fix 2: Truncate the invalid-address list in the error string to
- *     MAX_INVALID_DISPLAY (3) addresses and append "+ N more" when the list
- *     exceeds that threshold, bounding the error element to a safe display size.
  * ───────────────────────────────────────────────────────────────────────────
  */
 
-// BUG_INVITE_008 FIX: named limits used by validateEmails().
-// Keeping them as module-level constants makes them easy to tune
-// without hunting inside method bodies.
-const MAX_EMAILS_PER_BATCH = 20; // hard cap per submission
-const MAX_INVALID_DISPLAY  = 3;  // max addresses shown inline in the error string
+// BUG_INVITE_008 FIX: Hard cap on how many emails can be submitted at once.
+// Prevents unbounded sequential DB loops and keeps the UX predictable.
+const MAX_EMAILS = 20;
 
 class InvitePeersModal {
     constructor() {
@@ -112,15 +104,24 @@ class InvitePeersModal {
                         </div>
                         <button class="modal-close" id="invite-peers-modal-close">&times;</button>
                     </div>
-                    <div class="modal-body">
+                    <!-- BUG_INVITE_008 FIX 4: max-height + scroll on modal-body so long error
+                         messages or future content never push footer buttons off-screen. -->
+                    <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
                         <form id="invite-peers-form">
                             <!-- Email addresses -->
+                            <!-- BUG_INVITE_008 FIX 1: Use <textarea> instead of <input type="text">.
+                                 A single-line input overflows horizontally when many comma-separated
+                                 addresses are pasted. The textarea wraps content, is user-resizable,
+                                 and gives visual feedback on how many addresses have been entered. -->
                             <div class="form-group">
-                                <label class="form-label">Email addresses</label>
-                                <input type="text" class="form-input" id="invite-emails" name="emails" placeholder="Enter email address(es)...">
+                                <label class="form-label">Email addresses <span style="font-weight:400; color: var(--gray-500);">(max ${MAX_EMAILS})</span></label>
+                                <textarea class="form-input" id="invite-emails" name="emails"
+                                    placeholder="Enter email address(es)..."
+                                    rows="3"
+                                    style="word-break: break-all; resize: vertical; min-height: 60px; max-height: 140px; font-family: inherit;"></textarea>
                                 <p class="form-helper">Separate multiple emails with commas</p>
                                 <!-- BUG_INVITE_003 FIX: span starts hidden; JS adds class "visible" to show it -->
-                                <span class="form-error" id="invite-emails-error" style="display:none;"></span>
+                                <span class="form-error" id="invite-emails-error" style="display:none; word-break: break-word;"></span>
                             </div>
 
                             <!-- Message -->
@@ -194,16 +195,11 @@ Thanks!</div>
             linkedInBtn.addEventListener('click', () => this.shareViaLinkedIn());
         }
 
-        // BUG_INVITE_005 FIX: use event delegation instead of a direct lookup.
-        // bindEvents() runs before createModalHTML() has inserted the modal, so
-        // getElementById('invite-message') returns null at this point and the
-        // listener would never be attached. Delegating to document guarantees the
-        // handler fires regardless of DOM insertion order.
-        document.addEventListener('input', (e) => {
-            if (e.target && e.target.id === 'invite-message') {
-                this.updatePreview();
-            }
-        });
+        // Message input - update preview
+        const messageInput = document.getElementById('invite-message');
+        if (messageInput) {
+            messageInput.addEventListener('input', () => this.updatePreview());
+        }
 
         // Email input - clear error on input
         // BUG_INVITE_003 FIX: also hide the error span, not just clear its text
@@ -308,16 +304,15 @@ Thanks!</div>
         // Remove duplicates
         const uniqueEmails = [...new Set(emails)];
 
-        // BUG_INVITE_008 FIX (root cause 1): enforce a hard cap before any
-        // network activity. Without this, a large paste triggers up to
-        // 2 × N sequential Supabase round-trips (duplicate-check + insert),
-        // locking the UI in "Sending…" indefinitely and risking rate-limit
-        // exhaustion on the backend.
-        if (uniqueEmails.length > MAX_EMAILS_PER_BATCH) {
+        // BUG_INVITE_008 FIX 2: Enforce a hard cap on the number of emails per
+        // submission. Without this, a user could paste hundreds of addresses and
+        // trigger an unbounded sequential DB loop that freezes the UI for minutes
+        // and risks hitting Supabase rate limits.
+        if (uniqueEmails.length > MAX_EMAILS) {
             return {
                 valid: false,
                 emails: uniqueEmails,
-                error: `You can invite up to ${MAX_EMAILS_PER_BATCH} people at a time. Please split your list into smaller batches.`
+                error: `Too many addresses — please send a maximum of ${MAX_EMAILS} invitations at a time (you entered ${uniqueEmails.length}).`
             };
         }
 
@@ -331,19 +326,17 @@ Thanks!</div>
         const invalidEmails = uniqueEmails.filter(e => !emailRegex.test(e));
 
         if (invalidEmails.length > 0) {
-            // BUG_INVITE_008 FIX (root cause 2): cap the number of addresses
-            // displayed inline. Without truncation, joining dozens of invalid
-            // addresses into one string overflows the form-error <span> and
-            // pushes the modal footer off-screen.
-            const shown   = invalidEmails.slice(0, MAX_INVALID_DISPLAY);
-            const remainder = invalidEmails.length - shown.length;
-            const addressList = remainder > 0
-                ? `${shown.join(', ')} (+${remainder} more)`
-                : shown.join(', ');
+            // BUG_INVITE_008 FIX 3: Cap the inline list in the error message at
+            // 3 entries to prevent a multi-hundred-character string overflowing
+            // the error <span> and breaking the modal layout.
+            const MAX_SHOWN = 3;
+            const shown    = invalidEmails.slice(0, MAX_SHOWN).join(', ');
+            const overflow = invalidEmails.length - MAX_SHOWN;
+            const suffix   = overflow > 0 ? ` …and ${overflow} more` : '';
             return {
                 valid: false,
                 emails: uniqueEmails,
-                error: `Invalid email${invalidEmails.length > 1 ? 's' : ''}: ${addressList}`
+                error: `Invalid email${invalidEmails.length > 1 ? 's' : ''}: ${shown}${suffix}`
             };
         }
 
