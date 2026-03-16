@@ -389,14 +389,10 @@ Thanks!</div>
                 throw new Error(`Could not record invitation${failedEmails.length > 1 ? 's' : ''}. Please try again.`);
             }
 
-            // BUG_INVITE_001/002 FIX: Email delivery requires a backend trigger.
-            // A Supabase Edge Function or Database Webhook must be configured to
-            // listen on INSERT to the invitations table and send the actual email
-            // (e.g. via Resend / SendGrid). Until that is wired up, show an honest
-            // message rather than a false "sent" confirmation.
-            //
-            // When the Edge Function is ready, remove this comment block and
-            // restore: window.showToast?.('Invitations sent successfully!', 'success');
+            // Email delivery: the Supabase Database Webhook on INSERT → invitations
+            // triggers the `send-invitation-email` Edge Function which calls Resend.
+            // Rows that were successfully inserted will have their email dispatched
+            // automatically; sent_at is stamped by the Edge Function on delivery.
             if (alreadyPending.length > 0 && successCount === 0 && hardFailed.length === 0) {
                 // All addresses already had pending invitations — nothing new sent
                 window.showToast?.(
@@ -419,9 +415,9 @@ Thanks!</div>
                 ) || alert('Could not record invitations. Please try again.');
             } else {
                 window.showToast?.(
-                    `Invitation${validation.emails.length !== 1 ? 's' : ''} recorded — your peer${validation.emails.length !== 1 ? 's' : ''} will receive an email shortly.`,
+                    `Invitation${validation.emails.length !== 1 ? 's' : ''} sent successfully!`,
                     'success'
-                ) || alert('Invitation(s) recorded successfully.');
+                ) || alert('Invitation(s) sent successfully!');
             }
 
             this.close();
