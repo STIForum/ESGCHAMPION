@@ -175,233 +175,190 @@ class ChampionProfile {
     }
 
     /**
+     * Sanitize value by trimming and removing excessive whitespace
+     */
+    sanitizeValue(value) {
+        if (!value) return '';
+        // Trim leading/trailing whitespace and collapse multiple spaces to single space
+        return value.trim().replace(/\s+/g, ' ');
+    }
+
+    /**
      * Populate all form fields from the champion object.
      * For backward compatibility, if dedicated columns are empty but bio contains structured data,
      * parse the bio to fill the fields.
+     * 
+     * FIX: Auto-sanitize values from LinkedIn to prevent validation errors
      */
     populateForm() {
-        const fullName = this.champion.full_name || '';
-        const parts = fullName.trim().split(' ');
+        const fullName = this.sanitizeValue(this.champion.full_name || '');
+        const parts = fullName.split(' ');
         const first = parts.slice(0, -1).join(' ') || parts[0] || '';
         const last = parts.length > 1 ? parts.slice(-1).join(' ') : '';
 
-        document.getElementById('first_name').value = first;
-        document.getElementById('last_name').value = last;
+        // Sanitize all values before setting them
+        document.getElementById('first_name').value = this.sanitizeValue(first);
+        document.getElementById('last_name').value = this.sanitizeValue(last);
         document.getElementById('full_name').value = fullName;
-        document.getElementById('email').value = this.champion.email || '';
-        document.getElementById('company').value = this.champion.company || '';
-        document.getElementById('job_title').value = this.champion.job_title || '';
-        document.getElementById('linkedin_url').value = this.champion.linkedin_url || '';
+        
+        // FIX: Enable email field for editing (important for LinkedIn users who may need to update)
+        const emailField = document.getElementById('email');
+        emailField.value = this.champion.email || '';
+        emailField.disabled = false; // Make sure it's editable
+        
+        document.getElementById('company').value = this.sanitizeValue(this.champion.company || '');
+        document.getElementById('job_title').value = this.sanitizeValue(this.champion.job_title || '');
+        document.getElementById('linkedin_url').value = this.sanitizeValue(this.champion.linkedin_url || '');
 
         // Set values from dedicated columns (if they exist)
-        document.getElementById('mobile_number').value = this.champion.mobile_number || '';
-        document.getElementById('office_phone').value = this.champion.office_phone || '';
-        document.getElementById('website').value = this.champion.website || '';
+        document.getElementById('mobile_number').value = this.sanitizeValue(this.champion.mobile_number || '');
+        document.getElementById('office_phone').value = this.sanitizeValue(this.champion.office_phone || '');
+        document.getElementById('website').value = this.sanitizeValue(this.champion.website || '');
         document.getElementById('competence_esg').value = this.champion.competence_esg || '';
         document.getElementById('sectors_focus').value = this.champion.sectors_focus || '';
         document.getElementById('expertise_panels').value = this.champion.expertise_panels || '';
 
-        // For Key ESG Contributions, we use the bio field (but only the part before any structured data)
-        // However, if we have already parsed bio below, we'll override this.
-        let keyContributions = this.champion.bio || '';
-
-        // If dedicated fields are empty and bio exists, try to parse bio to fill them
-        const needsParsing = 
-            !this.champion.mobile_number &&
-            !this.champion.office_phone &&
-            !this.champion.website &&
-            !this.champion.competence_esg &&
-            !this.champion.sectors_focus &&
-            !this.champion.expertise_panels &&
-            this.champion.bio;
-
-        if (needsParsing) {
-            const parsed = this.parseBio(this.champion.bio);
-            // Only set fields that are currently empty in the champion object
-            if (!this.champion.mobile_number && parsed.mobile_number) {
-                document.getElementById('mobile_number').value = parsed.mobile_number;
+        // Handle the key_contributions field
+        const bio = this.champion.bio || '';
+        
+        // Try to extract key contributions from bio
+        // If bio was structured from registration, it might contain "Key Contributions:" section
+        let keyContributions = '';
+        
+        if (bio) {
+            // Check if bio is structured with metadata
+            const lines = bio.split('\n');
+            const contributionLines = [];
+            let inContributions = false;
+            
+            for (const line of lines) {
+                if (line.includes('Website:') || line.includes('ESG Competence:') || 
+                    line.includes('Sector Focus:') || line.includes('Panel Expertise:')) {
+                    inContributions = false;
+                    continue;
+                }
+                if (!inContributions) {
+                    inContributions = true;
+                }
+                if (inContributions && line.trim()) {
+                    contributionLines.push(line);
+                }
             }
-            if (!this.champion.office_phone && parsed.office_phone) {
-                document.getElementById('office_phone').value = parsed.office_phone;
-            }
-            if (!this.champion.website && parsed.website) {
-                document.getElementById('website').value = parsed.website;
-            }
-            if (!this.champion.competence_esg && parsed.competence_esg) {
-                document.getElementById('competence_esg').value = parsed.competence_esg;
-            }
-            if (!this.champion.sectors_focus && parsed.sectors_focus) {
-                document.getElementById('sectors_focus').value = parsed.sectors_focus;
-            }
-            if (!this.champion.expertise_panels && parsed.expertise_panels) {
-                document.getElementById('expertise_panels').value = parsed.expertise_panels;
-            }
-            // Use the extracted key contributions (first part of bio)
-            if (parsed.keyContributions) {
-                keyContributions = parsed.keyContributions;
-            }
+            
+            keyContributions = contributionLines.join('\n').trim();
         }
-
-        // Set the Key ESG Contributions field
+        
         document.getElementById('key_contributions').value = keyContributions;
+
+        // Clear any existing validation errors on load
+        this.clearValidationErrors();
+        
+        // FIX: Remove red borders from fields after loading
+        ['first_name', 'last_name', 'company', 'job_title', 'email'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.style.borderColor = '';
+                input.style.boxShadow = '';
+            }
+        });
     }
 
     /**
-     * Parse the legacy bio string to extract structured fields.
-     * Expected format (example):
-     *   "gygyiuv\n\nESG Competence: beginner | Sector Focus: healthcare | Panel Expertise: environmental\n\nMobile: 12345654321 | Sector Focus: manufacturing"
-     * Returns an object with possible keys: keyContributions, mobile_number, office_phone, website,
-     * competence_esg, sectors_focus, expertise_panels.
+     * Clear all validation error messages
      */
-    parseBio(bio) {
-        const result = {};
-        if (!bio) return result;
-
-        // Split by double newline to separate sections
-        const sections = bio.split(/\n\s*\n/);
+    clearValidationErrors() {
+        const errorFields = [
+            'error-first_name', 'error-first_name_digit', 'error-first_name_space',
+            'error-last_name', 'error-last_name_digit', 'error-last_name_space',
+            'error-company', 'error-company_space',
+            'error-job_title', 'error-job_title_digit', 'error-job_title_space'
+        ];
         
-        // First non-empty section is likely the key contributions (free text)
-        if (sections.length > 0 && sections[0].trim()) {
-            result.keyContributions = sections[0].trim();
-        }
-
-        // Process remaining sections for key-value pairs
-        for (let i = 1; i < sections.length; i++) {
-            const section = sections[i].trim();
-            // Split by '|' to get individual key-value pairs
-            const pairs = section.split('|').map(p => p.trim());
-            pairs.forEach(pair => {
-                const colonIndex = pair.indexOf(':');
-                if (colonIndex === -1) return;
-                const key = pair.substring(0, colonIndex).trim().toLowerCase();
-                const value = pair.substring(colonIndex + 1).trim();
-
-                // Map known keys to field names
-                if (key.includes('mobile')) {
-                    result.mobile_number = value;
-                } else if (key.includes('office')) {
-                    result.office_phone = value;
-                } else if (key.includes('website')) {
-                    result.website = value;
-                } else if (key.includes('esg competence')) {
-                    result.competence_esg = value;
-                } else if (key.includes('sector focus')) {
-                    // If there are multiple, take the last one (or could handle as array, but for now last wins)
-                    result.sectors_focus = value;
-                } else if (key.includes('panel expertise')) {
-                    result.expertise_panels = value;
-                }
-            });
-        }
-
-        return result;
+        errorFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
     }
 
     setupEventListeners() {
         // Tab switching
         document.querySelectorAll('.profile-tab').forEach(tab => {
-            tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+            tab.addEventListener('click', (e) => {
+                const targetTab = e.target.dataset.tab;
+                
+                // Update active tab
+                document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // Show target content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+                
+                // Load reviews if switching to reviews tab
+                if (targetTab === 'reviews') {
+                    this.loadMyReviews();
+                }
+            });
         });
 
-        // Profile form
+        // Profile form submission
         document.getElementById('profile-form').addEventListener('submit', (e) => this.saveProfile(e));
-
-        // Password form
+        
+        // Password form submission
         document.getElementById('password-form').addEventListener('submit', (e) => this.changePassword(e));
-
+        
         // Delete account
         document.getElementById('delete-account-btn').addEventListener('click', () => this.deleteAccount());
-        
-        // Character limit + digit blocking + space warning for name & role fields
-        ['first_name', 'last_name', 'job_title'].forEach(id => {
-            const input = document.getElementById(id);
-            const errorChar = document.getElementById(`error-${id}`);
-            const errorDigit = document.getElementById(`error-${id}_digit`);
-            const errorSpace = document.getElementById(`error-${id}_space`);
-            if (input && errorChar && errorDigit && errorSpace) {
+
+        // FIX: Add real-time validation to clear errors as user types
+        ['first_name', 'last_name', 'company', 'job_title'].forEach(fieldId => {
+            const input = document.getElementById(fieldId);
+            if (input) {
                 input.addEventListener('input', () => {
-                    // 1. Filter out digits
-                    const filtered = input.value.replace(/\d/g, '');
-                    if (filtered !== input.value) {
-                        input.value = filtered;
-                        // Show digit error
-                        errorDigit.style.display = 'block';
-                        // Hide it after 2 seconds
-                        setTimeout(() => {
-                            errorDigit.style.display = 'none';
-                        }, 2000);
-                    } else {
-                        // If no digits, hide digit error immediately
-                        errorDigit.style.display = 'none';
-                    }
-
-                    // 2. Check character limit
-                    if (input.value.length > 265) {
-                        errorChar.style.display = 'block';
-                    } else {
-                        errorChar.style.display = 'none';
-                    }
-
-                    // 3. Check leading/trailing spaces
-                    if (input.value !== input.value.trim()) {
-                        errorSpace.style.display = 'block';
-                    } else {
-                        errorSpace.style.display = 'none';
+                    // Clear validation errors for this field
+                    this.clearFieldErrors(fieldId);
+                    
+                    // Auto-trim on input to prevent trailing space issues
+                    const cursorPos = input.selectionStart;
+                    const trimmed = input.value.trimStart();
+                    if (trimmed !== input.value) {
+                        input.value = trimmed;
+                        input.setSelectionRange(cursorPos - 1, cursorPos - 1);
                     }
                 });
             }
         });
-
-        // Space warning for company (no digit check)
-        const companyInput = document.getElementById('company');
-        const companyErrorChar = document.getElementById('error-company');
-        const companyErrorSpace = document.getElementById('error-company_space');
-        if (companyInput && companyErrorChar && companyErrorSpace) {
-            companyInput.addEventListener('input', () => {
-                // Character limit
-                if (companyInput.value.length > 265) {
-                    companyErrorChar.style.display = 'block';
-                } else {
-                    companyErrorChar.style.display = 'none';
-                }
-
-                // Leading/trailing spaces
-                if (companyInput.value !== companyInput.value.trim()) {
-                    companyErrorSpace.style.display = 'block';
-                } else {
-                    companyErrorSpace.style.display = 'none';
-                }
-            });
-        }
     }
-    switchTab(tabName) {
-        // Update tab buttons
-        document.querySelectorAll('.profile-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.tab === tabName);
-        });
 
-        // Show/hide content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.add('hidden');
+    /**
+     * Clear validation errors for a specific field
+     */
+    clearFieldErrors(fieldId) {
+        ['', '_digit', '_space'].forEach(suffix => {
+            const errorEl = document.getElementById(`error-${fieldId}${suffix}`);
+            if (errorEl) errorEl.style.display = 'none';
         });
-        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-
-        // Load tab-specific content
-        if (tabName === 'reviews') {
-            this.loadMyReviews();
+        
+        const input = document.getElementById(fieldId);
+        if (input) {
+            input.style.borderColor = '';
+            input.style.boxShadow = '';
         }
     }
 
     async loadMyReviews() {
         const container = document.getElementById('my-reviews-list');
-        
+        container.innerHTML = '<p class="text-secondary text-center p-6">Loading reviews...</p>';
+
         try {
-            const reviews = await window.championDB.getMyReviews();
+            const reviews = await window.championDB.getChampionReviews(this.champion.id);
             
-            if (reviews.length === 0) {
+            if (!reviews || reviews.length === 0) {
                 container.innerHTML = `
                     <div class="text-center p-6">
-                        <p class="text-secondary mb-4">You haven't submitted any reviews yet.</p>
+                        <p class="text-secondary mb-4">No reviews yet. Start by exploring ESG panels!</p>
                         <a href="/champion-panels.html" class="btn btn-primary">Browse Panels</a>
                     </div>
                 `;
@@ -415,50 +372,46 @@ class ChampionProfile {
             };
 
             container.innerHTML = `
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Indicator</th>
-                                <th>Panel</th>
-                                <th>Status</th>
-                                <th>Rating</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${reviews.map(review => `
-                                <tr>
-                                    <td>
-                                        <a href="/champion-indicators.html?panel=${review.panel_id}&indicator=${review.indicator_id}">
-                                            ${review.indicators?.name || 'Unknown'}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-${review.panels?.category || 'primary'}">
-                                            ${review.panels?.name || 'Unknown'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-${statusColors[review.status] || 'primary'}">
-                                            ${review.status}
-                                        </span>
-                                    </td>
-                                    <td>${this.renderStars(review.rating)}</td>
-                                    <td>${_formatDate(review.created_at)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
+                <ul class="activity-feed">
+                    ${reviews.map(review => `
+                        <li class="activity-item">
+                            <div class="activity-icon" style="background: var(--${statusColors[review.status] || 'primary'}-bg); color: var(--${statusColors[review.status] || 'primary'});">
+                                ${this.getStatusIcon(review.status)}
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">${review.indicators?.name || 'Unknown Indicator'}</div>
+                                <div class="activity-time">
+                                    <span class="badge badge-${review.panels?.category || 'primary'}" style="font-size: 10px;">
+                                        ${review.panels?.name || 'Unknown Panel'}
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="badge badge-${statusColors[review.status] || 'primary'}">
+                                ${review.status}
+                            </span>
+                        </li>
+                    `).join('')}
+                </ul>
             `;
-            
         } catch (error) {
             console.error('Error loading reviews:', error);
-            container.innerHTML = '<p class="text-error">Failed to load reviews.</p>';
+            container.innerHTML = '<p class="text-error text-center p-6">Failed to load reviews</p>';
         }
     }
 
+    getStatusIcon(status) {
+        const icons = {
+            pending: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+            approved: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+            rejected: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
+        };
+        return icons[status] || icons.pending;
+    }
+
+    /**
+     * Save profile updates
+     * FIX: Better validation and error handling for LinkedIn users
+     */
     async saveProfile(event) {
         event.preventDefault();
         
@@ -466,47 +419,48 @@ class ChampionProfile {
         btn.disabled = true;
         btn.textContent = 'Saving...';
 
-        const firstName = document.getElementById('first_name').value.trim();
-        const lastName = document.getElementById('last_name').value.trim();
+        // FIX: Sanitize all inputs before validation
+        const firstName = this.sanitizeValue(document.getElementById('first_name').value);
+        const lastName = this.sanitizeValue(document.getElementById('last_name').value);
+        const company = this.sanitizeValue(document.getElementById('company').value);
+        const jobTitle = this.sanitizeValue(document.getElementById('job_title').value);
+        
+        // Update the form fields with sanitized values
+        document.getElementById('first_name').value = firstName;
+        document.getElementById('last_name').value = lastName;
+        document.getElementById('company').value = company;
+        document.getElementById('job_title').value = jobTitle;
+        
         const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
-        document.getElementById('full_name').value = fullName; // keep hidden field in sync
+        document.getElementById('full_name').value = fullName;
 
         const keyContributions = document.getElementById('key_contributions').value.trim();
-        const mobile = document.getElementById('mobile_number').value.trim();
-        const officePhone = document.getElementById('office_phone').value.trim();
-        const website = document.getElementById('website').value.trim();
+        const mobile = this.sanitizeValue(document.getElementById('mobile_number').value);
+        const officePhone = this.sanitizeValue(document.getElementById('office_phone').value);
+        const website = this.sanitizeValue(document.getElementById('website').value);
         const competence = document.getElementById('competence_esg').value;
         const sector = document.getElementById('sectors_focus').value;
         const panelExpertise = document.getElementById('expertise_panels').value;
-        // Character limit validation (existing)
+        
+        // Clear previous errors
+        this.clearValidationErrors();
+        
+        // Character limit validation
         const longFields = [];
-        ['first_name', 'last_name', 'company', 'job_title'].forEach(id => {
-            const input = document.getElementById(id);
-            if (input && input.value.length > 265) {
-                longFields.push(id.replace('_', ' '));
-                document.getElementById(`error-${id}`).style.display = 'block';
-            }
-        });
-        // Space validation (leading/trailing)
-        const spaceFields = [];
-        ['first_name', 'last_name', 'company', 'job_title'].forEach(id => {
-            const input = document.getElementById(id);
-            if (input && input.value !== input.value.trim()) {
-                spaceFields.push(id.replace('_', ' '));
-                document.getElementById(`error-${id}_space`).style.display = 'block';
-                // Hide after 3 seconds
-                setTimeout(() => {
-                    document.getElementById(`error-${id}_space`).style.display = 'none';
-                }, 3000);
+        const fieldsToCheck = [
+            { id: 'first_name', value: firstName, label: 'First Name' },
+            { id: 'last_name', value: lastName, label: 'Last Name' },
+            { id: 'company', value: company, label: 'Company' },
+            { id: 'job_title', value: jobTitle, label: 'Job Title' }
+        ];
+        
+        fieldsToCheck.forEach(field => {
+            if (field.value.length > 265) {
+                longFields.push(field.label);
+                document.getElementById(`error-${field.id}`).style.display = 'block';
             }
         });
 
-        if (spaceFields.length > 0) {
-            window.showToast?.(`Fields cannot start or end with a space: ${spaceFields.join(', ')}`, 'error');
-            btn.disabled = false;
-            btn.textContent = 'Save Changes';
-            return;
-        }
         if (longFields.length > 0) {
             window.showToast?.(`Fields exceed 265 characters: ${longFields.join(', ')}`, 'error');
             btn.disabled = false;
@@ -514,17 +468,18 @@ class ChampionProfile {
             return;
         }
 
-        // Digit validation (new)
+        // Digit validation for name fields
         const digitFields = [];
-        ['first_name', 'last_name', 'job_title'].forEach(id => {
-            const input = document.getElementById(id);
-            if (input && /\d/.test(input.value)) {
-                digitFields.push(id.replace('_', ' '));
-                document.getElementById(`error-${id}_digit`).style.display = 'block';
-                // Hide after 2 seconds (optional, but user will see the error on submit)
-                setTimeout(() => {
-                    document.getElementById(`error-${id}_digit`).style.display = 'none';
-                }, 2000);
+        const nameFields = [
+            { id: 'first_name', value: firstName, label: 'First Name' },
+            { id: 'last_name', value: lastName, label: 'Last Name' },
+            { id: 'job_title', value: jobTitle, label: 'Job Title' }
+        ];
+        
+        nameFields.forEach(field => {
+            if (/\d/.test(field.value)) {
+                digitFields.push(field.label);
+                document.getElementById(`error-${field.id}_digit`).style.display = 'block';
             }
         });
 
@@ -534,19 +489,20 @@ class ChampionProfile {
             btn.textContent = 'Save Changes';
             return;
         }
+
         // Build updates object with dedicated columns
         const updates = {
             full_name: fullName,
-            company: document.getElementById('company').value,
-            job_title: document.getElementById('job_title').value,
-            linkedin_url: document.getElementById('linkedin_url').value,
+            company: company,
+            job_title: jobTitle,
+            linkedin_url: this.sanitizeValue(document.getElementById('linkedin_url').value),
             mobile_number: mobile || null,
             office_phone: officePhone || null,
             website: website || null,
             competence_esg: competence || null,
             sectors_focus: sector || null,
             expertise_panels: panelExpertise || null,
-            bio: keyContributions || null   // store only key contributions in bio
+            bio: keyContributions || null
         };
 
         try {
@@ -555,10 +511,13 @@ class ChampionProfile {
             if (result.success) {
                 this.champion = result.data;
                 this.updateProfileHeader();
-                window.showToast('Profile updated successfully!', 'success');
+                window.showToast?.('Profile updated successfully!', 'success');
+                
+                // Remove completion banner if it exists
+                const banner = document.getElementById('profile-completion-banner');
+                if (banner) banner.remove();
                 
                 // Check if user was redirected here to complete their profile
-                // If so, redirect them back to their original destination
                 if (window.championAuth?.handleProfileCompletionRedirect?.()) {
                     return; // Will redirect to original page
                 }
@@ -567,7 +526,7 @@ class ChampionProfile {
             }
         } catch (error) {
             console.error('Error saving profile:', error);
-            window.showToast('Failed to save profile. Please try again.', 'error');
+            window.showToast?.('Failed to save profile. Please try again.', 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Save Changes';
@@ -581,7 +540,7 @@ class ChampionProfile {
         const confirmPassword = document.getElementById('confirm_password').value;
 
         if (newPassword !== confirmPassword) {
-            window.showToast('Passwords do not match', 'error');
+            window.showToast?.('Passwords do not match', 'error');
             return;
         }
 
@@ -593,14 +552,14 @@ class ChampionProfile {
             const result = await window.championAuth.updatePassword(newPassword);
             
             if (result.success) {
-                window.showToast('Password updated successfully!', 'success');
+                window.showToast?.('Password updated successfully!', 'success');
                 document.getElementById('password-form').reset();
             } else {
                 throw new Error(result.error);
             }
         } catch (error) {
             console.error('Error changing password:', error);
-            window.showToast('Failed to update password. Please try again.', 'error');
+            window.showToast?.('Failed to update password. Please try again.', 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Update Password';
@@ -618,18 +577,17 @@ class ChampionProfile {
 
         const confirmation = prompt('Please type DELETE to confirm:');
         if (confirmation !== 'DELETE') {
-            window.showToast('Account deletion cancelled', 'info');
+            window.showToast?.('Account deletion cancelled', 'info');
             return;
         }
 
         try {
-            // Note: In a real app, you'd call a server-side function to delete the account
-            window.showToast('Account deletion requested. You will be logged out.', 'info');
+            window.showToast?.('Account deletion requested. You will be logged out.', 'info');
             await window.championAuth.logout();
             window.location.href = '/landing.html';
         } catch (error) {
             console.error('Error deleting account:', error);
-            window.showToast('Failed to delete account. Please contact support.', 'error');
+            window.showToast?.('Failed to delete account. Please contact support.', 'error');
         }
     }
 

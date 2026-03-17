@@ -127,7 +127,10 @@ class RankingPage {
                             ${champion.company || 'ESG Champion'} • ${champion.accepted_reviews_count || 0} reviews
                         </div>
                     </div>
-                    <div class="leaderboard-score">${champion.credits || 0}</div>
+                    <div class="leaderboard-score" style="text-align: right;">
+                        <div>${champion.credits || 0}</div>
+                        <div style="font-size: var(--text-xs); color: var(--gray-400); font-weight: 400;">credits</div>
+                    </div>
                 </li>
             `;
         }).join('');
@@ -197,4 +200,3 @@ document.addEventListener('DOMContentLoaded', () => {
     const ranking = new RankingPage();
     ranking.init();
 });
-

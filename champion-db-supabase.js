@@ -474,11 +474,85 @@ class ChampionDB {
     // =====================================================
 
     /**
-     * Get leaderboard data
+     * Get leaderboard data with real-time computed STIF scores.
+     *
+     * The `champions.credits` column can be stale (BUG_DASH_021/022/025).
+     * Instead we compute scores the same way getSTIFScore() does — by summing
+     * field completions across all accepted indicator reviews belonging to
+     * approved submissions — and use those as the authoritative credit values.
      */
     async getLeaderboard(period = '30days', limit = 50) {
         try {
-            return await this.service.getLeaderboard(limit, period);
+            // 1. Fetch base champion list (for profile data + fallback credits)
+            const champions = await this.service.getLeaderboard(1000, period);
+
+            // 2. Fetch ALL approved submissions across all champions in one query
+            const { data: allSubmissions, error: subError } = await this.service.client
+                .from('panel_review_submissions')
+                .select('id, champion_id')
+                .eq('status', 'approved');
+
+            if (subError) throw subError;
+
+            // 3. If there are approved submissions, fetch all accepted indicator reviews
+            let scoreMap = {}; // championId -> computed credits
+
+            if (allSubmissions && allSubmissions.length > 0) {
+                const submissionIds = allSubmissions.map(s => s.id);
+
+                // Build a map: submissionId -> championId
+                const subToChampion = {};
+                allSubmissions.forEach(s => { subToChampion[s.id] = s.champion_id; });
+
+                const { data: indicatorReviews, error: revError } = await this.service.client
+                    .from('panel_review_indicator_reviews')
+                    .select('submission_id, sme_size_band, primary_sector, relevance, regulatory_necessity, operational_feasibility, cost_to_collect, misreporting_risk, rationale, suggested_tier, geographic_footprint, primary_framework, esg_class, estimated_time, support_required, notes, sdgs, stakeholder_priority, optional_tags')
+                    .in('submission_id', submissionIds)
+                    .eq('review_status', 'accepted');
+
+                if (revError) throw revError;
+
+                const mandatoryFields = [
+                    'sme_size_band', 'primary_sector', 'relevance',
+                    'regulatory_necessity', 'operational_feasibility',
+                    'cost_to_collect', 'misreporting_risk', 'rationale',
+                    'suggested_tier'
+                ];
+                const optionalFields = [
+                    'geographic_footprint', 'primary_framework', 'esg_class',
+                    'estimated_time', 'support_required', 'notes'
+                ];
+                const optionalArrayFields = ['sdgs', 'stakeholder_priority', 'optional_tags'];
+
+                for (const review of (indicatorReviews || [])) {
+                    const championId = subToChampion[review.submission_id];
+                    if (!championId) continue;
+                    if (!scoreMap[championId]) scoreMap[championId] = 0;
+
+                    for (const f of mandatoryFields) {
+                        const v = review[f];
+                        if (v !== null && v !== undefined && v !== '') scoreMap[championId] += 2;
+                    }
+                    for (const f of optionalFields) {
+                        const v = review[f];
+                        if (v !== null && v !== undefined && v !== '') scoreMap[championId] += 1;
+                    }
+                    for (const f of optionalArrayFields) {
+                        const v = review[f];
+                        if (Array.isArray(v) && v.length > 0) scoreMap[championId] += 1;
+                    }
+                }
+            }
+
+            // 4. Merge computed scores back onto champion records, then re-sort & slice
+            const enriched = champions.map(c => ({
+                ...c,
+                credits: scoreMap[c.id] !== undefined ? scoreMap[c.id] : (c.credits || 0)
+            }));
+
+            enriched.sort((a, b) => b.credits - a.credits);
+
+            return enriched.slice(0, limit);
         } catch (error) {
             console.error('Error getting leaderboard:', error);
             throw error;

@@ -55,7 +55,7 @@
                 <div class="loading-spinner"></div>
             </div>
             <h2>Completing Sign In</h2>
-            <p class="text-secondary">Please wait while we verify your credentials...</p>
+            <p class="text-secondary" id="loading-message">Please wait while we verify your credentials...</p>
         </div>
 
         <div class="callback-card hidden" id="error-state">
@@ -78,7 +78,7 @@
                 </svg>
             </div>
             <h2>Sign In Successful</h2>
-            <p class="text-secondary">Redirecting to your dashboard...</p>
+            <p class="text-secondary" id="success-message">Redirecting to your dashboard...</p>
         </div>
     </div>
 
@@ -87,43 +87,131 @@
     <script src="champion-auth-supabase.js"></script>
     
     <script>
+        /**
+         * Enhanced LinkedIn OAuth Callback Handler
+         * 
+         * FIX: Properly handles profile completion for LinkedIn users
+         * - Checks login context (champion vs business)
+         * - Ensures profile metadata is populated from LinkedIn
+         * - Verifies profile completion before redirecting to dashboard
+         * - Redirects to profile page if required fields are missing
+         */
         async function handleCallback() {
             const loadingState = document.getElementById('loading-state');
+            const loadingMessage = document.getElementById('loading-message');
             const errorState = document.getElementById('error-state');
             const successState = document.getElementById('success-state');
+            const successMessage = document.getElementById('success-message');
             const errorMessage = document.getElementById('error-message');
 
             try {
-                // Wait for auth to initialize
+                // Step 1: Wait for services to be ready
+                loadingMessage.textContent = 'Initializing authentication...';
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Initialize auth and check for session
-                await window.championAuth.init();
+                // Step 2: Check login context (champion vs business)
+                const loginContext = localStorage.getItem('login_context');
+                console.log('Login context:', loginContext);
                 
-                // Check if we have a session
-                const session = await window.supabaseService.getSession();
-                
-                if (session) {
-                    // Load or create profile
+                // Step 3: Initialize appropriate auth service
+                if (loginContext === 'business') {
+                    // Handle business user flow
+                    if (!window.businessAuth) {
+                        throw new Error('Business authentication not available');
+                    }
+                    await window.businessAuth.init();
+                    const session = await window.supabaseService.getSession();
+                    
+                    if (session) {
+                        loadingState.classList.add('hidden');
+                        successState.classList.remove('hidden');
+                        successMessage.textContent = 'Redirecting to business dashboard...';
+                        
+                        setTimeout(() => {
+                            window.location.href = '/business-dashboard.html';
+                        }, 1500);
+                        return;
+                    }
+                } else {
+                    // Handle champion user flow (default)
+                    loadingMessage.textContent = 'Loading your profile...';
+                    await window.championAuth.init();
+                    
+                    // Step 4: Check if we have a session
+                    const session = await window.supabaseService.getSession();
+                    
+                    if (!session) {
+                        throw new Error('No session found. Please try signing in again.');
+                    }
+                    
+                    console.log('Session found, user:', session.user?.email);
+                    
+                    // Step 5: Load or create champion profile
+                    loadingMessage.textContent = 'Setting up your profile...';
                     await window.championAuth.loadChampionProfile();
                     
-                    // Show success
+                    const champion = window.championAuth.getChampion();
+                    console.log('Champion profile loaded:', champion);
+                    
+                    if (!champion) {
+                        throw new Error('Failed to load profile. Please try again.');
+                    }
+                    
+                    // Step 6: Check if profile is complete
+                    const profileStatus = window.championAuth.getProfileCompletionStatus();
+                    console.log('Profile completion status:', profileStatus);
+                    
+                    if (!profileStatus.isComplete) {
+                        // FIX: Profile is incomplete - redirect to profile page
+                        // This prevents the red border bug by ensuring LinkedIn users complete their profile
+                        console.log('Profile incomplete, redirecting to profile page');
+                        
+                        loadingState.classList.add('hidden');
+                        successState.classList.remove('hidden');
+                        successMessage.textContent = 'Please complete your profile...';
+                        
+                        // Store that we came from LinkedIn login
+                        sessionStorage.setItem('linkedin_login', 'true');
+                        
+                        setTimeout(() => {
+                            // Redirect to profile page with completion mode
+                            window.location.href = '/champion-profile.html?complete=true';
+                        }, 1000);
+                        return;
+                    }
+                    
+                    // Step 7: Profile is complete - redirect to dashboard
+                    console.log('Profile complete, redirecting to dashboard');
+                    
                     loadingState.classList.add('hidden');
                     successState.classList.remove('hidden');
+                    successMessage.textContent = 'Redirecting to your dashboard...';
                     
-                    // Redirect to dashboard
                     setTimeout(() => {
                         window.location.href = '/champion-dashboard.html';
                     }, 1500);
-                } else {
-                    throw new Error('No session found. Please try signing in again.');
                 }
             } catch (error) {
                 console.error('Callback error:', error);
                 
+                // Hide loading state
                 loadingState.classList.add('hidden');
                 errorState.classList.remove('hidden');
-                errorMessage.textContent = error.message || 'Authentication failed. Please try again.';
+                
+                // Provide helpful error messages
+                let userMessage = 'Authentication failed. Please try again.';
+                
+                if (error.message?.includes('session')) {
+                    userMessage = 'Could not establish your session. Please sign in again.';
+                } else if (error.message?.includes('profile')) {
+                    userMessage = 'Could not load your profile. Please try signing in again.';
+                } else if (error.message?.includes('network')) {
+                    userMessage = 'Network error. Please check your connection and try again.';
+                } else if (error.message) {
+                    userMessage = error.message;
+                }
+                
+                errorMessage.textContent = userMessage;
             }
         }
 
@@ -132,4 +220,3 @@
     </script>
 </body>
 </html>
-
