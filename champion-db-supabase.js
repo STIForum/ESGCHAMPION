@@ -165,21 +165,44 @@ class ChampionDB {
         }
 
         try {
-            const reviews = await this.service.getReviewsByChampion(auth.getUser().id);
-            
-            // Get vote counts for each review
-            const reviewsWithVotes = await Promise.all(
-                reviews.map(async (review) => {
-                    const votes = await this.service.getVotes(review.id);
-                    return {
-                        ...review,
-                        upvotes: votes.filter(v => v.vote_type === 'upvote').length,
-                        downvotes: votes.filter(v => v.vote_type === 'downvote').length
-                    };
-                })
-            );
+            const championId = auth.getUser().id;
 
-            return reviewsWithVotes;
+            // Source 1: legacy reviews
+            const reviews = await this.service.getReviewsByChampion(championId);
+
+            // Source 2: panel submission indicator reviews (same logic as getDashboardStats)
+            let panelIndicatorReviews = [];
+            const panelSubmissions = await this.service.getUserPanelReviewSubmissions(championId);
+
+            if (panelSubmissions && panelSubmissions.length > 0) {
+                for (const submission of panelSubmissions) {
+                    try {
+                        const fullSubmission = await this.service.getSubmissionWithIndicatorReviews(submission.id);
+                        if (fullSubmission && fullSubmission.indicatorReviews) {
+                            const mappedReviews = fullSubmission.indicatorReviews.map(review => ({
+                                id: review.id,
+                                indicator_id: review.indicator_id || review.indicators?.id,
+                                panel_id: submission.panel_id || fullSubmission.panel_id,
+                                status: submission.status,
+                                created_at: review.created_at || submission.created_at,
+                                indicators: review.indicators,
+                                panels: fullSubmission.panels,
+                                rating: review.clarity_rating,
+                                content: review.analysis
+                            }));
+                            panelIndicatorReviews.push(...mappedReviews);
+                        }
+                    } catch (err) {
+                        console.warn('Error fetching submission details:', err);
+                    }
+                }
+            }
+
+            // Combine and sort
+            const allReviews = [...reviews, ...panelIndicatorReviews];
+            allReviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            return allReviews;
         } catch (error) {
             console.error('Error getting my reviews:', error);
             throw error;

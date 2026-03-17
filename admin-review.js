@@ -1799,8 +1799,6 @@ class AdminReviewPage {
             this.renderFrameworksList();
             this.populateFrameworkSelects();
             this.populateFrameworkFilterSelects();
-            this.populateIndicatorFrameworkSelect();
-            this.populateEditIndicatorFrameworkSelect(); // ← add this
 
         } catch (error) {
             console.error('Error loading frameworks:', error);
@@ -1896,6 +1894,10 @@ class AdminReviewPage {
         container.innerHTML = '<div class="loading-spinner" style="margin: var(--space-8) auto;"></div>';
 
         try {
+            // Ensure panelsList is available for framework lookups
+            if (!this.panelsList || this.panelsList.length === 0) {
+                this.panelsList = await window.adminService.getAllPanels();
+            }
             this.indicatorsList = await window.adminService.getAllIndicators();
             this.populateFrameworkFilterSelects();
             this.renderIndicatorsList();
@@ -1914,9 +1916,16 @@ class AdminReviewPage {
         const pageItems = pageMeta.pagedItems;
 
         // Helper to get framework display
+        // Priority: indicator's own field → joined panels relation → panelsList lookup by panel_id
         const getFramework = (indicator) => {
-            const fw = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
-            return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || '';
+            const fw = (
+                indicator.primary_framework ||
+                indicator.framework ||
+                indicator.panels?.primary_framework ||
+                (this.panelsList || []).find(p => p.id === indicator.panel_id)?.primary_framework ||
+                ''
+            ).toLowerCase();
+            return window.FRAMEWORK_LABELS?.[fw] || fw.toUpperCase() || 'N/A';
         };
 
         // NEW: helper to compute status + badge
@@ -1961,7 +1970,13 @@ class AdminReviewPage {
                     <tbody>
                         ${pageItems.map(indicator => {
                             const framework = getFramework(indicator);
-                            const fwLower = (indicator.primary_framework || indicator.framework || indicator.panels?.primary_framework || '').toLowerCase();
+                            const fwLower = (
+                                indicator.primary_framework ||
+                                indicator.framework ||
+                                indicator.panels?.primary_framework ||
+                                (this.panelsList || []).find(p => p.id === indicator.panel_id)?.primary_framework ||
+                                ''
+                            ).toLowerCase();
                             const { label: statusLabel, badge: statusBadge } = getStatusInfo(indicator);
 
                             return `
@@ -2829,8 +2844,24 @@ class AdminReviewPage {
         // Populate panel dropdown for indicator
         await this.loadPanelDropdown();
 
-        // NEW: populate Primary Framework select for indicators from backend frameworks
-        this.populateIndicatorFrameworkSelect();
+        // Reset framework display on open
+        const fwDisplay = document.getElementById('indicator-framework-display');
+        const fwHidden  = document.getElementById('indicator-framework');
+        if (fwDisplay) fwDisplay.value = '';
+        if (fwHidden)  fwHidden.value  = '';
+
+        // Wire panel → framework auto-fill
+        const panelSelect = document.getElementById('indicator-panel');
+        if (panelSelect) {
+            const onPanelChange = () => {
+                const { code, label } = this._getPanelFramework(panelSelect.value, this.panelsList || []);
+                if (fwDisplay) fwDisplay.value = label || '';
+                if (fwHidden)  fwHidden.value  = code  || '';
+            };
+            panelSelect.removeEventListener('change', panelSelect._fwListener);
+            panelSelect._fwListener = onPanelChange;
+            panelSelect.addEventListener('change', onPanelChange);
+        }
 
         // Clear CSV import status
         const csvStatus = document.getElementById('csv-import-status');
@@ -2842,74 +2873,20 @@ class AdminReviewPage {
         // Focus panel dropdown first
         setTimeout(() => document.getElementById('indicator-panel')?.focus(), 100);
     }
-    populateIndicatorFrameworkSelect() {
-        const select = document.getElementById('indicator-framework');
-        if (!select) return;
-
-        const current = select.value;
-
-        // Use active + draft frameworks from backend; fall back if none
-        const activeFrameworks = (this.frameworksList || []).filter(
-            fw => fw.status === 'active' || fw.status === 'draft'
-        );
-
-        const fallbackFrameworks = [
-            { code: 'gri', name: 'GRI' },
-            { code: 'esrs', name: 'ESRS' },
-            { code: 'ifrs', name: 'IFRS' }
-        ];
-
-        const source = activeFrameworks.length ? activeFrameworks : fallbackFrameworks;
-
-        select.innerHTML = '<option value="">Select framework</option>' +
-            source.map(fw => {
-                const code = String(fw.code || '').toLowerCase();
-                const label = fw.name || code.toUpperCase();
-                return `<option value="${code}">${label} (${code.toUpperCase()})</option>`;
-            }).join('');
-
-        // Preserve previously selected value if still valid
-        if (current) {
-            const normalized = String(current).toLowerCase();
-            if (source.some(fw => String(fw.code || '').toLowerCase() === normalized)) {
-                select.value = normalized;
-            }
-        }
-}
-
-    populateEditIndicatorFrameworkSelect() {
-        const select = document.getElementById('edit-indicator-framework');
-        if (!select) return;
-
-        const current = select.value;
-
-        const activeFrameworks = (this.frameworksList || []).filter(
-            fw => fw.status === 'active' || fw.status === 'draft'
-        );
-
-        const fallbackFrameworks = [
-            { code: 'gri', name: 'GRI' },
-            { code: 'esrs', name: 'ESRS' },
-            { code: 'ifrs', name: 'IFRS' }
-        ];
-
-        const source = activeFrameworks.length ? activeFrameworks : fallbackFrameworks;
-
-        select.innerHTML = '<option value="">Select framework</option>' +
-            source.map(fw => {
-                const code = String(fw.code || '').toLowerCase();
-                const label = fw.name || code.toUpperCase();
-                return `<option value="${code}">${label} (${code.toUpperCase()})</option>`;
-            }).join('');
-
-        // Restore previously selected value if still valid
-        if (current) {
-            const normalized = String(current).toLowerCase();
-            if (source.some(fw => String(fw.code || '').toLowerCase() === normalized)) {
-                select.value = normalized;
-            }
-        }
+    /**
+     * Given a panel ID, returns { code, label } for its primary framework.
+     * Used to auto-fill the read-only framework field in Add/Edit Indicator modals.
+     */
+    _getPanelFramework(panelId, panelsList) {
+        const panel = (panelsList || []).find(p => p.id === panelId);
+        if (!panel || !panel.primary_framework) return { code: '', label: '' };
+        const code = panel.primary_framework.toLowerCase();
+        const fw = (this.frameworksList || []).find(f => (f.code || '').toLowerCase() === code);
+        const label = fw ? `${fw.name} (${code.toUpperCase()})` : code.toUpperCase();
+        return { code, label };
     }
+
+
     /**
      * Load panels into the indicator panel dropdown
      */
@@ -2919,6 +2896,9 @@ class AdminReviewPage {
 
         try {
             const panels = await window.adminService.getAllPanels();
+
+            // Store for framework lookup
+            this.panelsList = panels || this.panelsList || [];
             
             // Clear and set default option
             panelSelect.innerHTML = '<option value="">Select a panel for this indicator</option>';
@@ -3534,11 +3514,9 @@ class AdminReviewPage {
         modal.classList.add('active');
 
         try {
-            // Make sure frameworks are loaded so the dropdown is correct
+            // Make sure frameworks are loaded
             if (!this.frameworksList || this.frameworksList.length === 0) {
                 await this.loadFrameworks();
-            } else {
-                this.populateEditIndicatorFrameworkSelect();
             }
 
             // Fetch indicator data and panels in parallel
@@ -3556,6 +3534,9 @@ class AdminReviewPage {
 
             this.currentEditingIndicator = indicator;
 
+            // Keep panelsList in sync for framework lookup
+            this.panelsList = panels || this.panelsList || [];
+
             // Populate panel dropdown
             const panelSelect = document.getElementById('edit-indicator-panel');
             if (panelSelect) {
@@ -3572,19 +3553,33 @@ class AdminReviewPage {
                 });
             }
 
-            // Ensure edit-indicator-framework select is populated from backend frameworks
-            this.populateEditIndicatorFrameworkSelect?.();
+            // Auto-fill framework from the indicator's current panel
+            const editFwDisplay = document.getElementById('edit-indicator-framework-display');
+            const editFwHidden  = document.getElementById('edit-indicator-framework');
 
-            // Populate form fields
+            const { code: panelFwCode, label: panelFwLabel } =
+                this._getPanelFramework(indicator.panel_id, panels);
+            if (editFwDisplay) editFwDisplay.value = panelFwLabel || '';
+            if (editFwHidden)  editFwHidden.value  = panelFwCode  || '';
+
+            // Wire panel change → update framework display
+            if (panelSelect) {
+                const onEditPanelChange = () => {
+                    const { code, label } = this._getPanelFramework(panelSelect.value, panels);
+                    if (editFwDisplay) editFwDisplay.value = label || '';
+                    if (editFwHidden)  editFwHidden.value  = code  || '';
+                };
+                panelSelect.removeEventListener('change', panelSelect._fwListener);
+                panelSelect._fwListener = onEditPanelChange;
+                panelSelect.addEventListener('change', onEditPanelChange);
+            }
+
+            // Populate remaining form fields
             document.getElementById('edit-indicator-id').value = indicator.id;
             document.getElementById('edit-indicator-title').value = indicator.name || '';
             document.getElementById('edit-indicator-unit').value = indicator.unit || '';
             document.getElementById('edit-indicator-formula-required').checked = indicator.formula_required || false;
             document.getElementById('edit-indicator-code').value = indicator.code || '';
-
-            // Use lowercase to match how options are built from backend frameworks
-            const fwValue = (indicator.primary_framework || '').toLowerCase();
-            document.getElementById('edit-indicator-framework').value = fwValue;
 
             document.getElementById('edit-indicator-framework-version').value = indicator.framework_version || '';
             document.getElementById('edit-indicator-description').value = indicator.description || '';

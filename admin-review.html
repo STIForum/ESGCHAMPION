@@ -965,12 +965,14 @@
                     <!-- Primary Framework -->
                     <div class="form-group">
                         <label class="form-label">Primary Framework</label>
-                        <select class="form-select" id="indicator-framework" name="primaryFramework">
-                            <option value="">Select framework</option>
-                            <option value="gri">GRI</option>
-                            <option value="esrs">ESRS</option>
-                            <option value="ifrs">IFRS</option>
-                        </select>
+                        <input type="text" class="form-input" id="indicator-framework-display"
+                            placeholder="Auto-filled from selected panel"
+                            readonly
+                            style="background: var(--gray-50); color: var(--gray-500); cursor: not-allowed;">
+                        <input type="hidden" id="indicator-framework" name="primaryFramework">
+                        <span style="font-size: var(--text-xs); color: var(--gray-400); margin-top: 4px; display: block;">
+                            Determined by the selected panel
+                        </span>
                     </div>
 
                     <!-- Framework Version -->
@@ -1144,9 +1146,14 @@
                     <!-- Primary Framework -->
                     <div class="form-group">
                         <label class="form-label">Primary Framework</label>
-                        <select class="form-select" id="edit-indicator-framework" name="primaryFramework">
-                            <option value="">Select framework</option>
-                        </select>
+                        <input type="text" class="form-input" id="edit-indicator-framework-display"
+                            placeholder="Auto-filled from selected panel"
+                            readonly
+                            style="background: var(--gray-50); color: var(--gray-500); cursor: not-allowed;">
+                        <input type="hidden" id="edit-indicator-framework" name="primaryFramework">
+                        <span style="font-size: var(--text-xs); color: var(--gray-400); margin-top: 4px; display: block;">
+                            Determined by the selected panel
+                        </span>
                     </div>
 
                     <!-- Framework Version -->

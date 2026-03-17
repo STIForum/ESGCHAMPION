@@ -281,6 +281,14 @@ class ChampionProfile {
     }
 
     setupEventListeners() {
+        // Avatar upload — compresses image and saves base64 to champions.avatar_url
+        const avatarWrapper = document.getElementById('avatar-upload-wrapper');
+        const avatarInput   = document.getElementById('avatar-file-input');
+        if (avatarWrapper && avatarInput) {
+            avatarWrapper.addEventListener('click', () => avatarInput.click());
+            avatarInput.addEventListener('change', (e) => this.uploadAvatar(e));
+        }
+
         // Tab switching
         document.querySelectorAll('.profile-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -353,8 +361,7 @@ class ChampionProfile {
         container.innerHTML = '<p class="text-secondary text-center p-6">Loading reviews...</p>';
 
         try {
-            const reviews = await window.championDB.getChampionReviews(this.champion.id);
-            
+            const reviews = await window.championDB.getMyReviews();            
             if (!reviews || reviews.length === 0) {
                 container.innerHTML = `
                     <div class="text-center p-6">
@@ -406,6 +413,104 @@ class ChampionProfile {
             rejected: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
         };
         return icons[status] || icons.pending;
+    }
+
+    /**
+     * Compress an image File to a base64 JPEG data URL using Canvas.
+     * Resizes to max 256×256 and encodes at 0.8 quality — keeps the DB
+     * row lean while still looking sharp at avatar sizes.
+     */
+    _compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('Could not read file'));
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('Could not load image'));
+                img.onload = () => {
+                    const MAX = 256;
+                    let { width, height } = img;
+                    if (width > height) {
+                        if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+                    } else {
+                        if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.80));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /**
+     * Handle avatar file selection → compress → save base64 directly into
+     * champions.avatar_url via the existing updateProfile() method.
+     * No Storage bucket required.
+     */
+    async uploadAvatar(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate
+        if (!file.type.startsWith('image/')) {
+            window.showToast?.('Please select a valid image file.', 'error');
+            event.target.value = '';
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            window.showToast?.('Image must be smaller than 10 MB.', 'error');
+            event.target.value = '';
+            return;
+        }
+
+        const wrapper = document.getElementById('avatar-upload-wrapper');
+        const overlay = wrapper?.querySelector('.avatar-upload-overlay');
+
+        // Show uploading state
+        wrapper?.classList.add('uploading');
+        if (overlay) overlay.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <span>Saving…</span>
+        `;
+
+        try {
+            // Compress to a small base64 JPEG
+            const base64 = await this._compressImage(file);
+
+            // Save directly into champions.avatar_url
+            const result = await window.championAuth.updateProfile({ avatar_url: base64 });
+            if (!result.success) throw new Error(result.error);
+
+            this.champion = result.data;
+
+            // Update avatar in the header immediately
+            const avatarEl = document.getElementById('profile-avatar');
+            if (avatarEl) {
+                avatarEl.innerHTML = `<img src="${base64}" alt="${this.champion.full_name || 'Avatar'}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            }
+
+            window.showToast?.('Profile picture updated!', 'success');
+        } catch (error) {
+            console.error('Avatar save failed:', error);
+            window.showToast?.('Failed to save picture. Please try again.', 'error');
+        } finally {
+            wrapper?.classList.remove('uploading');
+            if (overlay) overlay.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                <span>Change</span>
+            `;
+            event.target.value = '';
+        }
     }
 
     /**
