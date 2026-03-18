@@ -32,6 +32,8 @@ class ChampionPanels {
         this.currentFilter = 'all';
         this.currentPanelId = null;
         this.filterHandlerBound = false;
+        // Panel IDs confirmed pending in the DB — populated on every loadPanels() call
+        this.pendingPanelIds = new Set();
     }
 
     async isBusinessUserSession() {
@@ -88,6 +90,29 @@ class ChampionPanels {
             await this.loadFrameworks();
             const panels = await window.championDB.getPanelsWithCounts();
             this.panels = panels;
+
+            // ── DB-backed lock ──────────────────────────────────────────────────
+            // Fetch which panels still have a live pending submission from the DB.
+            // This is the authoritative source; sessionStorage is only an optimistic
+            // cache and goes stale once the admin approves / rejects.
+            this.pendingPanelIds = await window.championDB.getUserPendingPanelIds();
+
+            // Sync sessionStorage to match: remove any 'pending' entries for panels
+            // that are no longer pending in the DB (i.e. admin has decided).
+            // Without this step the champion's browser keeps showing the locked card
+            // even after approval/rejection because the fallback path still returns 'pending'.
+            try {
+                const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+                let changed = false;
+                for (const [pid, status] of Object.entries(panelReviews)) {
+                    if (status === 'pending' && !this.pendingPanelIds.has(String(pid))) {
+                        delete panelReviews[pid];
+                        changed = true;
+                    }
+                }
+                if (changed) sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
+            } catch (_) { /* non-fatal */ }
+            // ───────────────────────────────────────────────────────────────────
 
             this.renderFrameworkFilters();
             this.renderFrameworkSections();
@@ -244,7 +269,7 @@ class ChampionPanels {
             }
             
             return `
-            <div class="panel-card ${framework} ${isAwaitingApproval ? 'awaiting-approval' : ''}" data-framework="${framework}" style="cursor: pointer;" onclick="panelsPage.startPanelReview('${panel.id}', '${panel.name.replace(/'/g, "\\'")}')">
+            <div class="panel-card ${framework} ${isAwaitingApproval ? 'awaiting-approval' : ''}" data-framework="${framework}" style="cursor: ${isAwaitingApproval ? 'not-allowed' : 'pointer'};" ${isAwaitingApproval ? '' : `onclick="panelsPage.startPanelReview('${panel.id}', '${panel.name.replace(/'/g, "\\'")}')"`}>
                 <h3 style="font-size: var(--text-xl); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2);">
                     <span style="font-size: 1.2em;">${icon}</span>
                     ${panel.name}
@@ -274,7 +299,14 @@ class ChampionPanels {
     }
 
     getPanelReviewStatus(panelId) {
-        // Check sessionStorage for panel review status
+        // DB-backed set is the authoritative source — checked first.
+        // If the admin has approved/rejected, this set no longer contains the panel
+        // and we fall through without returning 'pending'.
+        if (this.pendingPanelIds?.has(String(panelId))) return 'pending';
+
+        // Optimistic sessionStorage cache: only used for panels submitted in the
+        // current session before the next loadPanels() refresh, AND only if the
+        // DB didn't already clear it above.
         const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
         return panelReviews[panelId] || null;
     }
@@ -301,21 +333,20 @@ class ChampionPanels {
     }
 
     async startPanelReview(panelId, panelName) {
-        // Set current panel ID for invite peers modal
         window.currentPanelId = panelId;
-        
-        // Check if panel is already awaiting approval
+
+        // Hard block — no bypass. If the DB says this panel is still pending,
+        // the user cannot open it until the admin approves or rejects.
         const status = this.getPanelReviewStatus(panelId);
         if (status === 'pending') {
-            // Ask user if they want to re-review or clear
-            if (confirm('This panel shows as "Awaiting Approval". If the submission failed, click OK to clear and re-review.')) {
-                this.clearPanelReviewStatus(panelId);
-                await this.loadPanels(); // Refresh the display
-            }
+            window.showToast?.(
+                'This panel is locked while your submission is awaiting admin review. You\'ll be able to access it once approved or rejected.',
+                'warning',
+                5000
+            ) || alert('This panel is locked while your submission is awaiting admin review.\n\nYou\'ll be able to access it once the admin approves or rejects your submission.');
             return;
         }
 
-        // Open the indicator selection modal
         await this.openIndicatorModal(panelId, panelName);
     }
 

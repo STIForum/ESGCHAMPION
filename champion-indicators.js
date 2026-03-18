@@ -283,6 +283,31 @@ class ChampionIndicators {
             return;
         }
 
+        // Guard: if this panel already has a pending submission in the DB, block
+        // access to the review page entirely. This prevents bypassing the panel
+        // lock by navigating directly to champion-indicators.html via URL.
+        // The resubmit flow (rejected indicators only) is exempt from this check.
+        if (this.currentPanelId && !this.isResubmitMode) {
+            try {
+                const pendingIds = await window.championDB.getUserPendingPanelIds();
+                if (pendingIds.has(String(this.currentPanelId))) {
+                    window.showToast?.(
+                        'This panel is locked while your submission is awaiting admin review.',
+                        'warning',
+                        5000
+                    );
+                    setTimeout(() => {
+                        window.location.href = '/champion-panels.html';
+                    }, 1500);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Could not verify panel pending status:', e);
+                // Non-fatal — continue loading; the DB guard in createPanelReviewSubmission
+                // will still block any duplicate submission attempt.
+            }
+        }
+
         // Load selected indicators
         await this.loadIndicators();
     }
@@ -1036,8 +1061,30 @@ class ChampionIndicators {
         } catch (error) {
             console.error('Error submitting panel review:', error);
             
-            // Check if it's a database table not found error
             const errorMessage = error.message || error.toString();
+
+            // This panel already has a live pending submission — treat it as a
+            // successful lock rather than a crash. Redirect back to panels so the
+            // user sees the locked card rather than a broken error state.
+            if (errorMessage.includes('DUPLICATE_PENDING_SUBMISSION')) {
+                window.showToast?.(
+                    'This panel already has a submission awaiting admin review. Redirecting you back to panels.',
+                    'warning',
+                    4000
+                );
+                // Ensure sessionStorage reflects the pending state
+                try {
+                    const panelReviews = JSON.parse(sessionStorage.getItem('panelReviews') || '{}');
+                    panelReviews[this.currentPanelId] = 'pending';
+                    sessionStorage.setItem('panelReviews', JSON.stringify(panelReviews));
+                } catch (_) {}
+                setTimeout(() => {
+                    window.location.href = '/champion-panels.html';
+                }, 2000);
+                return;
+            }
+
+            // Check if it's a database table not found error
             if (errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
                 window.showToast('Database not configured. Please run the SQL migration first.', 'error');
             } else {

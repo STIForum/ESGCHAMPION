@@ -886,6 +886,47 @@ class ChampionDB {
             return [];
         }
     }
+
+    /**
+     * Get all panel IDs where the current user has a PENDING submission.
+     * These panels are locked until the admin approves or rejects.
+     * Returns a Set of panel ID strings.
+     *
+     * Key design decisions:
+     *  - Queries panel_review_submissions (NOT the reviews table)
+     *  - Uses champion.id from the already-loaded auth profile (no extra DB call,
+     *    avoids the 400 error caused by the non-existent auth_user_id column)
+     *  - Returns empty Set on any error so the UI degrades gracefully
+     */
+    async getUserPendingPanelIds() {
+        const auth = window.championAuth;
+        if (!auth?.isAuthenticated?.()) return new Set();
+
+        try {
+            // champion record is already in memory — no extra DB round-trip needed
+            const champion = auth.getChampion?.();
+            if (!champion?.id) return new Set();
+
+            const supabase = this.service?.client || window.getSupabase?.();
+            if (!supabase) return new Set();
+
+            const { data, error } = await supabase
+                .from('panel_review_submissions')
+                .select('panel_id')
+                .eq('champion_id', champion.id)
+                .eq('status', 'pending');
+
+            if (error) {
+                console.error('getUserPendingPanelIds error:', error.message);
+                return new Set();
+            }
+
+            return new Set((data || []).map(r => String(r.panel_id)));
+        } catch (err) {
+            console.error('getUserPendingPanelIds exception:', err);
+            return new Set();
+        }
+    }
 }
 
 // Create and export singleton instance
