@@ -722,7 +722,7 @@ class DynamicNavigation {
         // Credit breakdown — support new shape (creditsAwarded) and legacy shape (credits)
         const creditsAwarded = data.creditsAwarded ?? data.credits_awarded ?? data.credits ?? null;
         const indicatorCount = data.indicatorCount ?? data.indicator_count ?? null;
-        const maxPerReview = 26;
+        const maxPerReview = 27;
 
         // Build credit summary block — only shown for approvals that carry credit data
         let creditBlock = '';

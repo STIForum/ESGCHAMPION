@@ -550,6 +550,11 @@ class ChampionIndicators {
 
         const state = {
             ...this.getEmptyReviewState(),
+            // Pre-populate read-assist fields from the indicator's own metadata so
+            // champions don't lose the +1 optional credit simply because the selects
+            // look pre-filled but are actually blank in state (BUG: missing 1 pt).
+            esg_class: indicator.esg_class || '',
+            primary_framework: indicator.primary_framework || '',
             ...savedReview,
             indicatorId: indicator.id,
             indicatorName: indicator.name
@@ -877,7 +882,7 @@ class ChampionIndicators {
                         <div class="flex-between mb-2">
                             <div>
                                 <strong>${champion.full_name || 'Anonymous'}</strong>
-                                <span class="badge badge-${review.status === 'approved' ? 'success' : review.status === 'pending' ? 'warning' : 'error'}" style="margin-left: var(--space-2);">
+                                <span class="badge badge-${review.status === 'Finished' ? 'success' : review.status === 'pending' ? 'warning' : 'error'}" style="margin-left: var(--space-2);">
                                     ${review.status}
                                 </span>
                             </div>
