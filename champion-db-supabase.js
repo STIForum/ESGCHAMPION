@@ -398,11 +398,11 @@ class ChampionDB {
             const userId = auth.getUser().id;
             const champion = await this.service.getChampion(userId);
 
-            // Fetch all approved panel review submissions for this champion
+            // Query using champion.id which matches panel_review_submissions.champion_id
             const { data: approvedSubmissions, error: subError } = await this.service.client
                 .from('panel_review_submissions')
-                .select('id, champion_id')
-                .eq('champion_id', userId)
+                .select('id')
+                .eq('champion_id', champion.id)
                 .eq('status', 'approved');
 
             if (subError) throw subError;
@@ -414,30 +414,25 @@ class ChampionDB {
             if (approvedSubmissions && approvedSubmissions.length > 0) {
                 const submissionIds = approvedSubmissions.map(s => s.id);
 
-                // Fetch all accepted indicator reviews for those submissions
+                // No review_status filter — older approvals don't have that flag set,
+                // filtering by it silently excludes them (original BUG_DASH_022 cause).
                 const { data: indicatorReviews, error: revError } = await this.service.client
                     .from('panel_review_indicator_reviews')
-                    .select('*')
-                    .in('submission_id', submissionIds)
-                    .eq('review_status', 'accepted');
+                    .select('sme_size_band, primary_sector, relevance, regulatory_necessity, operational_feasibility, cost_to_collect, misreporting_risk, rationale, suggested_tier, geographic_footprint, primary_framework, esg_class, estimated_time, support_required, notes, sdgs, stakeholder_priority, optional_tags')
+                    .in('submission_id', submissionIds);
 
                 if (revError) throw revError;
 
-                // Mandatory fields (+2 each) — 9 fields, max 18 per review
                 const mandatoryFields = [
                     'sme_size_band', 'primary_sector', 'relevance',
                     'regulatory_necessity', 'operational_feasibility',
                     'cost_to_collect', 'misreporting_risk', 'rationale',
                     'suggested_tier'
                 ];
-
-                // Non-mandatory scalar fields (+1 each)
                 const optionalFields = [
                     'geographic_footprint', 'primary_framework', 'esg_class',
                     'estimated_time', 'support_required', 'notes'
                 ];
-
-                // Non-mandatory array fields (+1 if non-empty)
                 const optionalArrayFields = ['sdgs', 'stakeholder_priority', 'optional_tags'];
 
                 for (const review of (indicatorReviews || [])) {
@@ -457,9 +452,6 @@ class ChampionDB {
                 }
             }
 
-            // Always use the freshly computed total — never the potentially stale
-            // champion.credits DB column, which can lag behind accepted indicator reviews
-            // and cause BUG_DASH_021 / BUG_DASH_022 / BUG_DASH_025.
             const totalScore = mandatoryCredits + optionalCredits;
 
             return {
@@ -479,11 +471,11 @@ class ChampionDB {
     }
 
     /**
-     * Get champion's rank
+     * Get champion's rank.
      */
     async getChampionRank(championId) {
         try {
-            const leaderboard = await this.service.getLeaderboard(1000);
+            const leaderboard = await this.getLeaderboard('all', 1000);
             const rank = leaderboard.findIndex(c => c.id === championId) + 1;
             return rank || null;
         } catch (error) {
@@ -497,85 +489,107 @@ class ChampionDB {
     // =====================================================
 
     /**
-     * Get leaderboard data with real-time computed STIF scores.
+     * Get leaderboard data.
      *
-     * The `champions.credits` column can be stale (BUG_DASH_021/022/025).
-     * Instead we compute scores the same way getSTIFScore() does — by summing
-     * field completions across all accepted indicator reviews belonging to
-     * approved submissions — and use those as the authoritative credit values.
+     * IMPORTANT — RLS constraint:
+     * Supabase RLS on panel_review_submissions only allows each user to read
+     * their own rows by default. This means computing scores from submissions
+     * returns 0 for everyone except the logged-in user (leaderboard shows all
+     * others at 0 credits).
+     *
+     * Fix strategy:
+     *  1. Apply the SQL in fix_leaderboard_rls.sql to add a policy that lets
+     *     any authenticated user read rows WHERE status = 'approved'.
+     *  2. As a JS fallback (works even without the SQL fix): use champions.credits
+     *     which IS on the publicly readable champions table, so it always shows
+     *     the correct value for every champion regardless of who's logged in.
+     *
+     * champions.credits is written by approveSubmissionWithComment on every
+     * approval — it reflects what the admin awarded and is the same value shown
+     * on each champion's own dashboard via getSTIFScore().
      */
-    async getLeaderboard(period = '30days', limit = 50) {
+    async getLeaderboard(period = 'all', limit = 50) {
         try {
-            // 1. Fetch base champion list (for profile data + fallback credits)
+            // 1. Fetch champion list — champions table is readable by all authenticated
+            //    users, so credits here is always accurate for every champion.
             const champions = await this.service.getLeaderboard(1000, period);
+            if (!champions || champions.length === 0) return [];
 
-            // 2. Fetch ALL approved submissions across all champions in one query
-            const { data: allSubmissions, error: subError } = await this.service.client
-                .from('panel_review_submissions')
-                .select('id, champion_id')
-                .eq('status', 'approved');
+            // 2. Attempt to compute fresh scores from approved submissions.
+            //    This only works if the RLS policy in fix_leaderboard_rls.sql
+            //    has been applied; otherwise the query silently returns only the
+            //    current user's own rows.
+            let scoreMap = {};
+            try {
+                const championIds = champions.map(c => c.id);
 
-            if (subError) throw subError;
+                const { data: allSubmissions } = await this.service.client
+                    .from('panel_review_submissions')
+                    .select('id, champion_id')
+                    .in('champion_id', championIds)
+                    .eq('status', 'approved');
 
-            // 3. If there are approved submissions, fetch all accepted indicator reviews
-            let scoreMap = {}; // championId -> computed credits
+                if (allSubmissions && allSubmissions.length > 0) {
+                    const submissionIds = allSubmissions.map(s => s.id);
+                    const subToChampion = {};
+                    allSubmissions.forEach(s => { subToChampion[s.id] = s.champion_id; });
 
-            if (allSubmissions && allSubmissions.length > 0) {
-                const submissionIds = allSubmissions.map(s => s.id);
+                    const { data: indicatorReviews } = await this.service.client
+                        .from('panel_review_indicator_reviews')
+                        .select('submission_id, sme_size_band, primary_sector, relevance, regulatory_necessity, operational_feasibility, cost_to_collect, misreporting_risk, rationale, suggested_tier, geographic_footprint, primary_framework, esg_class, estimated_time, support_required, notes, sdgs, stakeholder_priority, optional_tags')
+                        .in('submission_id', submissionIds);
 
-                // Build a map: submissionId -> championId
-                const subToChampion = {};
-                allSubmissions.forEach(s => { subToChampion[s.id] = s.champion_id; });
+                    const mandatoryFields = ['sme_size_band', 'primary_sector', 'relevance', 'regulatory_necessity', 'operational_feasibility', 'cost_to_collect', 'misreporting_risk', 'rationale', 'suggested_tier'];
+                    const optionalFields = ['geographic_footprint', 'primary_framework', 'esg_class', 'estimated_time', 'support_required', 'notes'];
+                    const optionalArrayFields = ['sdgs', 'stakeholder_priority', 'optional_tags'];
 
-                const { data: indicatorReviews, error: revError } = await this.service.client
-                    .from('panel_review_indicator_reviews')
-                    .select('submission_id, sme_size_band, primary_sector, relevance, regulatory_necessity, operational_feasibility, cost_to_collect, misreporting_risk, rationale, suggested_tier, geographic_footprint, primary_framework, esg_class, estimated_time, support_required, notes, sdgs, stakeholder_priority, optional_tags')
-                    .in('submission_id', submissionIds)
-                    .eq('review_status', 'accepted');
-
-                if (revError) throw revError;
-
-                const mandatoryFields = [
-                    'sme_size_band', 'primary_sector', 'relevance',
-                    'regulatory_necessity', 'operational_feasibility',
-                    'cost_to_collect', 'misreporting_risk', 'rationale',
-                    'suggested_tier'
-                ];
-                const optionalFields = [
-                    'geographic_footprint', 'primary_framework', 'esg_class',
-                    'estimated_time', 'support_required', 'notes'
-                ];
-                const optionalArrayFields = ['sdgs', 'stakeholder_priority', 'optional_tags'];
-
-                for (const review of (indicatorReviews || [])) {
-                    const championId = subToChampion[review.submission_id];
-                    if (!championId) continue;
-                    if (!scoreMap[championId]) scoreMap[championId] = 0;
-
-                    for (const f of mandatoryFields) {
-                        const v = review[f];
-                        if (v !== null && v !== undefined && v !== '') scoreMap[championId] += 2;
-                    }
-                    for (const f of optionalFields) {
-                        const v = review[f];
-                        if (v !== null && v !== undefined && v !== '') scoreMap[championId] += 1;
-                    }
-                    for (const f of optionalArrayFields) {
-                        const v = review[f];
-                        if (Array.isArray(v) && v.length > 0) scoreMap[championId] += 1;
+                    for (const review of (indicatorReviews || [])) {
+                        const cId = subToChampion[review.submission_id];
+                        if (!cId) continue;
+                        if (!scoreMap[cId]) scoreMap[cId] = 0;
+                        for (const f of mandatoryFields) {
+                            const v = review[f];
+                            if (v !== null && v !== undefined && v !== '') scoreMap[cId] += 2;
+                        }
+                        for (const f of optionalFields) {
+                            const v = review[f];
+                            if (v !== null && v !== undefined && v !== '') scoreMap[cId] += 1;
+                        }
+                        for (const f of optionalArrayFields) {
+                            const v = review[f];
+                            if (Array.isArray(v) && v.length > 0) scoreMap[cId] += 1;
+                        }
                     }
                 }
+            } catch (_) {
+                // Score computation failed — fall through to champions.credits below
             }
 
-            // 4. Merge computed scores back onto champion records, then re-sort & slice
-            const enriched = champions.map(c => ({
-                ...c,
-                credits: scoreMap[c.id] !== undefined ? scoreMap[c.id] : (c.credits || 0)
-            }));
+            // 3. Detect whether the scoreMap covers more than just the current user.
+            //    If RLS is blocking cross-user reads, scoreMap will only contain
+            //    the logged-in user's champion_id. In that case, fall back entirely
+            //    to champions.credits so the leaderboard is consistent for everyone.
+            const currentChampionId = window.championAuth?.getChampion?.()?.id;
+            const scoredIds = Object.keys(scoreMap);
+            const rslIsLimiting = scoredIds.length === 0 ||
+                (scoredIds.length === 1 && currentChampionId && scoredIds[0] === currentChampionId);
+
+            const enriched = champions.map(c => {
+                let credits;
+                if (rslIsLimiting) {
+                    // RLS blocks cross-user reads — use the authoritative DB column
+                    // which is always readable and reflects what the admin awarded.
+                    credits = c.credits || 0;
+                } else {
+                    // Full cross-user computation succeeded
+                    credits = scoreMap[c.id] !== undefined ? scoreMap[c.id] : (c.credits || 0);
+                }
+                return { ...c, credits };
+            });
 
             enriched.sort((a, b) => b.credits - a.credits);
-
             return enriched.slice(0, limit);
+
         } catch (error) {
             console.error('Error getting leaderboard:', error);
             throw error;
@@ -875,10 +889,7 @@ class ChampionDB {
      */
     async getUserRejectedIndicatorIds(panelId) {
         const auth = window.championAuth;
-        if (!auth.isAuthenticated()) {
-            return [];
-        }
-
+        if (!auth.isAuthenticated()) { return []; }
         try {
             return await this.service.getUserRejectedIndicatorIds(auth.getUser().id, panelId);
         } catch (error) {
@@ -889,38 +900,22 @@ class ChampionDB {
 
     /**
      * Get all panel IDs where the current user has a PENDING submission.
-     * These panels are locked until the admin approves or rejects.
      * Returns a Set of panel ID strings.
-     *
-     * Key design decisions:
-     *  - Queries panel_review_submissions (NOT the reviews table)
-     *  - Uses champion.id from the already-loaded auth profile (no extra DB call,
-     *    avoids the 400 error caused by the non-existent auth_user_id column)
-     *  - Returns empty Set on any error so the UI degrades gracefully
      */
     async getUserPendingPanelIds() {
         const auth = window.championAuth;
         if (!auth?.isAuthenticated?.()) return new Set();
-
         try {
-            // champion record is already in memory — no extra DB round-trip needed
             const champion = auth.getChampion?.();
             if (!champion?.id) return new Set();
-
             const supabase = this.service?.client || window.getSupabase?.();
             if (!supabase) return new Set();
-
             const { data, error } = await supabase
                 .from('panel_review_submissions')
                 .select('panel_id')
                 .eq('champion_id', champion.id)
                 .eq('status', 'pending');
-
-            if (error) {
-                console.error('getUserPendingPanelIds error:', error.message);
-                return new Set();
-            }
-
+            if (error) { console.error('getUserPendingPanelIds error:', error.message); return new Set(); }
             return new Set((data || []).map(r => String(r.panel_id)));
         } catch (err) {
             console.error('getUserPendingPanelIds exception:', err);

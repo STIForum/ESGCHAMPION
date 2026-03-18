@@ -145,12 +145,20 @@ class RankingPage {
             const champion = window.championAuth.getChampion();
             if (!champion) return;
 
-            const rank = await window.championDB.getChampionRank(champion.id);
-            
+            // Find this champion in the already-loaded leaderboard data so the
+            // "Your Position" card shows the same computed credits as the leaderboard
+            // itself — not the potentially stale champions.credits DB column.
+            const entry = this.champions.find(c => c.id === champion.id);
+            const computedCredits = entry ? entry.credits : (champion.credits || 0);
+
+            const rank = entry
+                ? this.champions.indexOf(entry) + 1
+                : await window.championDB.getChampionRank(champion.id);
+
             document.getElementById('your-rank').textContent = rank ? `#${rank}` : '#--';
-            document.getElementById('your-credits').textContent = champion.credits || 0;
+            document.getElementById('your-credits').textContent = computedCredits;
             document.getElementById('your-rank-card').classList.remove('hidden');
-            
+
         } catch (error) {
             console.error('Error getting user rank:', error);
         }
