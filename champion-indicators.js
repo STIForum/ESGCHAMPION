@@ -634,7 +634,6 @@ class ChampionIndicators {
                         <div class="field-row">
                             <div class="field-header">
                                 <label class="form-label" for="primary_framework">Primary Framework</label>
-                                ${this.renderInfo('primaryFramework', indicator.id)}
                             </div>
                             <select id="primary_framework" class="form-select" disabled aria-readonly="true">
                                 <option value="" disabled selected>Select...</option>
