@@ -636,10 +636,11 @@ class ChampionIndicators {
                                 <label class="form-label" for="primary_framework">Primary Framework</label>
                                 ${this.renderInfo('primaryFramework', indicator.id)}
                             </div>
-                            <select id="primary_framework" class="form-select">
+                            <select id="primary_framework" class="form-select" disabled aria-readonly="true">
                                 <option value="" disabled selected>Select...</option>
                                 ${this.frameworkOptions.map(opt => `<option value="${opt.value}" ${state.primary_framework === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
                             </select>
+                            <span class="pill-muted">Read-only</span>
                         </div>
                         <div class="field-row">
                             <div class="field-header">
