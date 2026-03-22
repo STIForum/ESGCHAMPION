@@ -124,13 +124,18 @@
                             <h1 id="welcome-title">Welcome back!</h1>
                             <p class="text-secondary">Here's your sustainability impact overview</p>
                         </div>
-                        <a href="/champion-panels.html" class="btn btn-primary">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Submit Review
-                        </a>
+                        <div class="dashboard-header-actions">
+                            <button class="btn btn-secondary" id="dashboard-tour-btn" type="button">
+                                Product Tour
+                            </button>
+                            <a href="/champion-panels.html" class="btn btn-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Submit Review
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Resume Progress Card -->
@@ -244,6 +249,39 @@
             </div>
         </div>
     </main>
+
+    <!-- Product Tour Modal -->
+    <div class="modal-backdrop" id="champion-tour-modal-backdrop">
+        <div class="modal" id="champion-tour-modal" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="champion-tour-step-title">Welcome to Your Champion Dashboard</h3>
+                <button class="modal-close" id="champion-tour-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tour-meta-row">
+                    <span class="tour-step-counter" id="champion-tour-step-counter">Step 1 of 4</span>
+                </div>
+
+                <p class="text-secondary" id="champion-tour-step-description" style="margin-bottom: var(--space-4);">
+                    This quick tour helps you find your most important actions in under a minute.
+                </p>
+
+                <div class="tour-tip" id="champion-tour-step-tip">
+                    Tip: use "Product Tour" any time to replay this walkthrough.
+                </div>
+
+                <label class="tour-checkbox">
+                    <input type="checkbox" id="champion-tour-dont-show">
+                    <span>Don't show this again</span>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="champion-tour-skip-btn" type="button">Skip Tour</button>
+                <button class="btn btn-ghost" id="champion-tour-prev-btn" type="button">Back</button>
+                <button class="btn btn-primary" id="champion-tour-next-btn" type="button">Next</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Score Info Modal -->
     <div class="modal-backdrop" id="score-modal-backdrop">

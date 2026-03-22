@@ -48,6 +48,35 @@ class ChampionDashboard {
     constructor() {
         this.auth = null;
         this.db = null;
+        this.productTourStorageKey = 'stif_champion_dashboard_tour_seen_v1';
+        this.currentTourStep = 0;
+        this.activeTourTarget = null;
+        this.tourSteps = [
+            {
+                title: 'Track Your Progress Fast',
+                description: 'Use the stats row to monitor credits, approvals, pending reviews, and your leaderboard rank at a glance.',
+                tip: 'If your rank looks unchanged, refresh after a new approved review.',
+                targets: ['#stats-grid']
+            },
+            {
+                title: 'Resume Incomplete Work',
+                description: 'When available, this card jumps you directly back to the exact panel or indicator where you paused.',
+                tip: 'No resume card yet? It appears automatically after you start and leave an in-progress review.',
+                targets: ['#resume-card', '#stats-grid']
+            },
+            {
+                title: 'Review Recent Activity',
+                description: 'Your latest outcomes appear here, including rejected submissions that can be resubmitted quickly.',
+                tip: 'Rejected items show a resubmit hint to help you recover quickly.',
+                targets: ['#recent-reviews-list']
+            },
+            {
+                title: 'Understand Your STIF Score',
+                description: 'Open the score details to see how completed fields and approved reviews contribute to your total score.',
+                tip: 'Use this breakdown to focus on actions that increase credits fastest.',
+                targets: ['#score-info-btn', '#stif-score']
+            }
+        ];
     }
 
     async init() {
@@ -92,6 +121,9 @@ class ChampionDashboard {
         
         // Setup event listeners
         this.setupEventListeners();
+
+        // Offer a first-time tour after the dashboard is fully visible.
+        this.maybeShowProductTour();
     }
 
     async loadDashboard() {
@@ -288,6 +320,216 @@ class ChampionDashboard {
                 backdrop.classList.remove('active');
             }
         });
+
+        // Product tour modal
+        const tourModal = document.getElementById('champion-tour-modal');
+        const tourBackdrop = document.getElementById('champion-tour-modal-backdrop');
+        const tourOpenBtn = document.getElementById('dashboard-tour-btn');
+        const tourCloseBtn = document.getElementById('champion-tour-modal-close');
+        const tourSkipBtn = document.getElementById('champion-tour-skip-btn');
+        const tourPrevBtn = document.getElementById('champion-tour-prev-btn');
+        const tourNextBtn = document.getElementById('champion-tour-next-btn');
+        const tourDontShow = document.getElementById('champion-tour-dont-show');
+
+        tourOpenBtn?.addEventListener('click', () => {
+            this.openProductTour(0, 'manual');
+        });
+
+        tourCloseBtn?.addEventListener('click', () => {
+            this.closeProductTour('closed');
+        });
+
+        tourSkipBtn?.addEventListener('click', () => {
+            this.trackProductTourEvent('tour_skipped', {
+                step: this.currentTourStep + 1,
+                totalSteps: this.tourSteps.length
+            });
+            this.closeProductTour('skipped');
+        });
+
+        tourPrevBtn?.addEventListener('click', () => {
+            this.goToTourStep(this.currentTourStep - 1);
+        });
+
+        tourNextBtn?.addEventListener('click', () => {
+            const isLastStep = this.currentTourStep >= this.tourSteps.length - 1;
+            if (isLastStep) {
+                this.markProductTourSeen();
+                this.trackProductTourEvent('tour_completed', {
+                    totalSteps: this.tourSteps.length
+                });
+                this.closeProductTour('completed');
+                window.location.href = '/champion-panels.html';
+                return;
+            }
+            this.goToTourStep(this.currentTourStep + 1);
+        });
+
+        tourDontShow?.addEventListener('change', (event) => {
+            if (event.target.checked) {
+                this.markProductTourSeen();
+            } else {
+                localStorage.removeItem(this.productTourStorageKey);
+            }
+        });
+
+        tourBackdrop?.addEventListener('click', (e) => {
+            if (e.target === tourBackdrop) {
+                this.closeProductTour('backdrop');
+            }
+        });
+
+        if (tourModal) {
+            tourModal.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    this.closeProductTour('escape');
+                }
+            });
+        }
+    }
+
+    maybeShowProductTour() {
+        const hasSeenTour = localStorage.getItem(this.productTourStorageKey) === 'true';
+        if (!hasSeenTour) {
+            setTimeout(() => this.openProductTour(0, 'auto'), 500);
+        }
+    }
+
+    openProductTour(stepIndex = 0, source = 'manual') {
+        const modal = document.getElementById('champion-tour-modal');
+        const backdrop = document.getElementById('champion-tour-modal-backdrop');
+        const dontShow = document.getElementById('champion-tour-dont-show');
+
+        if (!modal || !backdrop) {
+            return;
+        }
+
+        const hasSeenTour = localStorage.getItem(this.productTourStorageKey) === 'true';
+        if (dontShow) {
+            dontShow.checked = hasSeenTour;
+        }
+
+        modal.classList.add('active');
+        backdrop.classList.add('active');
+        modal.setAttribute('tabindex', '-1');
+        modal.focus();
+
+        this.goToTourStep(stepIndex);
+        this.trackProductTourEvent('tour_opened', {
+            source,
+            totalSteps: this.tourSteps.length
+        });
+    }
+
+    closeProductTour(reason = 'closed') {
+        const modal = document.getElementById('champion-tour-modal');
+        const backdrop = document.getElementById('champion-tour-modal-backdrop');
+        const dontShow = document.getElementById('champion-tour-dont-show');
+
+        if (dontShow?.checked) {
+            this.markProductTourSeen();
+        }
+
+        modal?.classList.remove('active');
+        backdrop?.classList.remove('active');
+        this.clearTourHighlight();
+
+        this.trackProductTourEvent('tour_closed', {
+            reason,
+            step: this.currentTourStep + 1,
+            totalSteps: this.tourSteps.length
+        });
+    }
+
+    markProductTourSeen() {
+        localStorage.setItem(this.productTourStorageKey, 'true');
+    }
+
+    goToTourStep(stepIndex) {
+        if (!this.tourSteps.length) {
+            return;
+        }
+
+        const clampedIndex = Math.max(0, Math.min(stepIndex, this.tourSteps.length - 1));
+        this.currentTourStep = clampedIndex;
+
+        const step = this.tourSteps[clampedIndex];
+        const titleEl = document.getElementById('champion-tour-step-title');
+        const descriptionEl = document.getElementById('champion-tour-step-description');
+        const tipEl = document.getElementById('champion-tour-step-tip');
+        const counterEl = document.getElementById('champion-tour-step-counter');
+        const prevBtn = document.getElementById('champion-tour-prev-btn');
+        const nextBtn = document.getElementById('champion-tour-next-btn');
+
+        if (titleEl) titleEl.textContent = step.title;
+        if (descriptionEl) descriptionEl.textContent = step.description;
+        if (tipEl) tipEl.textContent = `Tip: ${step.tip}`;
+        if (counterEl) counterEl.textContent = `Step ${clampedIndex + 1} of ${this.tourSteps.length}`;
+
+        if (prevBtn) {
+            prevBtn.disabled = clampedIndex === 0;
+            prevBtn.setAttribute('aria-disabled', String(clampedIndex === 0));
+        }
+
+        if (nextBtn) {
+            nextBtn.textContent = clampedIndex >= this.tourSteps.length - 1 ? 'Finish Tour' : 'Next';
+        }
+
+        const target = this.resolveTourTarget(step.targets || []);
+        this.highlightTourTarget(target);
+
+        this.trackProductTourEvent('tour_step_viewed', {
+            step: clampedIndex + 1,
+            title: step.title
+        });
+    }
+
+    resolveTourTarget(selectors) {
+        for (const selector of selectors) {
+            const candidate = document.querySelector(selector);
+            if (!candidate) {
+                continue;
+            }
+            const isHidden = candidate.classList.contains('hidden') || candidate.offsetParent === null;
+            if (!isHidden) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    highlightTourTarget(element) {
+        this.clearTourHighlight();
+        if (!element) {
+            return;
+        }
+
+        this.activeTourTarget = element;
+        element.classList.add('dashboard-tour-highlight');
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    clearTourHighlight() {
+        if (this.activeTourTarget) {
+            this.activeTourTarget.classList.remove('dashboard-tour-highlight');
+            this.activeTourTarget = null;
+        }
+    }
+
+    trackProductTourEvent(eventName, details = {}) {
+        const payload = {
+            event: `champion_dashboard_${eventName}`,
+            timestamp: new Date().toISOString(),
+            ...details
+        };
+
+        if (Array.isArray(window.dataLayer)) {
+            window.dataLayer.push(payload);
+        }
+
+        window.dispatchEvent(new CustomEvent('champion-dashboard-tour-event', {
+            detail: payload
+        }));
     }
 
     showError(message) {

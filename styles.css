@@ -899,6 +899,59 @@ p {
     border-top: 1px solid var(--gray-100);
 }
 
+.tour-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+}
+
+.tour-step-counter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: var(--primary-50);
+    color: var(--primary-700);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.tour-tip {
+    border: 1px solid var(--primary-100);
+    background: var(--primary-50);
+    color: var(--primary-800);
+    border-radius: var(--radius);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-5);
+}
+
+.tour-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--gray-600);
+    font-size: var(--text-sm);
+}
+
+.tour-checkbox input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-600);
+}
+
+.dashboard-tour-highlight {
+    position: relative;
+    z-index: 450;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0 0 4px rgba(0, 155, 119, 0.35), 0 12px 22px rgba(0, 0, 0, 0.18);
+    transition: box-shadow var(--transition);
+}
+
 /* =====================================================
    ALERTS & NOTIFICATIONS
    ===================================================== */
@@ -1359,6 +1412,14 @@ p {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .dashboard-grid {
@@ -1859,6 +1920,12 @@ p {
     .profile-meta {
         justify-content: center;
         flex-wrap: wrap;
+    }
+
+    .dashboard-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: var(--space-4);
     }
 }
 
