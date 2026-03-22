@@ -952,8 +952,23 @@ p {
     transition: box-shadow var(--transition);
 }
 
+#champion-tour-modal-backdrop {
+    background: rgba(0, 0, 0, 0.28);
+    backdrop-filter: none;
+}
+
 #champion-tour-modal {
+    width: min(420px, calc(100vw - 24px));
+    max-width: 420px;
+    max-height: min(80vh, 520px);
+    overflow-y: auto;
+    transform: none;
+    transition: opacity var(--transition), visibility var(--transition), top var(--transition), left var(--transition);
     z-index: 500;
+}
+
+#champion-tour-modal.active {
+    transform: none;
 }
 
 /* =====================================================

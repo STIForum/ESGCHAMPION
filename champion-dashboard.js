@@ -51,6 +51,7 @@ class ChampionDashboard {
         this.productTourStorageKey = 'stif_champion_dashboard_tour_seen_v1';
         this.currentTourStep = 0;
         this.activeTourTarget = null;
+        this.tourPositionRaf = null;
         this.tourSteps = [
             {
                 title: 'Use the Sidebar to Navigate',
@@ -391,6 +392,21 @@ class ChampionDashboard {
                 }
             });
         }
+
+        const repositionTourPopup = () => {
+            if (this.tourPositionRaf) {
+                window.cancelAnimationFrame(this.tourPositionRaf);
+            }
+            this.tourPositionRaf = window.requestAnimationFrame(() => {
+                const isOpen = tourModal?.classList.contains('active') && tourBackdrop?.classList.contains('active');
+                if (isOpen) {
+                    this.positionProductTourPopup(this.activeTourTarget);
+                }
+            });
+        };
+
+        window.addEventListener('resize', repositionTourPopup);
+        window.addEventListener('scroll', repositionTourPopup, { passive: true });
     }
 
     maybeShowProductTour() {
@@ -519,12 +535,17 @@ class ChampionDashboard {
     highlightTourTarget(element) {
         this.clearTourHighlight();
         if (!element) {
+            this.positionProductTourPopup(null);
             return;
         }
 
         this.activeTourTarget = element;
         element.classList.add('dashboard-tour-highlight');
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        window.setTimeout(() => {
+            this.positionProductTourPopup(element);
+        }, 180);
     }
 
     clearTourHighlight() {
@@ -532,6 +553,34 @@ class ChampionDashboard {
             this.activeTourTarget.classList.remove('dashboard-tour-highlight');
             this.activeTourTarget = null;
         }
+    }
+
+    positionProductTourPopup(targetElement) {
+        const modal = document.getElementById('champion-tour-modal');
+        if (!modal) {
+            return;
+        }
+
+        const viewportPadding = 12;
+        const modalRect = modal.getBoundingClientRect();
+        const targetRect = targetElement?.getBoundingClientRect();
+
+        let top = viewportPadding;
+        let left = viewportPadding;
+
+        if (targetRect) {
+            top = targetRect.top + viewportPadding;
+            left = targetRect.left + viewportPadding;
+        }
+
+        const maxLeft = Math.max(viewportPadding, window.innerWidth - modalRect.width - viewportPadding);
+        const maxTop = Math.max(viewportPadding, window.innerHeight - modalRect.height - viewportPadding);
+
+        left = Math.max(viewportPadding, Math.min(left, maxLeft));
+        top = Math.max(viewportPadding, Math.min(top, maxTop));
+
+        modal.style.left = `${Math.round(left)}px`;
+        modal.style.top = `${Math.round(top)}px`;
     }
 
     trackProductTourEvent(eventName, details = {}) {
