@@ -51,37 +51,43 @@ class ChampionDashboard {
         this.productTourStorageKey = 'stif_champion_dashboard_tour_seen_v1';
         this.currentTourStep = 0;
         this.activeTourTarget = null;
+        this.activeTourPreferredPosition = 'right';
         this.tourPositionRaf = null;
         this.tourSteps = [
             {
                 title: 'Use the Sidebar to Navigate',
                 description: 'This menu is your quick path to Dashboard, ESG Panels, Rankings, Profile, and Invite Peers.',
                 tip: 'Dashboard keeps you in your command center, while Panels is where you submit reviews.',
-                targets: ['.sidebar', '.sidebar-nav']
+                targets: ['.sidebar', '.sidebar-nav'],
+                position: 'right'
             },
             {
                 title: 'Track Your Progress Fast',
                 description: 'Use the stats row to monitor credits, approvals, pending reviews, and your leaderboard rank at a glance.',
                 tip: 'If your rank looks unchanged, refresh after a new approved review.',
-                targets: ['#stats-grid']
+                targets: ['#stats-grid'],
+                position: 'bottom'
             },
             {
                 title: 'Resume Incomplete Work',
                 description: 'When available, this card jumps you directly back to the exact panel or indicator where you paused.',
                 tip: 'No resume card yet? It appears automatically after you start and leave an in-progress review.',
-                targets: ['#resume-card', '#stats-grid']
+                targets: ['#resume-card', '#stats-grid'],
+                position: 'bottom'
             },
             {
                 title: 'Review Recent Activity',
                 description: 'Your latest outcomes appear here, including rejected submissions that can be resubmitted quickly.',
                 tip: 'Rejected items show a resubmit hint to help you recover quickly.',
-                targets: ['#recent-reviews-list']
+                targets: ['#recent-reviews-list'],
+                position: 'right'
             },
             {
                 title: 'Understand Your STIF Score',
                 description: 'Open the score details to see how completed fields and approved reviews contribute to your total score.',
                 tip: 'Use this breakdown to focus on actions that increase credits fastest.',
-                targets: ['#score-info-btn', '#stif-score']
+                targets: ['#score-info-btn', '#stif-score'],
+                position: 'left'
             }
         ];
     }
@@ -400,7 +406,7 @@ class ChampionDashboard {
             this.tourPositionRaf = window.requestAnimationFrame(() => {
                 const isOpen = tourModal?.classList.contains('active') && tourBackdrop?.classList.contains('active');
                 if (isOpen) {
-                    this.positionProductTourPopup(this.activeTourTarget);
+                    this.positionProductTourPopup(this.activeTourTarget, this.activeTourPreferredPosition);
                 }
             });
         };
@@ -497,7 +503,7 @@ class ChampionDashboard {
         }
 
         const target = this.resolveTourTarget(step.targets || []);
-        this.highlightTourTarget(target);
+        this.highlightTourTarget(target, step.position || 'right');
 
         this.trackProductTourEvent('tour_step_viewed', {
             step: clampedIndex + 1,
@@ -532,10 +538,12 @@ class ChampionDashboard {
         return rect.width > 0 && rect.height > 0;
     }
 
-    highlightTourTarget(element) {
+    highlightTourTarget(element, preferredPosition = 'right') {
         this.clearTourHighlight();
+        this.activeTourPreferredPosition = preferredPosition;
+
         if (!element) {
-            this.positionProductTourPopup(null);
+            this.positionProductTourPopup(null, preferredPosition);
             return;
         }
 
@@ -544,7 +552,7 @@ class ChampionDashboard {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         window.setTimeout(() => {
-            this.positionProductTourPopup(element);
+            this.positionProductTourPopup(element, preferredPosition);
         }, 180);
     }
 
@@ -555,32 +563,129 @@ class ChampionDashboard {
         }
     }
 
-    positionProductTourPopup(targetElement) {
+    positionProductTourPopup(targetElement, preferredPosition = 'right') {
         const modal = document.getElementById('champion-tour-modal');
         if (!modal) {
             return;
         }
 
-        const viewportPadding = 12;
+        const viewportPadding = 8;
+        const elementOffset = 10;
         const modalRect = modal.getBoundingClientRect();
         const targetRect = targetElement?.getBoundingClientRect();
 
-        let top = viewportPadding;
-        let left = viewportPadding;
-
-        if (targetRect) {
-            top = targetRect.top + viewportPadding;
-            left = targetRect.left + viewportPadding;
+        if (!targetRect) {
+            modal.dataset.position = 'top';
+            modal.style.left = `${viewportPadding}px`;
+            modal.style.top = `${viewportPadding}px`;
+            return;
         }
 
-        const maxLeft = Math.max(viewportPadding, window.innerWidth - modalRect.width - viewportPadding);
-        const maxTop = Math.max(viewportPadding, window.innerHeight - modalRect.height - viewportPadding);
+        const placements = this.getTourPositionCandidates(preferredPosition);
+        let chosenPlacement = preferredPosition;
+        let chosenCoords = null;
 
-        left = Math.max(viewportPadding, Math.min(left, maxLeft));
-        top = Math.max(viewportPadding, Math.min(top, maxTop));
+        for (const placement of placements) {
+            const rawCoords = this.calculateTourTooltipCoords(placement, targetRect, modalRect, elementOffset);
+            const fitsViewport = this.doesTooltipFitViewport(rawCoords, modalRect, viewportPadding);
+            const clampedCoords = this.clampTourTooltipCoords(rawCoords, modalRect, viewportPadding);
+            const overlapsTarget = this.doesTooltipOverlapTarget(clampedCoords, modalRect, targetRect);
 
-        modal.style.left = `${Math.round(left)}px`;
-        modal.style.top = `${Math.round(top)}px`;
+            if (fitsViewport && !overlapsTarget) {
+                chosenPlacement = placement;
+                chosenCoords = clampedCoords;
+                break;
+            }
+
+            if (!chosenCoords && !overlapsTarget) {
+                chosenPlacement = placement;
+                chosenCoords = clampedCoords;
+            }
+        }
+
+        if (!chosenCoords) {
+            const rawFallback = this.calculateTourTooltipCoords(preferredPosition, targetRect, modalRect, elementOffset);
+            chosenCoords = this.clampTourTooltipCoords(rawFallback, modalRect, viewportPadding);
+            chosenPlacement = preferredPosition;
+        }
+
+        modal.dataset.position = chosenPlacement;
+        modal.style.left = `${Math.round(chosenCoords.left)}px`;
+        modal.style.top = `${Math.round(chosenCoords.top)}px`;
+    }
+
+    getTourPositionCandidates(preferredPosition) {
+        const fallbackOrder = [preferredPosition, this.getOppositeTourPosition(preferredPosition), 'bottom', 'top', 'right', 'left'];
+        return [...new Set(fallbackOrder)];
+    }
+
+    getOppositeTourPosition(position) {
+        const opposites = {
+            top: 'bottom',
+            bottom: 'top',
+            left: 'right',
+            right: 'left'
+        };
+        return opposites[position] || 'right';
+    }
+
+    calculateTourTooltipCoords(position, targetRect, tooltipRect, offset) {
+        switch (position) {
+            case 'top':
+                return {
+                    left: targetRect.left + ((targetRect.width - tooltipRect.width) / 2),
+                    top: targetRect.top - tooltipRect.height - offset
+                };
+            case 'bottom':
+                return {
+                    left: targetRect.left + ((targetRect.width - tooltipRect.width) / 2),
+                    top: targetRect.bottom + offset
+                };
+            case 'left':
+                return {
+                    left: targetRect.left - tooltipRect.width - offset,
+                    top: targetRect.top + ((targetRect.height - tooltipRect.height) / 2)
+                };
+            case 'right':
+            default:
+                return {
+                    left: targetRect.right + offset,
+                    top: targetRect.top + ((targetRect.height - tooltipRect.height) / 2)
+                };
+        }
+    }
+
+    doesTooltipFitViewport(coords, tooltipRect, viewportPadding) {
+        return (
+            coords.left >= viewportPadding &&
+            coords.top >= viewportPadding &&
+            (coords.left + tooltipRect.width) <= (window.innerWidth - viewportPadding) &&
+            (coords.top + tooltipRect.height) <= (window.innerHeight - viewportPadding)
+        );
+    }
+
+    clampTourTooltipCoords(coords, tooltipRect, viewportPadding) {
+        const maxLeft = Math.max(viewportPadding, window.innerWidth - tooltipRect.width - viewportPadding);
+        const maxTop = Math.max(viewportPadding, window.innerHeight - tooltipRect.height - viewportPadding);
+
+        return {
+            left: Math.max(viewportPadding, Math.min(coords.left, maxLeft)),
+            top: Math.max(viewportPadding, Math.min(coords.top, maxTop))
+        };
+    }
+
+    doesTooltipOverlapTarget(coords, tooltipRect, targetRect) {
+        const tooltipLeft = coords.left;
+        const tooltipTop = coords.top;
+        const tooltipRight = tooltipLeft + tooltipRect.width;
+        const tooltipBottom = tooltipTop + tooltipRect.height;
+
+        return !(
+            tooltipRight <= targetRect.left ||
+            tooltipLeft >= targetRect.right ||
+            tooltipBottom <= targetRect.top ||
+            tooltipTop >= targetRect.bottom
+        );
     }
 
     trackProductTourEvent(eventName, details = {}) {
