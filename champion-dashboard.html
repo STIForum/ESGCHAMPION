@@ -252,17 +252,17 @@
 
     <!-- Product Tour Modal -->
     <div class="modal-backdrop" id="champion-tour-modal-backdrop"></div>
-    <div class="modal" id="champion-tour-modal">
+    <div class="modal tour-tooltip" id="champion-tour-modal">
         <div class="modal-header">
             <h3 class="modal-title" id="champion-tour-step-title">Welcome to Your Champion Dashboard</h3>
-            <button class="modal-close" id="champion-tour-modal-close">&times;</button>
+            <button class="modal-close tour-close" id="champion-tour-modal-close">&times;</button>
         </div>
         <div class="modal-body">
             <div class="tour-meta-row">
                 <span class="tour-step-counter" id="champion-tour-step-counter">Step 1 of 4</span>
             </div>
 
-            <p class="text-secondary" id="champion-tour-step-description" style="margin-bottom: var(--space-4);">
+            <p class="text-secondary" id="champion-tour-step-description">
                 This quick tour helps you find your most important actions in under a minute.
             </p>
 
@@ -275,10 +275,10 @@
                 <span>Don't show this again</span>
             </label>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-ghost" id="champion-tour-skip-btn" type="button">Skip Tour</button>
-            <button class="btn btn-ghost" id="champion-tour-prev-btn" type="button">Back</button>
-            <button class="btn btn-primary" id="champion-tour-next-btn" type="button">Next</button>
+        <div class="modal-footer tour-actions">
+            <button class="btn tour-btn tour-btn-text" id="champion-tour-skip-btn" type="button">Skip Tour</button>
+            <button class="btn tour-btn tour-btn-ghost" id="champion-tour-prev-btn" type="button">Back</button>
+            <button class="btn tour-btn tour-btn-primary" id="champion-tour-next-btn" type="button">Next</button>
         </div>
     </div>
 
