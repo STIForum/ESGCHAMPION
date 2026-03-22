@@ -923,7 +923,7 @@ p {
 .tour-tip {
     border: 1px solid rgba(0, 115, 230, 0.12);
     background: rgba(0, 115, 230, 0.08);
-    color: var(--gray-700);
+    color: var(--gray-800);
     border-radius: 8px;
     padding: 8px 10px;
     font-size: 13px;
@@ -936,7 +936,7 @@ p {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    color: var(--gray-600);
+    color: var(--gray-700);
     font-size: 13px;
     font-weight: 500;
 }
@@ -969,10 +969,14 @@ p {
     border-radius: 12px;
     border: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    transform: translateY(4px);
-    transition: opacity 180ms ease-out, visibility 180ms ease-out, transform 180ms ease-out, top 180ms ease-out, left 180ms ease-out;
+    transform: translateY(2px);
+    transition: opacity 180ms ease-out, visibility 180ms ease-out, transform 180ms ease-out;
     z-index: 500;
-    will-change: top, left, transform;
+    will-change: opacity, transform;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 #champion-tour-modal.active {
@@ -988,6 +992,7 @@ p {
     font-weight: 600;
     line-height: 1.3;
     color: var(--gray-900);
+    letter-spacing: 0;
 }
 
 #champion-tour-modal .tour-close {
@@ -1015,7 +1020,7 @@ p {
     font-size: 13.5px;
     font-weight: 500;
     line-height: 1.5;
-    color: var(--gray-600);
+    color: var(--gray-700);
 }
 
 #champion-tour-modal .tour-actions {
@@ -1031,6 +1036,13 @@ p {
     padding: 7px 10px;
     min-height: 30px;
     border-radius: 8px;
+}
+
+#champion-tour-modal .tour-btn:focus-visible,
+#champion-tour-modal .tour-close:focus-visible,
+#champion-tour-modal .tour-checkbox input:focus-visible {
+    outline: 2px solid rgba(0, 115, 230, 0.35);
+    outline-offset: 1px;
 }
 
 #champion-tour-modal .tour-btn-primary {
