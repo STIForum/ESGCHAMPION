@@ -952,6 +952,10 @@ p {
     transition: box-shadow var(--transition);
 }
 
+#champion-tour-modal {
+    z-index: 500;
+}
+
 /* =====================================================
    ALERTS & NOTIFICATIONS
    ===================================================== */

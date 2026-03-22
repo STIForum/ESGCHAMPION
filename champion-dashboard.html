@@ -251,35 +251,34 @@
     </main>
 
     <!-- Product Tour Modal -->
-    <div class="modal-backdrop" id="champion-tour-modal-backdrop">
-        <div class="modal" id="champion-tour-modal" style="max-width: 640px;">
-            <div class="modal-header">
-                <h3 class="modal-title" id="champion-tour-step-title">Welcome to Your Champion Dashboard</h3>
-                <button class="modal-close" id="champion-tour-modal-close">&times;</button>
+    <div class="modal-backdrop" id="champion-tour-modal-backdrop"></div>
+    <div class="modal" id="champion-tour-modal" style="max-width: 640px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="champion-tour-step-title">Welcome to Your Champion Dashboard</h3>
+            <button class="modal-close" id="champion-tour-modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="tour-meta-row">
+                <span class="tour-step-counter" id="champion-tour-step-counter">Step 1 of 4</span>
             </div>
-            <div class="modal-body">
-                <div class="tour-meta-row">
-                    <span class="tour-step-counter" id="champion-tour-step-counter">Step 1 of 4</span>
-                </div>
 
-                <p class="text-secondary" id="champion-tour-step-description" style="margin-bottom: var(--space-4);">
-                    This quick tour helps you find your most important actions in under a minute.
-                </p>
+            <p class="text-secondary" id="champion-tour-step-description" style="margin-bottom: var(--space-4);">
+                This quick tour helps you find your most important actions in under a minute.
+            </p>
 
-                <div class="tour-tip" id="champion-tour-step-tip">
-                    Tip: use "Product Tour" any time to replay this walkthrough.
-                </div>
-
-                <label class="tour-checkbox">
-                    <input type="checkbox" id="champion-tour-dont-show">
-                    <span>Don't show this again</span>
-                </label>
+            <div class="tour-tip" id="champion-tour-step-tip">
+                Tip: use "Product Tour" any time to replay this walkthrough.
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-ghost" id="champion-tour-skip-btn" type="button">Skip Tour</button>
-                <button class="btn btn-ghost" id="champion-tour-prev-btn" type="button">Back</button>
-                <button class="btn btn-primary" id="champion-tour-next-btn" type="button">Next</button>
-            </div>
+
+            <label class="tour-checkbox">
+                <input type="checkbox" id="champion-tour-dont-show">
+                <span>Don't show this again</span>
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" id="champion-tour-skip-btn" type="button">Skip Tour</button>
+            <button class="btn btn-ghost" id="champion-tour-prev-btn" type="button">Back</button>
+            <button class="btn btn-primary" id="champion-tour-next-btn" type="button">Next</button>
         </div>
     </div>
 

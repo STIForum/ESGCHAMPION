@@ -495,12 +495,25 @@ class ChampionDashboard {
             if (!candidate) {
                 continue;
             }
-            const isHidden = candidate.classList.contains('hidden') || candidate.offsetParent === null;
-            if (!isHidden) {
+            if (this.isTourTargetVisible(candidate)) {
                 return candidate;
             }
         }
         return null;
+    }
+
+    isTourTargetVisible(element) {
+        if (!element || element.classList.contains('hidden')) {
+            return false;
+        }
+
+        const styles = window.getComputedStyle(element);
+        if (styles.display === 'none' || styles.visibility === 'hidden' || styles.opacity === '0') {
+            return false;
+        }
+
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
     }
 
     highlightTourTarget(element) {
