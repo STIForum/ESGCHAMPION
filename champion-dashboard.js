@@ -53,6 +53,12 @@ class ChampionDashboard {
         this.activeTourTarget = null;
         this.tourSteps = [
             {
+                title: 'Use the Sidebar to Navigate',
+                description: 'This menu is your quick path to Dashboard, ESG Panels, Rankings, Profile, and Invite Peers.',
+                tip: 'Dashboard keeps you in your command center, while Panels is where you submit reviews.',
+                targets: ['.sidebar', '.sidebar-nav']
+            },
+            {
                 title: 'Track Your Progress Fast',
                 description: 'Use the stats row to monitor credits, approvals, pending reviews, and your leaderboard rank at a glance.',
                 tip: 'If your rank looks unchanged, refresh after a new approved review.',
@@ -359,7 +365,6 @@ class ChampionDashboard {
                     totalSteps: this.tourSteps.length
                 });
                 this.closeProductTour('completed');
-                window.location.href = '/champion-panels.html';
                 return;
             }
             this.goToTourStep(this.currentTourStep + 1);
