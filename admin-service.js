@@ -502,7 +502,7 @@ class AdminService {
                     esg_classification,
                     category
                 ),
-                champions:reviewer_user_id (
+                champions:champion_id (
                     id,
                     full_name,
                     email,
@@ -528,22 +528,26 @@ class AdminService {
                 id,
                 submission_id,
                 indicator_id,
-                sme_context,
-                cost_to_collect,
-                relevance_to_sme,
-                clarity_and_language,
-                data_availability,
-                additional_guidance,
-                suggested_tier,
+                sme_size_band,
+                primary_sector,
+                geographic_footprint,
+                primary_framework,
+                esg_class,
                 sdgs,
-                tags,
+                relevance,
+                regulatory_necessity,
+                operational_feasibility,
+                cost_to_collect,
+                misreporting_risk,
+                estimated_time,
+                support_required,
+                stakeholder_priority,
+                suggested_tier,
+                rationale,
+                optional_tags,
                 notes,
-                is_necessary,
-                clarity_rating,
-                analysis,
                 status,
                 review_status,
-                feedback,
                 created_at,
                 updated_at,
                 indicators (
@@ -575,12 +579,12 @@ class AdminService {
                     reviewed_at: submission.reviewed_at || '',
                     admin_notes: submission.admin_notes || '',
                     
-                    // Champion info
+                    // Champion info — joined via champion_id
                     champion_name: submission.champions?.full_name || '',
                     champion_email: submission.champions?.email || '',
                     champion_company: submission.champions?.company || '',
                     
-                    // Reviewer info
+                    // Admin who reviewed
                     reviewed_by: submission.reviewer?.full_name || '',
                     
                     // Indicator info
@@ -592,25 +596,27 @@ class AdminService {
                     indicator_esg_class: review.indicators?.esg_class || '',
                     indicator_impact: review.indicators?.impact_level || '',
                     
-                    // Review assessment
-                    sme_context: review.sme_context || '',
-                    cost_to_collect: review.cost_to_collect || '',
-                    relevance_to_sme: review.relevance_to_sme || '',
-                    clarity_and_language: review.clarity_and_language || '',
-                    data_availability: review.data_availability || '',
-                    additional_guidance: review.additional_guidance || '',
-                    suggested_tier: review.suggested_tier || '',
+                    // Champion's structured assessment — actual fields saved by the form
+                    sme_size_band: review.sme_size_band || '',
+                    primary_sector: review.primary_sector || '',
+                    geographic_footprint: review.geographic_footprint || '',
+                    primary_framework_assessed: review.primary_framework || '',
+                    esg_class_assessed: review.esg_class || '',
                     sdgs: (review.sdgs || []).join('; '),
-                    tags: (review.tags || []).join('; '),
+                    relevance: review.relevance || '',
+                    regulatory_necessity: review.regulatory_necessity || '',
+                    operational_feasibility: review.operational_feasibility || '',
+                    cost_to_collect: review.cost_to_collect || '',
+                    misreporting_risk: review.misreporting_risk || '',
+                    estimated_time: review.estimated_time || '',
+                    support_required: review.support_required || '',
+                    stakeholder_priority: (review.stakeholder_priority || []).join('; '),
+                    suggested_tier: review.suggested_tier || '',
+                    rationale: review.rationale || '',
+                    optional_tags: (review.optional_tags || []).join('; '),
                     notes: review.notes || '',
                     
-                    // Legacy fields
-                    is_necessary: review.is_necessary || '',
-                    clarity_rating: review.clarity_rating || '',
-                    analysis: review.analysis || '',
-                    
                     review_status: review.review_status || review.status || 'pending',
-                    review_feedback: review.feedback || '',
                     review_created_at: review.created_at
                 });
             }
@@ -623,7 +629,7 @@ class AdminService {
      * Generate CSV from approved reviews data
      */
     generateApprovedReviewsCSV(reviews) {
-        // Define headers
+        // Define headers — aligned to fields actually saved in panel_review_indicator_reviews
         const headers = [
             'Submission ID',
             'Panel Name',
@@ -635,7 +641,7 @@ class AdminService {
             'Champion Name',
             'Champion Email',
             'Champion Company',
-            'Reviewed By',
+            'Reviewed By (Admin)',
             'Indicator ID',
             'Indicator Name',
             'Indicator Code',
@@ -643,21 +649,26 @@ class AdminService {
             'Indicator Framework',
             'Indicator ESG Class',
             'Indicator Impact',
-            'SME Context',
-            'Cost to Collect',
-            'Relevance to SME',
-            'Clarity & Language',
-            'Data Availability',
-            'Additional Guidance',
-            'Suggested Tier',
+            // Champion's structured assessment fields (saved by the review form)
+            'SME Size Band',
+            'Primary Sector',
+            'Geographic Footprint',
+            'Primary Framework (Assessed)',
+            'ESG Class (Assessed)',
             'SDGs',
-            'Tags',
+            'Relevance',
+            'Regulatory Necessity',
+            'Operational Feasibility',
+            'Cost to Collect',
+            'Misreporting Risk',
+            'Estimated Time',
+            'Support Required',
+            'Stakeholder Priority',
+            'Suggested Tier',
+            'Rationale',
+            'Optional Tags',
             'Notes',
-            'Is Necessary',
-            'Clarity Rating',
-            'Analysis',
             'Review Status',
-            'Review Feedback',
             'Review Created At'
         ];
 
@@ -684,21 +695,26 @@ class AdminService {
                 row.indicator_framework,
                 row.indicator_esg_class,
                 row.indicator_impact,
-                row.sme_context,
-                row.cost_to_collect,
-                row.relevance_to_sme,
-                row.clarity_and_language,
-                row.data_availability,
-                row.additional_guidance,
-                row.suggested_tier,
+                // Actual fields saved by the review form
+                row.sme_size_band,
+                row.primary_sector,
+                row.geographic_footprint,
+                row.primary_framework_assessed,
+                row.esg_class_assessed,
                 row.sdgs,
-                row.tags,
+                row.relevance,
+                row.regulatory_necessity,
+                row.operational_feasibility,
+                row.cost_to_collect,
+                row.misreporting_risk,
+                row.estimated_time,
+                row.support_required,
+                row.stakeholder_priority,
+                row.suggested_tier,
+                row.rationale,
+                row.optional_tags,
                 row.notes,
-                row.is_necessary,
-                row.clarity_rating,
-                row.analysis,
                 row.review_status,
-                row.review_feedback,
                 row.review_created_at
             ];
 

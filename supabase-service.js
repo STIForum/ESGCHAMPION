@@ -1537,6 +1537,60 @@ class SupabaseService {
             }
         }
 
+        // ── Insert approved indicator reviews into the `reviews` table ──────────
+        // Each panel_review_indicator_review becomes one row in `reviews` with
+        // status = 'approved', so the reviews table stays the canonical record.
+        if (reviews.length > 0 && submission.champion_id) {
+            // Fetch the champion's name so it is embedded in content for easy
+            // identification when the data is exported without a join.
+            let championName = '';
+            try {
+                const { data: championData } = await this.client
+                    .from('champions')
+                    .select('full_name')
+                    .eq('id', submission.champion_id)
+                    .single();
+                championName = championData?.full_name || '';
+            } catch (_) { /* non-critical */ }
+
+            const reviewRows = reviews.map((ir) => ({
+                champion_id:  submission.champion_id,
+                indicator_id: ir.indicator_id,
+                panel_id:     submission.panel_id,
+                // Build a human-readable content string that always starts with
+                // the champion's name so exports show who made each review.
+                content: [
+                    championName      ? `Reviewed by: ${championName}`         : null,
+                    ir.rationale      ? `Rationale: ${ir.rationale}`           : null,
+                    ir.analysis       ? `Analysis: ${ir.analysis}`             : null,
+                    ir.notes          ? `Notes: ${ir.notes}`                   : null,
+                    ir.relevance      ? `Relevance: ${ir.relevance}`           : null,
+                    ir.suggested_tier ? `Suggested tier: ${ir.suggested_tier}` : null,
+                ].filter(Boolean).join('\n') || 'Panel indicator review',
+                // Map relevance tri_level to a 1–5 rating
+                rating: ir.relevance === 'high'   ? 5
+                       : ir.relevance === 'medium' ? 3
+                       : ir.relevance === 'low'    ? 1
+                       : null,
+                status:      'approved',
+                feedback:    adminComment || null,
+                reviewed_by: adminId || null,
+                reviewed_at: new Date().toISOString(),
+            }));
+
+            const { error: reviewsInsertError } = await this.client
+                .from('reviews')
+                .insert(reviewRows);
+
+            if (reviewsInsertError) {
+                // Non-fatal – log but don't block the approval
+                console.error('Error inserting approved reviews into reviews table:', reviewsInsertError);
+            } else {
+                console.log(`Inserted ${reviewRows.length} row(s) into reviews table for submission ${submissionId}`);
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // Fetch panel name for a meaningful notification message
         let panelName = 'your panel review';
         try {

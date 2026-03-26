@@ -892,6 +892,12 @@ class AdminReviewPage {
         // Export button
         document.getElementById('export-btn').addEventListener('click', () => this.exportData());
 
+        // Export Reviews button
+        const exportReviewsBtn = document.getElementById('export-reviews-btn');
+        if (exportReviewsBtn) {
+            exportReviewsBtn.addEventListener('click', () => this.exportReviews());
+        }
+
         // Modal close - Panel Review
         const panelModalClose = document.getElementById('panel-review-modal-close');
         const panelModalBackdrop = document.getElementById('panel-review-modal-backdrop');
@@ -2275,6 +2281,50 @@ class AdminReviewPage {
         } catch (error) {
             console.error('Error toggling admin:', error);
             window.showToast('Failed to update admin status.', 'error');
+        }
+    }
+
+    async exportReviews() {
+        const btn = document.getElementById('export-reviews-btn');
+        try {
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner" style="width: 20px; height: 20px;"></span> Exporting...';
+            }
+
+            const reviews = await window.adminService.getApprovedIndicatorReviews();
+
+            if (!reviews || reviews.length === 0) {
+                window.showToast?.('No approved reviews to export yet.', 'info');
+                return;
+            }
+
+            const csv = window.adminService.generateApprovedReviewsCSV(reviews);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', `stif-reviews-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            window.showToast?.(`✅ ${reviews.length} review(s) exported successfully!`, 'success');
+        } catch (error) {
+            console.error('Export reviews error:', error);
+            window.showToast?.(error.message || 'Failed to export reviews.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export Reviews
+                `;
+            }
         }
     }
 
